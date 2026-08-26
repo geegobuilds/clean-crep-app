@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clean Crep JA — Operator Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: #F5F7FA; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-thumb { background: #E0E8F4; border-radius: 3px; }
+  input:focus { outline: 2px solid #1A6FD4; outline-offset: -1px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const C = {
+  navy: '#0A1F44', blue: '#1A6FD4', blueHov: '#155CB8', navyHov: '#061329',
+  charcoal: '#2A2D35', offWhite: '#F5F7FA', ice: '#E8F1FB',
+  softBlue: '#A8C8F0', caption: '#5A6A8A', border: '#E0E8F4', white: '#FFFFFF',
+};
+const font = "'DM Sans', sans-serif";
+
+const STATUS_STYLES = {
+  'Received':          { bg: '#F5F7FA', fg: '#5A6A8A' },
+  'In Progress':       { bg: '#D6EAF8', fg: '#1A6FD4' },
+  'Ready for Pickup':  { bg: '#E8F1FB', fg: '#0A1F44' },
+  'Completed':         { bg: '#0A1F44', fg: '#FFFFFF' },
+  'Pending Payment':   { bg: '#FEF3F0', fg: '#993C1D' },
+};
+
+function StatusTag({ status }) {
+  const s = STATUS_STYLES[status] || STATUS_STYLES['Received'];
+  return (
+    <span style={{
+      fontSize: 10, fontWeight: 500, fontFamily: font,
+      background: s.bg, color: s.fg, borderRadius: 4, padding: '3px 8px',
+      display: 'inline-block', whiteSpace: 'nowrap',
+    }}>{status}</span>
+  );
+}
+
+function Icon({ name, size = 16, color = 'currentColor' }) {
+  const paths = {
+    orders:   <><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></>,
+    revenue:  <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,
+    clock:    <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+    pickup:   <><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,
+    up:       <><polyline points="18 15 12 9 6 15"/></>,
+    down:     <><polyline points="6 9 12 15 18 9"/></>,
+    chevronR: <polyline points="9 18 15 12 9 6"/>,
+    search:   <><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
+    wa:       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>,
+    plus:     <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+    filter:   <><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></>,
+    bell:     <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>,
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      {paths[name]}
+    </svg>
+  );
+}
+
+const INITIAL_ORDERS = [
+  { id: 'CC-0048', item: 'Air Force 1 Low',   customer: 'Rohan M.',   service: 'Sneaker Clean', status: 'In Progress',      price: '$2,000', dropped: '9:30 AM',  phone: '876-xxx-1234' },
+  { id: 'CC-0047', item: 'Wallabee Boot',      customer: 'Kezia T.',   service: 'Clarks Clean',  status: 'Ready for Pickup', price: '$3,500', dropped: '9:15 AM',  phone: '876-xxx-5678' },
+  { id: 'CC-0046', item: 'Jordan 4 Retro',     customer: 'Devon W.',   service: 'Sole Refresh',  status: 'Received',         price: 'TBD',    dropped: '9:00 AM',  phone: '876-xxx-9012' },
+  { id: 'CC-0045', item: 'Desert Trek',        customer: 'Simone P.',  service: 'Clarks Clean',  status: 'Completed',        price: '$3,500', dropped: 'Yesterday',phone: '876-xxx-3456' },
+  { id: 'CC-0044', item: 'Nike Dunk Low',      customer: 'Marcus L.',  service: 'Sneaker Clean', status: 'Pending Payment',  price: '$2,000', dropped: 'Yesterday',phone: '876-xxx-7890' },
+  { id: 'CC-0043', item: 'Clarks Originals',   customer: 'Tanya R.',   service: 'Clarks Clean',  status: 'Completed',        price: '$3,500', dropped: 'Apr 28',   phone: '876-xxx-2345' },
+  { id: 'CC-0042', item: 'Yeezy 350',          customer: 'Andre G.',   service: 'Sneaker Clean', status: 'Completed',        price: '$2,000', dropped: 'Apr 27',   phone: '876-xxx-6789' },
+];
+
+const STATUS_FLOW = ['Received', 'In Progress', 'Ready for Pickup', 'Completed', 'Pending Payment'];
+const tdS = { padding: '12px 16px', borderBottom: '1px solid #E0E8F4', verticalAlign: 'middle' };
+
+function MetricCard({ label, value, sub, delta, deltaUp, icon, iconBg, iconColor }) {
+  return (
+    <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, padding: '18px 20px', flex: 1, minWidth: 0 }}>
+      <div style={{ width: 34, height: 34, borderRadius: 9, background: iconBg || C.ice, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+        <Icon name={icon} size={16} color={iconColor || C.blue} />
+      </div>
+      <div style={{ fontSize: 9, fontWeight: 500, color: C.caption, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 30, fontWeight: 500, color: C.navy, lineHeight: 1, marginBottom: 4 }}>{value}</div>
+      <div style={{ fontSize: 11, color: C.caption }}>{sub}</div>
+      {delta && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 500, marginTop: 10, borderRadius: 4, padding: '2px 7px', background: deltaUp ? '#DCFCE7' : '#FEE2E2', color: deltaUp ? '#16A34A' : '#DC2626' }}>
+          <Icon name={deltaUp ? 'up' : 'down'} size={10} color={deltaUp ? '#16A34A' : '#DC2626'} />
+          {delta}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrderRow({ order, onStatusChange, isExpanded, onToggle }) {
+  return (
+    <>
+      <tr onClick={onToggle} style={{ cursor: 'pointer', background: isExpanded ? C.ice : 'transparent', transition: 'background 100ms' }}>
+        <td style={tdS}>
+          <span style={{ fontSize: 11, fontWeight: 500, color: C.blue, fontFamily: font }}>{order.id}</span>
+        </td>
+        <td style={tdS}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: C.navy, fontFamily: font }}>{order.item}</div>
+          <div style={{ fontSize: 10, color: C.caption, fontFamily: font, marginTop: 2 }}>{order.customer}</div>
+        </td>
+        <td style={tdS}><span style={{ fontSize: 11, color: C.charcoal, fontFamily: font }}>{order.service}</span></td>
+        <td style={tdS}><StatusTag status={order.status} /></td>
+        <td style={tdS}><span style={{ fontSize: 12, fontWeight: 500, color: C.navy, fontFamily: font }}>{order.price}</span></td>
+        <td style={tdS}><span style={{ fontSize: 10, color: C.caption, fontFamily: font }}>{order.dropped}</span></td>
+        <td style={tdS}>
+          <div style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}>
+            <Icon name="chevronR" size={14} color={C.caption} />
+          </div>
+        </td>
+      </tr>
+      {isExpanded && (
+        <tr style={{ background: C.ice }}>
+          <td colSpan={7} style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 9, color: C.caption, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 500, marginBottom: 4, fontFamily: font }}>CONTACT</div>
+                <div style={{ fontSize: 11, color: C.navy, fontFamily: font }}>{order.phone}</div>
+              </div>
+              <div style={{ width: 1, height: 32, background: C.border }} />
+              <div>
+                <div style={{ fontSize: 9, color: C.caption, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 500, marginBottom: 6, fontFamily: font }}>UPDATE STATUS</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {STATUS_FLOW.map(s => (
+                    <button key={s} onClick={e => { e.stopPropagation(); onStatusChange(order.id, s); }} style={{
+                      fontSize: 10, fontWeight: 500, borderRadius: 6, padding: '5px 12px', cursor: 'pointer',
+                      border: `1px solid ${order.status === s ? C.blue : C.border}`,
+                      background: order.status === s ? C.blue : C.white,
+                      color: order.status === s ? C.white : C.charcoal,
+                      fontFamily: font, transition: 'all 100ms',
+                    }}>{s}</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ marginLeft: 'auto' }}>
+                <a href={`https://wa.me/1?text=Hi ${order.customer}, your ${order.item} order (${order.id}) is now: ${order.status}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#25D366', color: '#fff', borderRadius: 7, padding: '7px 14px', fontSize: 11, fontWeight: 500, textDecoration: 'none', fontFamily: font }}>
+                  <Icon name="wa" size={13} color="#fff" /> Notify Customer
+                </a>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+function Dashboard() {
+  const [orders, setOrders] = useState(INITIAL_ORDERS);
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
+  const [expanded, setExpanded] = useState(null);
+  const [activeNav, setActiveNav] = useState('orders');
+
+  const filters = ['All', 'Received', 'In Progress', 'Ready for Pickup', 'Pending Payment', 'Completed'];
+
+  const filtered = orders.filter(o => {
+    const matchFilter = filter === 'All' || o.status === filter;
+    const q = search.toLowerCase();
+    const matchSearch = !q || o.id.toLowerCase().includes(q) || o.item.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  function handleStatusChange(id, status) {
+    setOrders(os => os.map(o => o.id === id ? { ...o, status } : o));
+    setExpanded(null);
+  }
+
+  const revenue = orders.filter(o => o.status === 'Completed').reduce((sum, o) => {
+    const n = parseInt(o.price.replace(/[^\d]/g, ''));
+    return sum + (isNaN(n) ? 0 : n);
+  }, 0);
+
+  const pendingPickup = orders.filter(o => o.status === 'Ready for Pickup').length;
+  const inProgress   = orders.filter(o => o.status === 'In Progress').length;
+
+  return (
+    <div style={{ minHeight: '100vh', background: C.offWhite, fontFamily: font }}>
+      {/* Topbar */}
+      <div style={{ background: C.navy, height: 56, display: 'flex', alignItems: 'center', padding: '0 32px', gap: 16, position: 'sticky', top: 0, zIndex: 100 }}>
+        <img src="assets/logo-cropped.png" alt="Clean Crep" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }} />
+        <span style={{ fontSize: 13, fontWeight: 500, color: C.white }}>Clean Crep JA</span>
+        <span style={{ fontSize: 11, color: 'rgba(168,200,240,0.6)', marginLeft: 2 }}>· Operator Dashboard</span>
+
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <span style={{ fontSize: 11, color: C.softBlue }}>Shop 19 · Pristine Plaza, HWT</span>
+          <a href="https://wa.me/18765072163" target="_blank" rel="noopener noreferrer" style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: '#25D366', color: '#fff', borderRadius: 7,
+            padding: '6px 14px', fontSize: 11, fontWeight: 500, textDecoration: 'none',
+          }}>
+            <Icon name="wa" size={13} color="#fff" /> WhatsApp
+          </a>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: C.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.white }}>CC</div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 32px' }}>
+        {/* Metrics */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+          <MetricCard label="Total Orders"   value={orders.length}    sub="All time"         icon="orders"  iconBg={C.ice}      iconColor={C.blue}    delta="18% this month" deltaUp />
+          <MetricCard label="Revenue"        value={`$${(revenue/1000).toFixed(0)}K`} sub="JMD · Completed" icon="revenue" iconBg={C.ice}  iconColor={C.blue}    delta="23% vs last month" deltaUp />
+          <MetricCard label="In Progress"    value={inProgress}       sub="Being cleaned"   icon="clock"   iconBg="#FEF3C7"    iconColor="#B45309" />
+          <MetricCard label="Ready for Pickup" value={pendingPickup}  sub="Waiting at shop" icon="pickup"  iconBg="#DCFCE7"    iconColor="#16A34A" />
+        </div>
+
+        {/* Orders table */}
+        <div style={{ background: C.white, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+          {/* Table header */}
+          <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 14, fontWeight: 500, color: C.navy, marginRight: 4 }}>Orders</div>
+
+            {/* Search */}
+            <div style={{ position: 'relative', flex: '1 1 200px', maxWidth: 260 }}>
+              <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                <Icon name="search" size={14} color={C.caption} />
+              </div>
+              <input
+                value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search order, item, customer…"
+                style={{ width: '100%', paddingLeft: 32, paddingRight: 12, height: 34, borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12, color: C.charcoal, fontFamily: font, background: C.offWhite }}
+              />
+            </div>
+
+            {/* Filter pills */}
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginLeft: 'auto' }}>
+              {filters.map(f => (
+                <button key={f} onClick={() => setFilter(f)} style={{
+                  fontSize: 10, fontWeight: 500, borderRadius: 20, padding: '4px 12px', cursor: 'pointer', border: 'none',
+                  background: filter === f ? C.navy : C.ice, color: filter === f ? C.white : C.caption,
+                  fontFamily: font, transition: 'background 100ms',
+                }}>{f}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
+              <thead>
+                <tr style={{ background: C.offWhite }}>
+                  {['Order ID', 'Item / Customer', 'Service', 'Status', 'Price', 'Dropped', ''].map(h => (
+                    <th key={h} style={{ ...tdS, fontSize: 9, fontWeight: 500, color: C.caption, textTransform: 'uppercase', letterSpacing: 1.5, textAlign: 'left', borderBottom: `1px solid ${C.border}` }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(order => (
+                  <OrderRow
+                    key={order.id} order={order}
+                    onStatusChange={handleStatusChange}
+                    isExpanded={expanded === order.id}
+                    onToggle={() => setExpanded(expanded === order.id ? null : order.id)}
+                  />
+                ))}
+              </tbody>
+            </table>
+            {filtered.length === 0 && (
+              <div style={{ padding: '40px', textAlign: 'center', color: C.caption, fontSize: 13 }}>No orders found.</div>
+            )}
+          </div>
+
+          <div style={{ padding: '12px 20px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, color: C.caption }}>{filtered.length} of {orders.length} orders</span>
+            <a href="Clean Crep App.html" style={{ fontSize: 11, color: C.blue, textDecoration: 'none', fontWeight: 500 }}>← Back to Customer App</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Dashboard />);
+</script>
+</body>
+</html>

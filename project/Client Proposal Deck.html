@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Package Proposal — [Client Name]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="deck-stage.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D1117; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+
+  /* ── Tokens ── */
+  :root {
+    --navy:     #0A1F44;
+    --blue:     #1A6FD4;
+    --white:    #FFFFFF;
+    --offwhite: #F5F7FA;
+    --ice:      #E8F1FB;
+    --softblue: #A8C8F0;
+    --caption:  #5A6A8A;
+    --border:   #E0E8F4;
+    --charcoal: #2A2D35;
+    --green:    #25D366;
+  }
+
+  deck-stage { --slide-bg: #0A1F44; }
+
+  /* ── All slides ── */
+  section {
+    width: 100%; height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    position: relative; overflow: hidden;
+  }
+
+  /* Shared decorative circle */
+  .deco-circle {
+    position: absolute; border-radius: 50%;
+    background: rgba(26,111,212,0.1); pointer-events: none;
+  }
+
+  /* Overline */
+  .overline {
+    font-size: 24px; font-weight: 500; color: var(--softblue);
+    text-transform: uppercase; letter-spacing: 4px; margin-bottom: 18px;
+  }
+  .overline.dark { color: var(--caption); }
+
+  /* Big number */
+  .big-num {
+    font-size: clamp(48px, 8vw, 96px); font-weight: 700;
+    color: var(--white); line-height: 1; letter-spacing: -2px;
+  }
+
+  /* Tag pill */
+  .pill {
+    display: inline-block; font-size: 24px; font-weight: 500;
+    border-radius: 20px; padding: 8px 20px;
+    background: rgba(26,111,212,0.2); color: var(--softblue);
+  }
+  .pill.blue { background: var(--blue); color: var(--white); }
+  .pill.navy { background: var(--navy); color: var(--white); }
+  .pill.light { background: var(--ice); color: var(--blue); }
+
+  /* Card */
+  .card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(168,200,240,0.14);
+    border-radius: 16px; padding: 28px;
+  }
+  .card.light {
+    background: var(--white);
+    border: 1px solid var(--border);
+  }
+  .card.ice { background: var(--ice); border: 1px solid var(--border); }
+
+  /* Divider */
+  .divider { height: 1px; background: rgba(168,200,240,0.12); margin: 0; }
+  .divider.light { background: var(--border); }
+
+  /* ── SLIDE LAYOUTS ── */
+
+  /* Dark slides (navy bg) */
+  .slide-dark {
+    background: var(--navy);
+    padding: 72px 96px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+
+  /* Light slides */
+  .slide-light {
+    background: var(--offwhite);
+    padding: 72px 96px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+
+  /* Split layout */
+  .split {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+    width: 100%; height: 100%;
+  }
+
+  /* Logo badge */
+  .logo-badge {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 0;
+  }
+  .logo-badge img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+  .logo-badge .brand { font-size: 24px; font-weight: 500; color: var(--white); }
+  .logo-badge .sub { font-size: 24px; color: var(--softblue); margin-top: 1px; }
+
+  /* Slide number */
+  .slide-num {
+    position: absolute; bottom: 40px; right: 64px;
+    font-size: 24px; color: rgba(168,200,240,0.35);
+    font-weight: 500; letter-spacing: 1px;
+  }
+  .slide-num.dark-num { color: rgba(90,106,138,0.5); }
+
+  /* ── Checklist ── */
+  .checklist { display: flex; flex-direction: column; gap: 14px; }
+  .check-row { display: flex; align-items: flex-start; gap: 14px; }
+  .check-dot {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    background: var(--blue); display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .check-dot svg { display: block; }
+  .check-title { font-size: 16px; font-weight: 500; color: var(--white); line-height: 1.3; }
+  .check-sub { font-size: 13px; color: var(--softblue); margin-top: 3px; line-height: 1.5; }
+
+  .checklist.light .check-title { color: var(--navy); }
+  .checklist.light .check-sub { color: var(--caption); }
+
+  /* ── Pricing table ── */
+  .price-table { width: 100%; border-collapse: collapse; }
+  .price-table th {
+    font-size: 10px; font-weight: 500; color: var(--caption);
+    text-transform: uppercase; letter-spacing: 2px;
+    padding: 10px 16px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--offwhite);
+  }
+  .price-table td {
+    padding: 13px 16px; border-bottom: 1px solid var(--border);
+    font-size: 14px; color: var(--charcoal); vertical-align: middle;
+  }
+  .price-table tr:last-child td { border-bottom: none; }
+  .price-table tr.total td { font-weight: 700; color: var(--navy); font-size: 16px; background: var(--ice); }
+  .price-table .price-col { font-weight: 500; color: var(--navy); white-space: nowrap; }
+
+  /* ── Screen mockup strip ── */
+  .screen-strip { display: flex; gap: 20px; align-items: flex-start; justify-content: center; }
+  .screen-mini {
+    flex-shrink: 0; width: 160px;
+    background: var(--navy);
+    border-radius: 20px;
+    box-shadow: 0 0 0 6px #1c1c1e, 0 16px 40px rgba(0,0,0,0.5);
+    overflow: hidden; position: relative;
+  }
+  .screen-mini-island {
+    width: 52px; height: 14px; border-radius: 8px; background: #000;
+    margin: 6px auto 0; display: block;
+  }
+  .screen-mini-content {
+    padding: 8px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .mini-bar { height: 8px; border-radius: 4px; background: rgba(168,200,240,0.15); }
+  .mini-bar.accent { background: rgba(26,111,212,0.5); }
+  .mini-bar.short { width: 60%; }
+  .mini-card-row { display: flex; gap: 5px; }
+  .mini-card {
+    flex: 1; height: 44px; border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(168,200,240,0.1);
+  }
+  .mini-hero { height: 64px; border-radius: 8px; background: rgba(26,111,212,0.3); margin-bottom: 4px; }
+  .mini-label { text-align: center; font-size: 10px; color: var(--softblue); margin-top: 8px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding-bottom: 6px; }
+</style>
+</head>
+<body>
+<deck-stage>
+
+  <!-- ── SLIDE 01: COVER ─────────────────────────────────── -->
+  <section class="slide-dark" data-screen-label="01 Cover">
+    <div class="deco-circle" style="width:600px;height:600px;top:-200px;right:-200px;"></div>
+    <div class="deco-circle" style="width:300px;height:300px;bottom:-100px;left:-80px;opacity:0.6;"></div>
+
+    <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:48px;">
+      <div class="logo-badge">
+        <img src="assets/logo-cropped.png" alt="Clean Crep JA" />
+        <div>
+          <div class="brand">Clean Crep Jamaica</div>
+          <div class="sub">Digital Services Proposal</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="overline">Prepared For</div>
+        <div style="font-size:clamp(40px,6vw,80px);font-weight:700;color:var(--white);line-height:0.92;letter-spacing:-2px;margin-bottom:24px;">
+          [Client<br /><span style="color:var(--blue);">Business Name]</span>
+        </div>
+        <div style="font-size:24px;color:var(--softblue);line-height:1.6;max-width:560px;">
+          A complete digital package — mobile app, operator dashboard, landing page, and social media templates. Built in days, not months.
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <span class="pill">Mobile App</span>
+        <span class="pill">Operator Dashboard</span>
+        <span class="pill">Landing Page</span>
+        <span class="pill">Instagram Templates</span>
+      </div>
+
+      <div style="font-size:24px;color:rgba(168,200,240,0.4);">May 2026 · Kingston, Jamaica</div>
+    </div>
+    <div class="slide-num">01 / 10</div>
+  </section>
+
+  <!-- ── SLIDE 02: THE OPPORTUNITY ──────────────────────── -->
+  <section class="slide-light" data-screen-label="02 Opportunity">
+    <div style="position:relative;z-index:1;max-width:960px;margin:0 auto;width:100%;">
+      <div class="overline dark">The Opportunity</div>
+      <h2 style="font-size:clamp(36px,5vw,64px);font-weight:700;color:var(--navy);line-height:0.95;letter-spacing:-1.5px;margin-bottom:32px;">
+        Your customers are<br />on their phones.
+      </h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px;">
+        {[
+          ['89%', 'of Jamaicans use WhatsApp as their primary communication tool'],
+          ['74%', 'of consumers say they\'d book a service online if the option existed'],
+          ['3×', 'more likely to return — customers who track orders come back more often'],
+        ].map(([val, text], i) => ``)}
+        <!-- Stat 1 -->
+        <div class="card light" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:56px;font-weight:700;color:var(--blue);line-height:1;letter-spacing:-1px;">89%</div>
+          <div style="font-size:24px;color:var(--caption);line-height:1.6;">of Jamaicans use WhatsApp as their primary communication channel.</div>
+        </div>
+        <!-- Stat 2 -->
+        <div class="card light" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:56px;font-weight:700;color:var(--blue);line-height:1;letter-spacing:-1px;">74%</div>
+          <div style="font-size:24px;color:var(--caption);line-height:1.6;">of consumers would book a service online if the option were available.</div>
+        </div>
+        <!-- Stat 3 -->
+        <div class="card light" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:56px;font-weight:700;color:var(--blue);line-height:1;letter-spacing:-1px;">3×</div>
+          <div style="font-size:24px;color:var(--caption);line-height:1.6;">more likely to return — customers who track orders come back more often.</div>
+        </div>
+      </div>
+      <div style="margin-top:32px;padding:20px 24px;background:var(--ice);border-radius:12px;border:1px solid var(--border);">
+        <div style="font-size:15px;color:var(--navy);font-weight:500;">A digital presence isn't optional anymore — it's what separates businesses that grow from ones that stay still.</div>
+      </div>
+    </div>
+    <div class="slide-num dark-num">02 / 10</div>
+  </section>
+
+  <!-- ── SLIDE 03: WHAT'S INCLUDED ──────────────────────── -->
+  <section class="slide-dark" data-screen-label="03 Whats Included">
+    <div class="deco-circle" style="width:500px;height:500px;bottom:-150px;right:-150px;"></div>
+    <div style="position:relative;z-index:1;max-width:960px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
+      <div>
+        <div class="overline">The Package</div>
+        <h2 style="font-size:clamp(32px,4.5vw,56px);font-weight:700;color:var(--white);line-height:0.95;letter-spacing:-1px;margin-bottom:36px;">Everything you need<br />to go digital.</h2>
+        <div class="checklist">
+          <div class="check-row">
+            <div class="check-dot"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1 4 3.5 6.5 9 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="check-title">Customer Mobile App</div><div class="check-sub">Home, Booking, Order Tracker, Inbox, Profile — 5 full screens</div></div>
+          </div>
+          <div class="check-row">
+            <div class="check-dot"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1 4 3.5 6.5 9 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="check-title">Operator Dashboard</div><div class="check-sub">Manage orders, update statuses, search, filter, notify customers</div></div>
+          </div>
+          <div class="check-row">
+            <div class="check-dot"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1 4 3.5 6.5 9 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="check-title">Landing Page</div><div class="check-sub">Services, how it works, location, hours — fully responsive</div></div>
+          </div>
+          <div class="check-row">
+            <div class="check-dot"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1 4 3.5 6.5 9 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="check-title">5 Instagram Templates</div><div class="check-sub">1080×1350 — service promo, before/after, loyalty, location card</div></div>
+          </div>
+          <div class="check-row">
+            <div class="check-dot"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1 4 3.5 6.5 9 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="check-title">Custom Design System</div><div class="check-sub">Colours, typography, components — consistent across everything</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini screen mockups -->
+      <div class="screen-strip">
+        <div>
+          <div class="screen-mini" style="height:240px;">
+            <div class="screen-mini-island"></div>
+            <div class="screen-mini-content">
+              <div class="mini-hero"></div>
+              <div class="mini-bar short"></div>
+              <div class="mini-bar accent short" style="width:80%;"></div>
+              <div class="mini-card-row">
+                <div class="mini-card"></div>
+                <div class="mini-card"></div>
+                <div class="mini-card"></div>
+              </div>
+              <div class="mini-bar" style="width:70%;"></div>
+              <div class="mini-bar short"></div>
+            </div>
+          </div>
+          <div class="mini-label">Home</div>
+        </div>
+        <div>
+          <div class="screen-mini" style="height:220px;margin-top:24px;">
+            <div class="screen-mini-island"></div>
+            <div class="screen-mini-content">
+              <div class="mini-bar accent" style="width:50%;height:6px;margin-bottom:4px;"></div>
+              <div class="mini-card" style="height:52px;"></div>
+              <div class="mini-card" style="height:52px;background:rgba(26,111,212,0.25);border-color:rgba(26,111,212,0.3);"></div>
+              <div class="mini-card" style="height:52px;"></div>
+            </div>
+          </div>
+          <div class="mini-label">Booking</div>
+        </div>
+        <div>
+          <div class="screen-mini" style="height:200px;margin-top:48px;">
+            <div class="screen-mini-island"></div>
+            <div class="screen-mini-content">
+              <div class="mini-hero" style="background:rgba(10,31,68,0.8);"></div>
+              <div style="display:flex;gap:4px;margin-top:2px;">
+                {[1,2,3,4].map(i => <div key={i} style="flex:1;height:6px;border-radius:3px;background:rgba(26,111,212,0.4);"></div>)}
+                <div style="flex:1;height:6px;border-radius:3px;background:rgba(168,200,240,0.15);"></div>
+              </div>
+              <div class="mini-bar short" style="margin-top:4px;"></div>
+            </div>
+          </div>
+          <div class="mini-label">Tracker</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">03 / 10</div>
+  </section>
+
+  <!-- ── SLIDE 04: MOBILE APP SCREENS ──────────────────── -->
+  <section class="slide-light" data-screen-label="04 App Screens" style="padding:56px 96px;display:flex;flex-direction:column;justify-content:center;">
+    <div style="max-width:960px;margin:0 auto;width:100%;">
+      <div class="overline dark">Customer App</div>
+      <h2 style="font-size:48px;font-weight:700;color:var(--navy);letter-spacing:-1px;margin-bottom:28px;">5 screens. Fully interactive.</h2>
+
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;">
+        <!-- placeholder to match old structure -->
+        <!-- Home -->
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+          <div style="width:100%;height:480px;background:var(--navy);border-radius:16px;border:3px solid #1c1c1e;overflow:hidden;padding:10px 8px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:10px;border-radius:3px;background:rgba(26,111,212,0.5);width:60%;"></div>
+            <div style="flex:1;background:rgba(26,111,212,0.2);border-radius:8px;"></div>
+            <div style="display:flex;gap:4px;">
+              <div style="flex:1;height:28px;border-radius:6px;background:rgba(255,255,255,0.07);"></div>
+              <div style="flex:1;height:28px;border-radius:6px;background:rgba(255,255,255,0.07);"></div>
+              <div style="flex:1;height:28px;border-radius:6px;background:rgba(255,255,255,0.07);"></div>
+            </div>
+            <div style="height:8px;border-radius:3px;background:rgba(168,200,240,0.15);width:50%;"></div>
+            <div style="height:32px;border-radius:6px;background:rgba(255,255,255,0.07);"></div>
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--caption);text-transform:uppercase;letter-spacing:1.5px;">Home</div>
+        </div>
+        <!-- Book -->
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+          <div style="width:100%;height:480px;background:var(--offwhite);border-radius:16px;border:3px solid #e0e8f4;overflow:hidden;padding:10px 8px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:10px;border-radius:3px;background:var(--navy);width:40%;"></div>
+            <div style="height:40px;border-radius:8px;background:var(--ice);border:1.5px solid var(--blue);"></div>
+            <div style="height:40px;border-radius:8px;background:var(--white);border:1px solid var(--border);"></div>
+            <div style="height:40px;border-radius:8px;background:var(--white);border:1px solid var(--border);"></div>
+            <div style="height:8px;border-radius:3px;background:var(--border);width:60%;margin-top:4px;"></div>
+            <div style="display:flex;gap:3px;margin-top:2px;">
+              {[...Array(5)].map((_,i) => <div key={i} style="flex:1;height:24px;border-radius:5px;background:var(--ice);"></div>)}
+            </div>
+            <div style="height:24px;border-radius:6px;background:var(--blue);margin-top:auto;"></div>
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--caption);text-transform:uppercase;letter-spacing:1.5px;">Book</div>
+        </div>
+        <!-- Orders -->
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+          <div style="width:100%;height:480px;background:var(--offwhite);border-radius:16px;border:3px solid #e0e8f4;overflow:hidden;padding:10px 8px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:48px;border-radius:8px;background:var(--navy);"></div>
+            <div style="height:8px;border-radius:99px;background:var(--border);position:relative;overflow:hidden;">
+              <div style="position:absolute;left:0;top:0;bottom:0;width:55%;background:var(--blue);border-radius:99px;"></div>
+            </div>
+            <div style="height:32px;border-radius:6px;background:var(--white);border:1.5px solid var(--blue);"></div>
+            <div style="height:32px;border-radius:6px;background:var(--white);border:1px solid var(--border);"></div>
+            <div style="height:32px;border-radius:6px;background:var(--white);border:1px solid var(--border);"></div>
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--caption);text-transform:uppercase;letter-spacing:1.5px;">Orders</div>
+        </div>
+        <!-- Inbox -->
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+          <div style="width:100%;height:480px;background:var(--offwhite);border-radius:16px;border:3px solid #e0e8f4;overflow:hidden;padding:10px 8px;display:flex;flex-direction:column;gap:5px;">
+            <div style="height:10px;border-radius:3px;background:var(--navy);width:35%;"></div>
+            <div style="height:8px;border-radius:3px;background:var(--border);width:55%;"></div>
+            <div style="height:1px;background:var(--border);margin:2px 0;"></div>
+            {[1,2,3,4].map(i => (
+              <div key={i} style={{height:'28px',borderRadius:'6px',background: i < 3 ? 'rgba(26,111,212,0.06)' : 'var(--white)',border:'1px solid var(--border)',display:'flex',alignItems:'center',gap:'5px',padding:'0 6px'}}>
+                <div style={{width:'14px',height:'14px',borderRadius:'4px',background: i < 3 ? 'var(--ice)' : 'var(--offwhite)',flexShrink:0}}></div>
+                <div style={{flex:1,height:'5px',borderRadius:'2px',background: i < 3 ? 'rgba(10,31,68,0.2)' : 'var(--border)'}}></div>
+              </div>
+            ))}
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--caption);text-transform:uppercase;letter-spacing:1.5px;">Inbox</div>
+        </div>
+        <!-- Profile -->
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+          <div style="width:100%;height:480px;background:var(--offwhite);border-radius:16px;border:3px solid #e0e8f4;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="height:40%;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px;">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--blue);"></div>
+              <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.4);width:50%;"></div>
+              <div style="display:flex;gap:8px;">
+                <div style="height:14px;width:24px;border-radius:3px;background:rgba(255,255,255,0.15);"></div>
+                <div style="height:14px;width:24px;border-radius:3px;background:rgba(255,255,255,0.15);"></div>
+                <div style="height:14px;width:24px;border-radius:3px;background:rgba(255,255,255,0.15);"></div>
+              </div>
+            </div>
+            <div style="flex:1;padding:8px;display:flex;flex-direction:column;gap:5px;">
+              <div style="height:8px;border-radius:99px;background:var(--border);overflow:hidden;"><div style="height:100%;width:70%;background:var(--blue);border-radius:99px;"></div></div>
+              <div style="height:22px;border-radius:5px;background:var(--white);border:1px solid var(--border);"></div>
+              <div style="height:22px;border-radius:5px;background:var(--white);border:1px solid var(--border);"></div>
+              <div style="height:22px;border-radius:5px;background:var(--white);border:1px solid var(--border);"></div>
+            </div>
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--caption);text-transform:uppercase;letter-spacing:1.5px;">Profile</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num dark-num">04 / 10</div>
+  </section>
+
+  <!-- ── SLIDE 05: OPERATOR DASHBOARD ──────────────────── -->
+  <section class="slide-dark" data-screen-label="05 Dashboard">
+    <div class="deco-circle" style="width:400px;height:400px;top:-100px;left:-100px;"></div>
+    <div style="position:relative;z-index:1;max-width:960px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
+      <div>
+        <div class="overline">Operator Dashboard</div>
+        <h2 style="font-size:clamp(28px,4vw,52px);font-weight:700;color:var(--white);line-height:0.95;letter-spacing:-1px;margin-bottom:28px;">Run your business<br />from one screen.</h2>
+        <div class="checklist" style="gap:16px;">
+          <div class="check-row">
+            <div class="check-dot"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1 4 3.5 6.5 9 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="check-title">Live order board</div><div class="check-sub">See every order, status, and customer at a glance</div></div>
+          </div>
+          <div class="check-row">
+            <div class="check-dot"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1 4 3.5 6.5 9 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="check-title">One-click status updates</div><div class="check-sub">Move orders from Received → Ready for Pickup in seconds</div></div>
+          </div>
+          <div class="check-row">
+            <div class="check-dot"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1 4 3.5 6.5 9 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="check-title">Revenue metrics</div><div class="check-sub">Total orders, revenue, avg turnaround, pending pickups</div></div>
+          </div>
+          <div class="check-row">
+            <div class="check-dot"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1 4 3.5 6.5 9 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="check-title">WhatsApp customer alerts</div><div class="check-sub">Notify customers directly from the dashboard</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard mini preview -->
+      <div style="background:var(--offwhite);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
+        <!-- Top bar -->
+        <div style="background:var(--navy);height:36px;display:flex;align-items:center;padding:0 14px;gap:8px;">
+          <div style="width:18px;height:18px;border-radius:50%;background:rgba(168,200,240,0.2);"></div>
+          <div style="height:8px;border-radius:3px;background:rgba(255,255,255,0.3);width:80px;"></div>
+          <div style="margin-left:auto;height:22px;width:60px;border-radius:5px;background:#25D366;"></div>
+        </div>
+        <!-- Metrics row -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px;">
+          {[var(--ice),var(--ice),'#FEF3C7','#DCFCE7'].map((bg,i) => (
+            <div key={i} style={{background:bg,borderRadius:'8px',padding:'8px',border:'1px solid var(--border)'}}>
+              <div style={{width:'18px',height:'18px',borderRadius:'5px',background:'rgba(26,111,212,0.2)',marginBottom:'6px'}}></div>
+              <div style={{height:'6px',borderRadius:'2px',background:'rgba(10,31,68,0.12)',width:'50%',marginBottom:'4px'}}></div>
+              <div style={{height:'14px',borderRadius:'3px',background:'rgba(10,31,68,0.25)',width:'60%'}}></div>
+            </div>
+          ))}
+          <div style="background:var(--ice);border-radius:8px;padding:8px;border:1px solid var(--border);">
+            <div style="width:18px;height:18px;border-radius:5px;background:rgba(26,111,212,0.2);margin-bottom:6px;"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(10,31,68,0.12);width:50%;margin-bottom:4px;"></div>
+            <div style="height:14px;border-radius:3px;background:rgba(10,31,68,0.25);width:60%;"></div>
+          </div>
+          <div style="background:var(--ice);border-radius:8px;padding:8px;border:1px solid var(--border);">
+            <div style="width:18px;height:18px;border-radius:5px;background:rgba(26,111,212,0.2);margin-bottom:6px;"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(10,31,68,0.12);width:50%;margin-bottom:4px;"></div>
+            <div style="height:14px;border-radius:3px;background:rgba(10,31,68,0.25);width:60%;"></div>
+          </div>
+          <div style="background:#FEF3C7;border-radius:8px;padding:8px;border:1px solid var(--border);">
+            <div style="width:18px;height:18px;border-radius:5px;background:rgba(180,83,9,0.2);margin-bottom:6px;"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(180,83,9,0.15);width:50%;margin-bottom:4px;"></div>
+            <div style="height:14px;border-radius:3px;background:rgba(180,83,9,0.25);width:60%;"></div>
+          </div>
+          <div style="background:#DCFCE7;border-radius:8px;padding:8px;border:1px solid var(--border);">
+            <div style="width:18px;height:18px;border-radius:5px;background:rgba(22,163,74,0.2);margin-bottom:6px;"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(22,163,74,0.15);width:50%;margin-bottom:4px;"></div>
+            <div style="height:14px;border-radius:3px;background:rgba(22,163,74,0.25);width:60%;"></div>
+          </div>
+        </div>
+        <!-- Table rows -->
+        <div style="padding:0 12px 12px;display:flex;flex-direction:column;gap:4px;">
+          {[...Array(4)].map((_,i) => (
+            <div key={i} style={{height:'28px',borderRadius:'6px',background:'var(--white)',border:'1px solid var(--border)',display:'flex',alignItems:'center',padding:'0 8px',gap:'8px'}}>
+              <div style={{height:'6px',width:'40px',borderRadius:'2px',background:'rgba(26,111,212,0.3)'}}></div>
+              <div style={{height:'6px',flex:1,borderRadius:'2px',background:'var(--border)'}}></div>
+              <div style={{height:'14px',width:'60px',borderRadius:'4px',background: i===0?'rgba(26,111,212,0.15)': i===1?'rgba(10,31,68,0.1)':'var(--offwhite)',border:`1px solid ${i===0?'rgba(26,111,212,0.3)':i===1?'rgba(10,31,68,0.15)':'var(--border)'}`}}></div>
+            </div>
+          ))}
+          <div style="height:28px;border-radius:6px;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;padding:0 8px;gap:8px;">
+            <div style="height:6px;width:40px;border-radius:2px;background:rgba(26,111,212,0.3);"></div>
+            <div style="height:6px;flex:1;border-radius:2px;background:var(--border);"></div>
+            <div style="height:14px;width:60px;border-radius:4px;background:rgba(153,60,29,0.1);border:1px solid rgba(153,60,29,0.2);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">05 / 10</div>
+  </section>
+
+  <!-- ── SLIDE 06: LANDING PAGE ─────────────────────────── -->
+  <section class="slide-light" data-screen-label="06 Landing Page">
+    <div style="max-width:960px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
+      <div>
+        <div class="overline dark">Landing Page</div>
+        <h2 style="font-size:clamp(28px,4vw,52px);font-weight:700;color:var(--navy);line-height:0.95;letter-spacing:-1px;margin-bottom:28px;">Your link-in-bio<br />destination.</h2>
+        <p style="font-size:15px;color:var(--caption);line-height:1.7;margin-bottom:28px;">A fully responsive website covering every section a local service business needs — built to convert Instagram followers into customers.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          {['Hero + CTA','Services & Pricing','How It Works','About & Stats','Location + Hours','Footer + WhatsApp'].map(item => (
+            <div key={item} style={{display:'flex',alignItems:'center',gap:8}}>
+              <div style={{width:6,height:6,borderRadius:'50%',background:'var(--blue)',flexShrink:0}}></div>
+              <span style={{fontSize:13,color:'var(--charcoal)'}}>{item}</span>
+            </div>
+          ))}
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div><span style="font-size:24px;color:var(--charcoal);">Hero + CTA</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div><span style="font-size:24px;color:var(--charcoal);">Services &amp; Pricing</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div><span style="font-size:24px;color:var(--charcoal);">How It Works</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div><span style="font-size:24px;color:var(--charcoal);">About &amp; Stats</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div><span style="font-size:24px;color:var(--charcoal);">Location + Hours</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div><span style="font-size:24px;color:var(--charcoal);">WhatsApp Float Button</span></div>
+        </div>
+      </div>
+
+      <!-- Landing page mini -->
+      <div style="background:var(--navy);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
+        <!-- Nav -->
+        <div style="background:var(--white);height:28px;display:flex;align-items:center;padding:0 12px;gap:8px;border-bottom:1px solid var(--border);">
+          <div style="width:14px;height:14px;border-radius:50%;background:rgba(168,200,240,0.3);"></div>
+          <div style="height:6px;border-radius:2px;background:var(--border);width:60px;"></div>
+          <div style="margin-left:auto;height:16px;width:44px;border-radius:4px;background:var(--blue);"></div>
+        </div>
+        <!-- Hero -->
+        <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;">
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="height:6px;border-radius:2px;background:rgba(168,200,240,0.3);width:50%;"></div>
+            <div style="height:18px;border-radius:3px;background:rgba(255,255,255,0.7);"></div>
+            <div style="height:18px;border-radius:3px;background:var(--blue);width:70%;"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(168,200,240,0.3);width:80%;margin-top:4px;"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(168,200,240,0.3);width:60%;"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <div style="height:20px;width:60px;border-radius:5px;background:var(--blue);"></div>
+              <div style="height:20px;width:60px;border-radius:5px;border:1px solid rgba(168,200,240,0.3);"></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="height:24px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(168,200,240,0.1);"></div>
+            <div style="height:24px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(168,200,240,0.1);"></div>
+            <div style="height:24px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(168,200,240,0.1);"></div>
+          </div>
+        </div>
+        <!-- Services row -->
+        <div style="background:var(--white);padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+          <div style="height:48px;border-radius:8px;background:var(--offwhite);border:1px solid var(--border);"></div>
+          <div style="height:48px;border-radius:8px;background:var(--ice);border:1.5px solid var(--blue);"></div>
+          <div style="height:48px;border-radius:8px;background:var(--offwhite);border:1px solid var(--border);"></div>
+        </div>
+        <!-- Steps -->
+        <div style="background:var(--offwhite);padding:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+          <div style="height:36px;border-radius:6px;background:var(--white);border:1px solid var(--border);"></div>
+          <div style="height:36px;border-radius:6px;background:var(--white);border:1px solid var(--border);"></div>
+          <div style="height:36px;border-radius:6px;background:var(--white);border:1px solid var(--border);"></div>
+          <div style="height:36px;border-radius:6px;background:var(--white);border:1px solid var(--border);"></div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num dark-num">06 / 10</div>
+  </section>
+
+  <!-- ── SLIDE 07: INSTAGRAM TEMPLATES ─────────────────── -->
+  <section class="slide-dark" data-screen-label="07 Instagram">
+    <div class="deco-circle" style="width:500px;height:500px;top:-150px;right:-100px;"></div>
+    <div style="position:relative;z-index:1;max-width:960px;margin:0 auto;width:100%;">
+      <div class="overline">Social Media</div>
+      <h2 style="font-size:clamp(28px,4vw,52px);font-weight:700;color:var(--white);line-height:0.95;letter-spacing:-1px;margin-bottom:40px;">5 Instagram templates.<br />Ready to post.</h2>
+
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+        <!-- Service Promo -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="aspect-ratio:4/5;background:var(--offwhite);border-radius:10px;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:6px;border-radius:2px;background:rgba(10,31,68,0.2);width:50%;"></div>
+            <div style="height:22px;border-radius:4px;background:var(--navy);width:80%;"></div>
+            <div style="height:22px;border-radius:4px;background:var(--navy);width:60%;"></div>
+            <div style="flex:1;border-radius:8px;background:var(--ice);"></div>
+            <div style="height:14px;border-radius:4px;background:var(--blue);width:40%;"></div>
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--softblue);text-align:center;text-transform:uppercase;letter-spacing:1px;">Promo</div>
+        </div>
+        <!-- Clarks -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="aspect-ratio:4/5;background:var(--navy);border-radius:10px;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:6px;border:1px solid rgba(168,200,240,0.15);">
+            <div style="height:6px;border-radius:2px;background:rgba(168,200,240,0.3);width:50%;"></div>
+            <div style="height:20px;border-radius:4px;background:rgba(255,255,255,0.6);width:80%;"></div>
+            <div style="height:20px;border-radius:4px;background:rgba(255,255,255,0.6);width:60%;"></div>
+            <div style="height:20px;border-radius:4px;background:rgba(255,255,255,0.6);width:40%;"></div>
+            <div style="flex:1;border-radius:8px;background:rgba(168,200,240,0.1);"></div>
+            <div style="height:14px;border-radius:4px;background:var(--blue);width:40%;"></div>
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--softblue);text-align:center;text-transform:uppercase;letter-spacing:1px;">Clarks</div>
+        </div>
+        <!-- Before/After -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="aspect-ratio:4/5;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="background:var(--navy);height:35%;padding:8px;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;">
+              <div style="height:6px;border-radius:2px;background:rgba(168,200,240,0.3);width:40%;"></div>
+              <div style="height:14px;border-radius:3px;background:rgba(255,255,255,0.5);width:70%;"></div>
+            </div>
+            <div style="flex:1;display:flex;">
+              <div style="flex:1;background:#DDD;"></div>
+              <div style="width:3px;background:var(--navy);"></div>
+              <div style="flex:1;background:var(--ice);"></div>
+            </div>
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--softblue);text-align:center;text-transform:uppercase;letter-spacing:1px;">B / A</div>
+        </div>
+        <!-- Loyalty -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="aspect-ratio:4/5;background:var(--navy);border-radius:10px;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:8px;border:1px solid rgba(168,200,240,0.1);">
+            <div style="height:6px;border-radius:2px;background:rgba(168,200,240,0.2);width:60%;"></div>
+            <div style="height:16px;border-radius:3px;background:rgba(255,255,255,0.5);width:90%;"></div>
+            <div style="height:4px;border-radius:99px;background:rgba(168,200,240,0.15);overflow:hidden;"><div style="width:70%;height:100%;background:var(--blue);border-radius:99px;"></div></div>
+            <div style="flex:1;border-radius:8px;background:rgba(26,111,212,0.15);border:1px solid rgba(26,111,212,0.2);display:flex;align-items:center;justify-content:center;">
+              <div style="height:20px;width:80%;border-radius:4px;background:rgba(255,255,255,0.15);"></div>
+            </div>
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--softblue);text-align:center;text-transform:uppercase;letter-spacing:1px;">Loyalty</div>
+        </div>
+        <!-- Location -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="aspect-ratio:4/5;background:var(--offwhite);border-radius:10px;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:6px;border-radius:2px;background:rgba(10,31,68,0.15);width:35%;"></div>
+            <div style="height:22px;border-radius:4px;background:var(--navy);width:80%;"></div>
+            <div style="flex:1;border-radius:8px;background:var(--navy);display:flex;flex-direction:column;padding:8px;gap:5px;">
+              <div style="height:28px;border-radius:6px;background:rgba(168,200,240,0.1);"></div>
+              <div style="height:6px;border-radius:2px;background:rgba(168,200,240,0.2);width:80%;"></div>
+              <div style="height:6px;border-radius:2px;background:rgba(168,200,240,0.2);width:60%;"></div>
+            </div>
+            <div style="height:16px;border-radius:5px;background:#25D366;"></div>
+          </div>
+          <div style="font-size:18px;font-weight:500;color:var(--softblue);text-align:center;text-transform:uppercase;letter-spacing:1px;">Location</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">07 / 10</div>
+  </section>
+
+  <!-- ── SLIDE 08: INVESTMENT ───────────────────────────── -->
+  <section class="slide-light" data-screen-label="08 Investment">
+    <div style="max-width:960px;margin:0 auto;width:100%;">
+      <div class="overline dark">Investment</div>
+      <h2 style="font-size:clamp(28px,4vw,48px);font-weight:700;color:var(--navy);letter-spacing:-1px;margin-bottom:36px;">Clear pricing.<br />No surprises.</h2>
+
+      <div style="background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;">
+        <table class="price-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Deliverable</th>
+              <th>What's Included</th>
+              <th style="text-align:right;">Investment (JMD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:500;color:var(--navy);">Customer Mobile App</td>
+              <td style="color:var(--caption);font-size:24px;">5 screens · Booking flow · Order tracking · Loyalty</td>
+              <td class="price-col" style="text-align:right;">$180,000</td>
+            </tr>
+            <tr>
+              <td style="font-weight:500;color:var(--navy);">Operator Dashboard</td>
+              <td style="color:var(--caption);font-size:24px;">Order management · Status updates · Revenue metrics</td>
+              <td class="price-col" style="text-align:right;">$120,000</td>
+            </tr>
+            <tr>
+              <td style="font-weight:500;color:var(--navy);">Landing Page</td>
+              <td style="color:var(--caption);font-size:24px;">Responsive website · 5 sections · WhatsApp integration</td>
+              <td class="price-col" style="text-align:right;">$90,000</td>
+            </tr>
+            <tr>
+              <td style="font-weight:500;color:var(--navy);">Instagram Templates</td>
+              <td style="color:var(--caption);font-size:24px;">5 × 1080×1350 posts · Branded design system</td>
+              <td class="price-col" style="text-align:right;">$50,000</td>
+            </tr>
+            <tr>
+              <td style="font-weight:500;color:var(--navy);">Custom Design System</td>
+              <td style="color:var(--caption);font-size:24px;">Colours · Typography · Components · Brand tokens</td>
+              <td class="price-col" style="text-align:right;">$40,000</td>
+            </tr>
+            <tr class="total">
+              <td colspan="2" style="font-size:16px;">Full Digital Package</td>
+              <td style="text-align:right;color:var(--blue);font-size:22px;">$480,000 JMD</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;">
+        <div style="background:var(--ice);border-radius:10px;padding:16px 20px;border:1px solid var(--border);">
+          <div style="font-size:11px;font-weight:500;color:var(--caption);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Payment Terms</div>
+          <div style="font-size:24px;color:var(--navy);font-weight:500;">50% deposit · 50% on delivery</div>
+          <div style="font-size:24px;color:var(--caption);margin-top:3px;">Bank transfer or cash accepted</div>
+        </div>
+        <div style="background:var(--ice);border-radius:10px;padding:16px 20px;border:1px solid var(--border);">
+          <div style="font-size:11px;font-weight:500;color:var(--caption);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Turnaround</div>
+          <div style="font-size:24px;color:var(--navy);font-weight:500;">5–7 business days</div>
+          <div style="font-size:24px;color:var(--caption);margin-top:3px;">From deposit to final delivery</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num dark-num">08 / 10</div>
+  </section>
+
+  <!-- ── SLIDE 09: TIMELINE ────────────────────────────── -->
+  <section class="slide-dark" data-screen-label="09 Timeline">
+    <div class="deco-circle" style="width:400px;height:400px;bottom:-100px;left:-100px;opacity:0.8;"></div>
+    <div style="position:relative;z-index:1;max-width:960px;margin:0 auto;width:100%;">
+      <div class="overline">Delivery Timeline</div>
+      <h2 style="font-size:clamp(28px,4vw,52px);font-weight:700;color:var(--white);line-height:0.95;letter-spacing:-1px;margin-bottom:48px;">From deposit to live<br />in 7 days.</h2>
+
+      <div style="position:relative;">
+        <!-- Track line -->
+        <div style="position:absolute;top:20px;left:20px;right:20px;height:2px;background:rgba(168,200,240,0.15);"></div>
+        <div style="position:absolute;top:20px;left:20px;width:75%;height:2px;background:var(--blue);"></div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;position:relative;z-index:1;">
+          <!-- Day 1 -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--white);">1</div>
+            <div class="card" style="flex:1;">
+              <div style="font-size:11px;color:var(--softblue);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;font-weight:500;">Day 1</div>
+              <div style="font-size:16px;font-weight:500;color:var(--white);margin-bottom:6px;">Kickoff</div>
+              <div style="font-size:12px;color:var(--softblue);line-height:1.6;">Collect brand assets, colours, content. Confirm scope and requirements.</div>
+            </div>
+          </div>
+          <!-- Day 2-3 -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--white);">2</div>
+            <div class="card" style="flex:1;">
+              <div style="font-size:11px;color:var(--softblue);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;font-weight:500;">Days 2–3</div>
+              <div style="font-size:16px;font-weight:500;color:var(--white);margin-bottom:6px;">Design</div>
+              <div style="font-size:12px;color:var(--softblue);line-height:1.6;">App screens, dashboard, landing page. First preview sent for review.</div>
+            </div>
+          </div>
+          <!-- Day 4-5 -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--white);">3</div>
+            <div class="card" style="flex:1;">
+              <div style="font-size:11px;color:var(--softblue);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;font-weight:500;">Days 4–5</div>
+              <div style="font-size:16px;font-weight:500;color:var(--white);margin-bottom:6px;">Revisions</div>
+              <div style="font-size:12px;color:var(--softblue);line-height:1.6;">Up to 2 rounds of revisions. Instagram templates delivered.</div>
+            </div>
+          </div>
+          <!-- Day 6-7 -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(168,200,240,0.2);border:2px solid rgba(168,200,240,0.3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--softblue);">4</div>
+            <div class="card" style="flex:1;border-color:rgba(168,200,240,0.1);">
+              <div style="font-size:11px;color:rgba(168,200,240,0.5);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;font-weight:500;">Days 6–7</div>
+              <div style="font-size:16px;font-weight:500;color:rgba(255,255,255,0.6);margin-bottom:6px;">Delivery</div>
+              <div style="font-size:12px;color:rgba(168,200,240,0.4);line-height:1.6;">Final files + hosting setup. Site goes live. Balance due on delivery.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">09 / 10</div>
+  </section>
+
+  <!-- ── SLIDE 10: CLOSE ───────────────────────────────── -->
+  <section class="slide-dark" data-screen-label="10 Close">
+    <div class="deco-circle" style="width:700px;height:700px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.5;"></div>
+    <div class="deco-circle" style="width:400px;height:400px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.7;"></div>
+
+    <div style="position:relative;z-index:1;max-width:960px;margin:0 auto;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:36px;">
+      <div class="logo-badge" style="justify-content:center;">
+        <img src="assets/logo-cropped.png" alt="Clean Crep JA" />
+        <div>
+          <div class="brand" style="font-size:18px;">Clean Crep Jamaica</div>
+          <div class="sub">Digital Services</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="overline" style="justify-content:center;text-align:center;">Let's Build</div>
+        <h2 style="font-size:clamp(40px,6vw,80px);font-weight:700;color:var(--white);line-height:0.92;letter-spacing:-2px;">Ready when<br /><span style="color:var(--blue);">you are.</span></h2>
+      </div>
+
+      <p style="font-size:18px;color:var(--softblue);line-height:1.6;max-width:540px;">
+        Your customers are already online. Let's make sure they find you, book you, and come back.
+      </p>
+
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+        <a href="https://wa.me/18765072163" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;border-radius:10px;padding:16px 32px;font-size:16px;font-weight:500;text-decoration:none;font-family:'DM Sans',sans-serif;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          Link Us on WhatsApp
+        </a>
+        <a href="Landing Page.html" target="_blank" style="display:inline-flex;align-items:center;gap:8px;border:1.5px solid rgba(168,200,240,0.3);color:var(--softblue);border-radius:10px;padding:15px 32px;font-size:16px;font-weight:500;text-decoration:none;font-family:'DM Sans',sans-serif;">
+          See Live Demo
+        </a>
+      </div>
+
+      <div style="display:flex;gap:40px;margin-top:16px;">
+        <div style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:var(--white);">$480K</div>
+          <div style="font-size:11px;color:var(--softblue);text-transform:uppercase;letter-spacing:2px;margin-top:3px;">JMD Total</div>
+        </div>
+        <div style="width:1px;background:rgba(168,200,240,0.15);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:var(--white);">7 Days</div>
+          <div style="font-size:11px;color:var(--softblue);text-transform:uppercase;letter-spacing:2px;margin-top:3px;">Turnaround</div>
+        </div>
+        <div style="width:1px;background:rgba(168,200,240,0.15);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:var(--white);">2 Rounds</div>
+          <div style="font-size:11px;color:var(--softblue);text-transform:uppercase;letter-spacing:2px;margin-top:3px;">Revisions</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">10 / 10</div>
+  </section>
+
+</deck-stage>
+
+<script type="application/json" id="speaker-notes">
+[
+  "Welcome — this proposal outlines the complete digital package we've built for Clean Crep Jamaica, and can build for your business. Take your time looking through each section.",
+  "The opportunity is clear: nearly 9 in 10 Jamaicans are on WhatsApp. Customers who can track orders and book online come back more often. A digital presence isn't optional — it's a growth lever.",
+  "The package covers everything: a customer-facing mobile app with 5 screens, a backend operator dashboard for staff, a fully responsive landing page, and 5 branded Instagram templates ready to post.",
+  "The mobile app includes Home, Booking, Order Tracker, Inbox, and Profile. The booking flow is 3 steps — service selection, details, and confirmation. The order tracker shows real-time progress from Received to Picked Up.",
+  "The operator dashboard lets your team manage every order from one screen. Update statuses with one click, search and filter orders, see revenue metrics, and notify customers directly via WhatsApp.",
+  "The landing page converts Instagram and WhatsApp traffic into bookings. It covers services and pricing, how the process works, your location and hours, and a floating WhatsApp button on every scroll position.",
+  "Five Instagram templates at 1080×1350 — a service promo, Clarks feature, before and after, loyalty drop, and location card. Consistent branding that matches the app and website.",
+  "The full package is priced at $480,000 JMD. Payment is 50% deposit and 50% on delivery. We accept bank transfer and cash. This covers design, build, and hosting setup.",
+  "We deliver in 7 business days from deposit. Day 1 is kickoff and asset collection. Days 2 to 3 are design and first preview. Days 4 to 5 are revisions. Days 6 to 7 are final delivery and going live.",
+  "That's the full picture. $480,000 JMD, 7 days, and your business is online. Link us on WhatsApp to get started — the number is on screen."
+]
+</script>
+</body>
+</html>

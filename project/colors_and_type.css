@@ -1,0 +1,195 @@
+/* ============================================================
+   Clean Crep Jamaica — Design Tokens
+   Font: DM Sans (Google Fonts), fallback Inter
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap');
+
+/* ── Color Tokens ─────────────────────────────────────────── */
+:root {
+  /* Base palette */
+  --color-navy:       #0A1F44;  /* Deep Navy — primary brand */
+  --color-blue:       #1A6FD4;  /* Brand Blue — accent/CTA */
+  --color-charcoal:   #2A2D35;  /* Body text / dark UI */
+  --color-off-white:  #F5F7FA;  /* Page background */
+  --color-ice:        #E8F1FB;  /* Card / panel surface */
+  --color-soft-blue:  #A8C8F0;  /* Subtext on dark backgrounds */
+  --color-caption:    #5A6A8A;  /* Caption / muted text */
+  --color-border:     #E0E8F4;  /* Subtle borders */
+
+  /* Blue hover states */
+  --color-blue-hover: #155CB8;
+  --color-navy-hover: #061329;
+
+  /* Semantic roles */
+  --bg-page:          var(--color-off-white);
+  --bg-card:          #FFFFFF;
+  --bg-panel:         var(--color-ice);
+  --bg-dark:          var(--color-navy);
+
+  --fg-primary:       var(--color-navy);
+  --fg-body:          var(--color-charcoal);
+  --fg-caption:       var(--color-caption);
+  --fg-on-dark:       #FFFFFF;
+  --fg-muted-dark:    var(--color-soft-blue);
+
+  --border-default:   var(--color-border);
+
+  --accent:           var(--color-blue);
+  --accent-hover:     var(--color-blue-hover);
+
+  /* Status colors */
+  --status-ready:     #1A6FD4;
+  --status-progress:  #F59E0B;
+  --status-done:      #16A34A;
+  --status-pending:   #DC2626;
+  --status-received:  #6B7280;
+
+  /* ── Shadow System ──────────────────────────────────────── */
+  --shadow-card:      0 2px 8px rgba(10, 31, 68, 0.08);
+  --shadow-elevated:  0 4px 16px rgba(10, 31, 68, 0.12);
+
+  /* ── Border Radius ──────────────────────────────────────── */
+  --radius-tag:     4px;
+  --radius-btn:     8px;
+  --radius-card:    12px;
+  --radius-pill:    20px;
+  --radius-avatar:  50%;
+
+  /* ── Spacing Scale ──────────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+
+  /* ── Typography ─────────────────────────────────────────── */
+  --font-sans: 'DM Sans', 'Inter', sans-serif;
+
+  --font-size-headline:    24px;
+  --font-size-subheading:  16px;
+  --font-size-body:        13px;
+  --font-size-caption:     11px;
+  --font-size-overline:    10px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium:  500;
+
+  --line-height-headline: 1.25;
+  --line-height-body:     1.55;
+  --line-height-caption:  1.4;
+
+  --letter-spacing-overline: 2px;
+}
+
+/* ── Base Resets ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  color: var(--fg-body);
+  background: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Semantic Type Classes ───────────────────────────────── */
+.headline {
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-medium);
+  color: var(--fg-primary);
+  line-height: var(--line-height-headline);
+  letter-spacing: -0.3px;
+}
+
+.subheading {
+  font-size: var(--font-size-subheading);
+  font-weight: var(--font-weight-medium);
+  color: var(--fg-primary);
+  line-height: 1.35;
+}
+
+.body-text {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  color: var(--fg-body);
+  line-height: var(--line-height-body);
+}
+
+.caption {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-regular);
+  color: var(--fg-caption);
+  line-height: var(--line-height-caption);
+}
+
+.overline {
+  font-size: var(--font-size-overline);
+  font-weight: var(--font-weight-medium);
+  color: var(--fg-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-overline);
+}
+
+/* ── Button Base ─────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  border: none;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-4);
+  transition: background 150ms ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--color-blue);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--color-blue-hover); }
+
+.btn-dark {
+  background: var(--color-navy);
+  color: #fff;
+}
+.btn-dark:hover { background: var(--color-navy-hover); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-blue);
+  border: 1.5px solid var(--color-blue);
+}
+.btn-ghost:hover { background: var(--color-ice); }
+
+/* ── Card Base ───────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+}
+
+/* ── Status Tag ──────────────────────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  border-radius: var(--radius-tag);
+  padding: 3px 8px;
+}
+.tag-ready    { background: #DBEAFE; color: #1A6FD4; }
+.tag-progress { background: #FEF3C7; color: #B45309; }
+.tag-done     { background: #DCFCE7; color: #16A34A; }
+.tag-pending  { background: #FEE2E2; color: #DC2626; }
+.tag-received { background: #F3F4F6; color: #4B5563; }

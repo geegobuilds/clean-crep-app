@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crep Dictionary Post — Clean Crep JA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #0D1524; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px; overflow: auto; }
+
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .label { font-size: 12px; font-weight: 500; color: #A8C8F0; text-transform: uppercase; letter-spacing: 3px; }
+  .sub-label { font-size: 11px; color: rgba(168,200,240,0.5); margin-top: -10px; }
+
+  .scaler {
+    width: min(540px, 90vw);
+    aspect-ratio: 1080 / 1350;
+    position: relative; overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .post {
+    position: absolute; top: 0; left: 0;
+    width: 1080px; height: 1350px;
+    transform-origin: top left;
+    transform: scale(0.5);
+  }
+
+  .post-inner {
+    width: 1080px; height: 1350px;
+    background: #0A1F44;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    padding: 90px;
+    display: flex; flex-direction: column;
+  }
+
+  /* Decorative concentric circles top-right */
+  .deco-rings {
+    position: absolute; top: -300px; right: -300px;
+    width: 800px; height: 800px;
+    z-index: 0;
+  }
+  .deco-rings::before, .deco-rings::after, .deco-rings span {
+    content: ''; position: absolute; border-radius: 50%;
+    border: 1.5px solid rgba(168,200,240,0.08);
+  }
+  .deco-rings::before { inset: 0; }
+  .deco-rings::after  { inset: 80px; }
+  .deco-rings span    { inset: 160px; display: block; }
+
+  .deco-rings-bl {
+    position: absolute; bottom: -200px; left: -200px;
+    width: 500px; height: 500px;
+    z-index: 0;
+  }
+  .deco-rings-bl::before, .deco-rings-bl::after {
+    content: ''; position: absolute; border-radius: 50%;
+    border: 1.5px solid rgba(168,200,240,0.05);
+  }
+  .deco-rings-bl::before { inset: 0; }
+  .deco-rings-bl::after  { inset: 60px; }
+
+  .body { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; }
+
+  /* Word + pronunciation block */
+  .word-block { margin-top: 8px; display: flex; align-items: baseline; gap: 32px; flex-wrap: wrap; }
+  .word {
+    font-family: 'Fraunces', serif;
+    font-size: 200px; font-weight: 700;
+    color: #fff;
+    line-height: 0.95; letter-spacing: -6px;
+  }
+  .pronunciation {
+    font-size: 44px; color: #A8C8F0;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+  }
+
+  /* Divider */
+  .divider {
+    width: 100%; height: 1px;
+    background: rgba(168,200,240,0.2);
+    margin: 32px 0 28px;
+  }
+
+  /* Part of speech */
+  .pos {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 32px; color: #1A6FD4;
+    margin-bottom: 20px;
+    font-weight: 400;
+  }
+
+  /* Definition */
+  .definition {
+    font-size: 42px;
+    color: #fff;
+    line-height: 1.35;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+  }
+
+  /* Example quotes */
+  .examples {
+    margin-top: 32px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .example {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 26px;
+    color: rgba(168,200,240,0.85);
+    line-height: 1.45;
+    padding-left: 22px;
+    border-left: 3px solid rgba(26,111,212,0.5);
+  }
+
+  /* Footer row */
+  .footer-row {
+    margin-top: auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px;
+  }
+
+  .similar-block {
+    display: flex; align-items: center; gap: 12px;
+    flex-wrap: nowrap;
+    flex: 1;
+    overflow: hidden;
+  }
+  .similar-label {
+    font-size: 22px; color: #A8C8F0;
+    font-weight: 500;
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+  .chip {
+    background: rgba(168,200,240,0.1);
+    border: 1px solid rgba(168,200,240,0.25);
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-size: 22px; color: #fff;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .brand-tag {
+    display: flex; align-items: center; gap: 14px;
+    flex-shrink: 0;
+  }
+  .brand-tag img {
+    width: 60px; height: 60px; border-radius: 50%; object-fit: cover;
+    box-shadow: 0 0 0 2px rgba(168,200,240,0.2);
+  }
+  .brand-tag .handle {
+    font-size: 22px; color: #fff; font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Action bar */
+  .actions {
+    display: flex; gap: 12px;
+    margin-top: 28px;
+  }
+  .btn {
+    background: rgba(168,200,240,0.08);
+    border: 1px solid rgba(168,200,240,0.18);
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: #fff;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background 150ms, border-color 150ms;
+    text-decoration: none;
+  }
+  .btn:hover { background: rgba(168,200,240,0.16); border-color: rgba(168,200,240,0.3); }
+  .btn.primary { background: #1A6FD4; border-color: #1A6FD4; }
+  .btn.primary:hover { background: #1558A8; border-color: #1558A8; }
+
+  /* Caption box */
+  .caption-box {
+    width: min(540px, 90vw);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(168,200,240,0.15);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-top: 8px;
+    color: #E8F1FB;
+    font-size: 14px;
+    line-height: 1.6;
+    position: relative;
+  }
+  .caption-box .copy-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(26,111,212,0.2);
+    border: 1px solid rgba(26,111,212,0.4);
+    color: #A8C8F0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+  }
+  .caption-box .copy-btn:hover { background: rgba(26,111,212,0.35); color: #fff; }
+  .caption-box .copy-btn.copied { background: #25D366; border-color: #25D366; color: #fff; }
+  .caption-box .cap-label { font-size: 10px; color: rgba(168,200,240,0.6); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; font-weight: 500; }
+  .caption-box .cap-text { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <span class="label">Crep Dictionary · Standard Post</span>
+
+  <div class="scaler">
+    <div class="post">
+      <div class="post-inner" id="capture-target">
+        <div class="deco-rings"><span></span></div>
+        <div class="deco-rings-bl"></div>
+
+        <div class="body">
+          <!-- Word block -->
+          <div class="word-block">
+            <div class="word">crep</div>
+            <div class="pronunciation">/krɛp/</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Definition -->
+          <div class="pos">noun</div>
+          <div class="definition">A fresh pair of sneakers, restored to their original glory — or better. The standard by which all clean footwear is measured.</div>
+
+          <!-- Examples -->
+          <div class="examples">
+            <div class="example">"Dropped my creps off at Clean Crep — picked them up looking like day one."</div>
+            <div class="example">"You can tell a lot about a man by the state of his creps."</div>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer-row">
+            <div class="similar-block">
+              <span class="similar-label">Similar:</span>
+              <span class="chip">fresh</span>
+              <span class="chip">sneaker</span>
+              <span class="chip">clean</span>
+              <span class="chip">restored</span>
+            </div>
+            <div class="brand-tag">
+              <img src="assets/logo-cropped.png" alt="Clean Crep JA" />
+              <span class="handle">@cleancrepja</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="sub-label">1080 × 1350 · Ready to post</span>
+
+  <div class="actions">
+    <button class="btn primary" id="dl-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download PNG
+    </button>
+    <a class="btn" href="Instagram Templates.html">← Back to all templates</a>
+  </div>
+
+  <div class="caption-box">
+    <button class="copy-btn" id="copy-btn">Copy</button>
+    <div class="cap-label">Instagram Caption</div>
+    <div class="cap-text" id="cap-text">crep /krɛp/ — noun.
+
+A fresh pair of sneakers, restored to their original glory. ✨
+
+Drop your pair off at Shop 19, Pristine Plaza, Half Way Tree.
+
+📍 Half Way Tree, Kingston
+📲 WhatsApp 876-507-2163
+
+#CleanCrepJA #SneakerCleaning #Kingston #HalfWayTree #JamaicanBusiness #SneakerRestoration #CrepCheck #KingstonJamaica #SneakerCare #FreshKicks</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<script>
+  document.getElementById('dl-btn').addEventListener('click', async () => {
+    const node = document.getElementById('capture-target');
+    try {
+      const dataUrl = await window.htmlToImage.toPng(node, {
+        width: 1080, height: 1350, pixelRatio: 2,
+        cacheBust: true,
+      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'clean-crep-dictionary-post.png';
+      a.click();
+    } catch (e) {
+      alert('Download failed: ' + e.message);
+    }
+  });
+
+  document.getElementById('copy-btn').addEventListener('click', async () => {
+    const text = document.getElementById('cap-text').innerText;
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied ✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    } catch (e) {
+      alert('Copy failed: ' + e.message);
+    }
+  });
+</script>
+</body>
+</html>

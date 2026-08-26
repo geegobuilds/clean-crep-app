@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sneaker Post — Clean Crep JA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #0D1524; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px; overflow: auto; }
+
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .label { font-size: 12px; font-weight: 500; color: #A8C8F0; text-transform: uppercase; letter-spacing: 3px; }
+  .sub-label { font-size: 11px; color: rgba(168,200,240,0.5); margin-top: -10px; }
+
+  .scaler {
+    width: min(540px, 90vw);
+    aspect-ratio: 1080 / 1350;
+    position: relative; overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .post {
+    position: absolute; top: 0; left: 0;
+    width: 1080px; height: 1350px;
+    transform-origin: top left;
+  }
+  .scaler[data-w="540"] .post { transform: scale(0.5); }
+
+  /* ── Post content ── */
+  .post-inner {
+    width: 1080px; height: 1350px;
+    background: #0A1F44;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    padding: 80px 90px;
+    display: flex; flex-direction: column;
+  }
+
+  /* Decorative circles */
+  .circle-tr {
+    position: absolute; top: -180px; right: -180px;
+    width: 700px; height: 700px; border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(26,111,212,0.22), rgba(26,111,212,0) 70%);
+    z-index: 0;
+  }
+  .circle-bl {
+    position: absolute; bottom: -120px; left: -200px;
+    width: 580px; height: 580px; border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(26,111,212,0.12), rgba(26,111,212,0) 70%);
+    z-index: 0;
+  }
+
+  .body { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; }
+
+  /* Logo badge */
+  .badge { display: flex; align-items: center; gap: 18px; }
+  .badge img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; image-rendering: -webkit-optimize-contrast; box-shadow: 0 0 0 2px rgba(168,200,240,0.2), 0 8px 20px rgba(0,0,0,0.3); }
+  .badge .name { font-size: 36px; font-weight: 500; color: #fff; line-height: 1.1; letter-spacing: -0.5px; white-space: nowrap; }
+  .badge .loc { font-size: 22px; color: #A8C8F0; margin-top: 6px; white-space: nowrap; }
+
+  /* Hero photo */
+  .hero {
+    margin-top: 56px;
+    width: 100%;
+    flex: 1;
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    background: #1a2a4a;
+    display: flex; align-items: stretch;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(168,200,240,0.1);
+  }
+  .hero img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .hero-grad {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(10,31,68,0.05) 0%, rgba(10,31,68,0) 50%, rgba(10,31,68,0.65) 100%);
+    pointer-events: none;
+  }
+
+  /* Top-left ribbon on hero */
+  .ribbon {
+    position: absolute; top: 24px; left: 24px;
+    background: rgba(10,31,68,0.78);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(168,200,240,0.25);
+    border-radius: 12px;
+    padding: 14px 22px;
+    display: inline-flex; align-items: center; gap: 12px;
+    width: max-content; max-width: none;
+  }
+  .ribbon .dot { width: 10px; height: 10px; border-radius: 50%; background: #1A6FD4; flex-shrink: 0; }
+  .ribbon .text { font-size: 20px; font-weight: 500; color: #fff; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
+
+  /* Watermark */
+  .watermark {
+    position: absolute; bottom: 24px; left: 24px;
+    font-size: 16px; color: rgba(255,255,255,0.55);
+    letter-spacing: 3px; text-transform: uppercase; font-weight: 500;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+
+  /* Bottom price tag overlaid on hero */
+  .price-tag {
+    position: absolute; bottom: 28px; right: 28px;
+    background: #1A6FD4;
+    border-radius: 16px;
+    padding: 18px 28px 16px;
+    box-shadow: 0 12px 32px rgba(26,111,212,0.4);
+  }
+  .price-tag .from { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 2.5px; }
+  .price-tag .amount { font-size: 32px; font-weight: 700; color: #fff; line-height: 1.1; margin-top: 2px; }
+
+  /* Headline */
+  .headline {
+    margin-top: 44px;
+    font-size: 96px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 0.92;
+    letter-spacing: -3px;
+  }
+  .headline em {
+    font-style: normal;
+    color: #1A6FD4;
+  }
+
+  /* Bottom row */
+  .bottom-row {
+    margin-top: 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+  }
+  .tags { display: flex; flex-direction: column; gap: 10px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-size: 22px; color: #A8C8F0; font-weight: 400;
+  }
+  .tag::before {
+    content: ''; width: 22px; height: 1.5px; background: #1A6FD4; display: block; flex-shrink: 0;
+  }
+
+  .wa {
+    display: flex; align-items: center; gap: 14px;
+    background: #25D366;
+    border-radius: 14px;
+    padding: 16px 22px;
+    box-shadow: 0 8px 24px rgba(37,211,102,0.35);
+  }
+  .wa svg { width: 28px; height: 28px; flex-shrink: 0; }
+  .wa-text .label-sm { font-size: 12px; color: rgba(255,255,255,0.85); font-weight: 500; text-transform: uppercase; letter-spacing: 2px; line-height: 1; }
+  .wa-text .num { font-size: 22px; color: #fff; font-weight: 700; line-height: 1.1; margin-top: 4px; }
+
+  /* Action bar */
+  .actions {
+    display: flex; gap: 12px;
+    margin-top: 28px;
+  }
+  .btn {
+    background: rgba(168,200,240,0.08);
+    border: 1px solid rgba(168,200,240,0.18);
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: #fff;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background 150ms, border-color 150ms;
+  }
+  .btn:hover { background: rgba(168,200,240,0.16); border-color: rgba(168,200,240,0.3); }
+  .btn.primary { background: #1A6FD4; border-color: #1A6FD4; }
+  .btn.primary:hover { background: #1558A8; border-color: #1558A8; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <span class="label">Sneaker Clean · Standard Post</span>
+
+  <div class="scaler" data-w="540">
+    <div class="post">
+      <div class="post-inner" id="capture-target">
+        <div class="circle-tr"></div>
+        <div class="circle-bl"></div>
+
+        <div class="body">
+          <!-- Logo + brand -->
+          <div class="badge">
+            <img src="assets/logo-cropped.png" alt="Clean Crep JA" />
+            <div>
+              <div class="name">Clean Crep Jamaica</div>
+              <div class="loc">Shop 19, Pristine Plaza · Half Way Tree</div>
+            </div>
+          </div>
+
+          <!-- Hero photo -->
+          <div class="hero">
+            <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a2a4a 0%,#0A1F44 100%);display:flex;align-items:center;justify-content:center;">
+              <svg width="640" height="640" viewBox="0 0 200 200" fill="none" style="opacity:0.9;">
+                <!-- Stylized sneaker silhouette -->
+                <path d="M30 130 Q30 110 50 105 L 80 100 Q 95 95 110 88 L 140 75 Q 155 70 165 80 Q 175 90 175 105 L 175 130 Q 175 145 160 145 L 45 145 Q 30 145 30 130 Z" fill="#1A6FD4" opacity="0.85"/>
+                <path d="M50 115 L 75 110 L 75 125 L 50 125 Z" fill="#0A1F44" opacity="0.6"/>
+                <circle cx="60" cy="142" r="8" fill="#0A1F44"/>
+                <circle cx="150" cy="142" r="8" fill="#0A1F44"/>
+                <path d="M95 100 L 100 92 M 105 95 L 110 87 M 115 90 L 120 82" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+              </svg>
+            </div>
+            <div class="hero-grad"></div>
+            <div class="ribbon">
+              <div class="dot"></div>
+              <div class="text">Sneaker Clean</div>
+            </div>
+            <div class="price-tag">
+              <div class="from">From</div>
+              <div class="amount">$2,500 JMD</div>
+            </div>
+            <div class="watermark">@cleancrepja</div>
+          </div>
+
+          <!-- Headline -->
+          <div class="headline">Bring Your<br />Crep <em>Back to Life.</em></div>
+
+          <!-- Bottom row -->
+          <div class="bottom-row">
+            <div class="tags">
+              <span class="tag">Deep Clean &amp; Deodorize</span>
+              <span class="tag">Stain &amp; Scuff Removal</span>
+              <span class="tag">2-Hour Turnaround</span>
+            </div>
+            <a class="wa" href="https://wa.me/18765072163" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              <div class="wa-text">
+                <div class="label-sm">WhatsApp</div>
+                <div class="num">876-507-2163</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="sub-label">1080 × 1350 · Ready to post</span>
+
+  <div class="actions">
+    <button class="btn primary" id="dl-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download PNG
+    </button>
+    <a class="btn" href="Instagram Templates.html">← Back to all templates</a>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<script>
+  document.getElementById('dl-btn').addEventListener('click', async () => {
+    const node = document.getElementById('capture-target');
+    try {
+      const dataUrl = await window.htmlToImage.toPng(node, {
+        width: 1080, height: 1350, pixelRatio: 2,
+        cacheBust: true,
+      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'clean-crep-sneaker-post.png';
+      a.click();
+    } catch (e) {
+      alert('Download failed: ' + e.message);
+    }
+  });
+</script>
+</body>
+</html>
