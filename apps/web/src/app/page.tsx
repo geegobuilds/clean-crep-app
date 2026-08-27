@@ -297,7 +297,15 @@ export default async function LandingPage() {
             <a href="#location">Location</a>
             <Link href="/staff/login">Staff Login</Link>
           </div>
-          <div className="footer-right">© {new Date().getFullYear()} Clean Crep Jamaica</div>
+          <div className="footer-right" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <Link href="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>
+              Privacy
+            </Link>
+            <Link href="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>
+              Terms
+            </Link>
+            <span>© {new Date().getFullYear()} Clean Crep Jamaica</span>
+          </div>
         </div>
       </footer>
 
