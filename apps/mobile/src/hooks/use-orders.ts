@@ -28,10 +28,7 @@ export function useOrders() {
   }, [session]);
 
   useEffect(() => {
-    // Initial fetch, then subscribe below — the intended
-    // fetch-then-subscribe pattern (see the web dashboard's identical hook
-    // for the fuller explanation of this lint exception).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // Initial fetch, then subscribe below — the intended fetch-then-subscribe pattern.
     reload();
     if (!session) return;
     const channel = supabase
