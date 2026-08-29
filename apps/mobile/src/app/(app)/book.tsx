@@ -51,11 +51,13 @@ export default function BookingScreen() {
     const { error: insertError } = await supabase.from('orders').insert({
       customer_id: session.user.id,
       service_id: selected.id,
+      location_id: selected.location_id,
       item_name: shoeType || selected.name,
       drop_method: dropoff ? 'dropoff' : 'pickup',
       scheduled_date: days[selDay].iso,
       notes: notes || null,
       price_cents: selected.price_cents,
+      currency: selected.currency,
     });
     setSubmitting(false);
     if (insertError) {
