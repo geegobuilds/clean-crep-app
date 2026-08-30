@@ -90,6 +90,23 @@ nav {
 }
 .btn-ghost:hover { border-color: rgba(168,200,240,0.6); background: rgba(168,200,240,0.08); }
 
+/* Pre-frames the click as continuing a booking already in motion, rather
+   than starting one — same trick as the competitor's homepage CTA. */
+.btn-order {
+  display: inline-flex; align-items: center; gap: 16px;
+  background: var(--blue); color: var(--white);
+  border: none; border-radius: 8px; padding: 12px 20px;
+  font-family: inherit; cursor: pointer; text-decoration: none;
+  transition: background 150ms;
+}
+.btn-order:hover { background: var(--blue-hov); }
+.btn-order-lines { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.btn-order-row { font-size: 12px; line-height: 1.4; }
+.btn-order-label { color: rgba(255,255,255,0.65); }
+.btn-order-value { color: var(--white); font-weight: 500; }
+.btn-order-row.emphasis .btn-order-value { font-size: 13px; }
+.btn-order-arrow { font-size: 18px; flex-shrink: 0; }
+
 .hero-visual { display: flex; flex-direction: column; gap: 12px; }
 .hero-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(168,200,240,0.14); border-radius: 14px; padding: 20px 22px; display: flex; align-items: center; gap: 16px; }
 .hero-card-icon { width: 44px; height: 44px; border-radius: 11px; background: rgba(26,111,212,0.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -166,6 +183,20 @@ section { padding: clamp(60px, 8vw, 100px) clamp(20px, 5vw, 64px); }
 .hours-row .time { font-size: 13px; font-weight: 500; color: var(--navy); }
 .hours-row .closed { color: var(--caption); font-weight: 400; }
 .location-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── FAQ ── */
+#faq { background: var(--offwhite); }
+.faq-list { max-width: 720px; margin-top: 40px; display: flex; flex-direction: column; gap: 10px; }
+.faq-item { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; }
+.faq-question {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  font-size: 14px; font-weight: 500; color: var(--navy);
+  cursor: pointer; list-style: none;
+}
+.faq-question::-webkit-details-marker { display: none; }
+.faq-caret { font-size: 18px; color: var(--blue); flex-shrink: 0; transition: transform 150ms; }
+.faq-item[open] .faq-caret { transform: rotate(45deg); }
+.faq-answer { font-size: 13px; color: var(--caption); line-height: 1.6; margin-top: 12px; }
 
 /* ── FOOTER ── */
 footer { background: var(--navy); padding: clamp(40px, 5vw, 60px) clamp(20px, 5vw, 64px); border-top: 1px solid rgba(168,200,240,0.1); }

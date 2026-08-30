@@ -53,6 +53,7 @@ export default async function LandingPage() {
             <a href="#services">Services</a>
             <a href="#how">How It Works</a>
             <a href="#location">Location</a>
+            <a href="#faq">FAQ</a>
             <a href={BOOK_NOW_URL} target="_blank" rel="noopener noreferrer" className="btn-primary nav-cta" style={{ padding: '8px 18px', fontSize: 13 }}>
               Book Now
             </a>
@@ -72,14 +73,18 @@ export default async function LandingPage() {
               Premium sneaker and Clarks cleaning service. Drop in at Shop 19, Pristine Plaza — or link us on WhatsApp to book.
             </p>
             <div className="hero-actions">
-              <a href={BOOK_NOW_URL} target="_blank" rel="noopener noreferrer" className="btn-primary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                Book a Clean
+              <a href={BOOK_NOW_URL} target="_blank" rel="noopener noreferrer" className="btn-order">
+                <div className="btn-order-lines">
+                  <div className="btn-order-row">
+                    <span className="btn-order-label">Service · </span>
+                    <span className="btn-order-value">Sneaker &amp; Clarks Clean</span>
+                  </div>
+                  <div className="btn-order-row emphasis">
+                    <span className="btn-order-label">Drop-off · </span>
+                    <span className="btn-order-value">Book today</span>
+                  </div>
+                </div>
+                <span className="btn-order-arrow">→</span>
               </a>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-ghost">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -278,6 +283,51 @@ export default async function LandingPage() {
                 </a>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq">
+        <div className="section-inner">
+          <div className="section-label">Questions</div>
+          <h2 className="section-title">FAQ</h2>
+          <p className="section-body">Everything we get asked most on WhatsApp, answered up front.</p>
+
+          <div className="faq-list">
+            {[
+              [
+                'Do you guarantee your cleaning?',
+                "Yes. If you're not happy with how a pair came back, bring it in and we'll re-clean it free of charge.",
+              ],
+              [
+                'How long does a clean take?',
+                'Most Sneaker and Clarks cleans are ready the same day, usually within a few hours. Sole Refresh depends on what we find on inspection.',
+              ],
+              [
+                'How do I pay?',
+                "Cash or bank transfer, due at drop-off or pickup — we don't take payment through the app yet.",
+              ],
+              [
+                'Do you offer pickup and delivery?',
+                'Right now it’s walk-in at Shop 19, Pristine Plaza, Half Way Tree. Link us on WhatsApp if you need pickup arranged.',
+              ],
+              [
+                'What if my shoes already have damage?',
+                'Let us know when you drop off — we’ll flag it before we start. See our Terms for how we handle pre-existing damage.',
+              ],
+              [
+                'How do loyalty points work?',
+                'You earn points on every completed order. 500 points earns a free clean — ask us at the shop.',
+              ],
+            ].map(([q, a]) => (
+              <details className="faq-item" key={q}>
+                <summary className="faq-question">
+                  {q}
+                  <span className="faq-caret">+</span>
+                </summary>
+                <p className="faq-answer">{a}</p>
+              </details>
+            ))}
           </div>
         </div>
       </section>
