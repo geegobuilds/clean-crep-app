@@ -87,10 +87,6 @@ an existing) user in Auth, then insert a row into `public.staff` with that same 
   Twilio (or similar) SMS provider wired into Supabase Auth, which requires the user's
   Twilio account. Straightforward to add later — swap the sign-in screen's calls to
   `supabase.auth.signInWithOtp({ phone })`.
-- **App icon/splash art is a placeholder.** `apps/mobile/assets/images/*` were auto-generated
-  by cropping the circular brand mark onto a navy background — functional, but a designer
-  should produce a proper icon set (in particular the Android monochrome/themed-icon layer,
-  which is currently just a filled silhouette) before a store submission.
 - **"Book Now" on the landing page currently opens WhatsApp**, not an app store link
   (`apps/web/src/app/page.tsx`, `BOOK_NOW_URL`) — there's nothing to link to until the app is
   published. Swap that constant once you have real App Store / Play Store URLs.
