@@ -97,16 +97,16 @@ on conflict (alias) do nothing;
 -- ── catalog gap: cap cleaning exists in the live Airtable Services table
 -- (Creppie already quotes/books it) but was never added here ────────────
 insert into services (name, price_cents, note, description, icon, popular, active, sort_order)
-select 'Standard Cap Clean', 1500, '24–48 hrs',
+select 'Standard Cap Clean', 150000, '24–48 hrs',
   'Cotton, polyester, dad caps.', 'pkg', false, true, 40
 where not exists (select 1 from services where lower(name) = 'standard cap clean');
 
 insert into services (name, price_cents, note, description, icon, popular, active, sort_order)
-select 'Premium Cap Clean', 2500, '24–48 hrs',
+select 'Premium Cap Clean', 250000, '24–48 hrs',
   'Wool, structured, fitted — hand washed and reshaped on a form.', 'pkg', false, true, 41
 where not exists (select 1 from services where lower(name) = 'premium cap clean');
 
 insert into services (name, price_cents, note, description, icon, popular, active, sort_order)
-select 'Bucket Hat', 1800, '24–48 hrs',
+select 'Bucket Hat', 180000, '24–48 hrs',
   'All materials.', 'pkg', false, true, 42
 where not exists (select 1 from services where lower(name) = 'bucket hat');
