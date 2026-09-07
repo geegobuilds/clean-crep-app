@@ -48,11 +48,18 @@ export interface Service {
   currency: string; // ISO 4217, e.g. "JMD"
 }
 
+export type OrderSource = 'app' | 'creppie';
+
 export interface Order {
   id: string;
   order_number: string; // e.g. "CC-0041"
-  customer_id: string;
-  service_id: string;
+  // Null on a Creppie (WhatsApp/IG) booking — that customer hasn't signed
+  // into the app, so guest_* below carries their contact info instead.
+  customer_id: string | null;
+  // Null when Creppie's free-text service name didn't resolve to a
+  // catalog row — item_name is still the source of truth for what was
+  // booked.
+  service_id: string | null;
   location_id: string;
   item_name: string;
   status: OrderStatus;
@@ -61,6 +68,12 @@ export interface Order {
   notes: string | null;
   price_cents: number | null;
   currency: string; // ISO 4217, copied from the service at booking time
+  source: OrderSource;
+  external_ref: string | null; // Airtable record id, for Creppie-sourced orders
+  guest_name: string | null;
+  guest_phone: string | null;
+  guest_email: string | null;
+  guest_instagram_handle: string | null;
   created_at: string;
   updated_at: string;
 }

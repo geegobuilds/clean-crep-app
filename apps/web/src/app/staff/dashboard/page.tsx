@@ -19,8 +19,17 @@ import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { createClient } from '@/lib/supabase/client';
 
 interface OrderRow extends Order {
-  service: Service;
-  customer: { name: string; phone: string | null };
+  service: Service | null;
+  customer: { name: string; phone: string | null } | null;
+}
+
+// Guest (Creppie) orders have no `customers` row — fall back to the
+// guest_* contact fields captured at booking time.
+function contactName(order: OrderRow): string {
+  return order.customer?.name ?? order.guest_name ?? 'Guest';
+}
+function contactPhone(order: OrderRow): string | null {
+  return order.customer?.phone ?? order.guest_phone ?? null;
 }
 
 const td: React.CSSProperties = { padding: '12px 16px', borderBottom: `1px solid ${colors.border}`, verticalAlign: 'middle' };
@@ -71,7 +80,7 @@ export default function DashboardPage() {
     const matchFilter = filter === 'All' || o.status === filter;
     const q = search.toLowerCase();
     const matchSearch =
-      !q || o.order_number.toLowerCase().includes(q) || o.item_name.toLowerCase().includes(q) || o.customer?.name?.toLowerCase().includes(q);
+      !q || o.order_number.toLowerCase().includes(q) || o.item_name.toLowerCase().includes(q) || contactName(o).toLowerCase().includes(q);
     return matchFilter && matchSearch;
   });
 
@@ -228,10 +237,10 @@ function OrderRowView({
   onToggle: () => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
 }) {
-  const phoneDigits = (order.customer?.phone ?? '').replace(/\D/g, '');
+  const phoneDigits = (contactPhone(order) ?? '').replace(/\D/g, '');
   const waPhone = phoneDigits ? (phoneDigits.startsWith('1') ? phoneDigits : `1${phoneDigits}`) : '';
   const notifyText = encodeURIComponent(
-    `Hi ${order.customer?.name ?? ''}, your ${order.item_name} order (${order.order_number}) is now: ${ORDER_STATUS_LABEL[order.status]}`
+    `Hi ${contactName(order)}, your ${order.item_name} order (${order.order_number}) is now: ${ORDER_STATUS_LABEL[order.status]}`
   );
 
   return (
@@ -242,10 +251,15 @@ function OrderRowView({
         </td>
         <td style={td}>
           <div style={{ fontSize: 12, fontWeight: 500, color: colors.navy }}>{order.item_name}</div>
-          <div style={{ fontSize: 10, color: colors.caption, marginTop: 2 }}>{order.customer?.name}</div>
+          <div style={{ fontSize: 10, color: colors.caption, marginTop: 2 }}>
+            {contactName(order)}
+            {order.source === 'creppie' && (
+              <span style={{ marginLeft: 6, color: '#25D366', fontWeight: 500 }}>&middot; WhatsApp</span>
+            )}
+          </div>
         </td>
         <td style={td}>
-          <span style={{ fontSize: 11, color: colors.charcoal }}>{order.service?.name}</span>
+          <span style={{ fontSize: 11, color: colors.charcoal }}>{order.service?.name ?? '—'}</span>
         </td>
         <td style={td}>
           <StatusTag status={order.status} />
@@ -268,7 +282,7 @@ function OrderRowView({
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
               <div>
                 <div style={{ fontSize: 9, color: colors.caption, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 500, marginBottom: 4 }}>CONTACT</div>
-                <div style={{ fontSize: 11, color: colors.navy }}>{order.customer?.phone ?? '—'}</div>
+                <div style={{ fontSize: 11, color: colors.navy }}>{contactPhone(order) ?? '—'}</div>
               </div>
               <div style={{ width: 1, height: 32, background: colors.border }} />
               <div>
