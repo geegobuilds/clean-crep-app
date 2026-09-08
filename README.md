@@ -96,12 +96,22 @@ an existing) user in Auth, then insert a row into `public.staff` with that same 
   events, notifications, and loyalty points — see git history / ask if you want the stub script
   again) rather than the full `supabase start` stack. Run `supabase start` yourself once to
   confirm end-to-end before deploying.
-- **Two separate order pipelines exist right now.** `clean-crep-systems` (a sibling repo)
-  holds Creppie, an n8n workflow that already takes WhatsApp/IG bookings and writes them to
-  **Airtable** — unrelated to this app's Supabase `orders` table. A booking through Creppie
-  and a booking through this app currently land in two different places. Decide whether
-  Creppie should keep writing to Airtable as a separate channel, or get pointed at this
-  app's Supabase backend instead.
+- ~~Two separate order pipelines exist right now~~ **Resolved**: Creppie (the n8n workflow in
+  the sibling `clean-crep-systems` repo that takes WhatsApp/IG bookings via ManyChat) now
+  dual-writes. Its original Airtable write is untouched; two new parallel Postgres nodes
+  (added directly in n8n, not tracked in either repo) also insert/update the same order in
+  this app's `orders` table, so the operator dashboard shows both channels in one place.
+  WhatsApp/IG customers haven't signed into the app, so these land as **guest orders**:
+  `customer_id`/`service_id` nullable, `source = 'creppie'`, contact info in `guest_name` /
+  `guest_phone` / `guest_email` / `guest_instagram_handle` (see migration
+  `0004_creppie_sync.sql`). Creppie's free-text service names are matched against `services`
+  via `resolve_service_id()`, falling back to a small `service_aliases` table for known
+  naming drift (e.g. Airtable's "Sneaker Cleaning" vs. this app's "Sneaker Clean"). That
+  migration also added `Standard Cap Clean` / `Premium Cap Clean` / `Bucket Hat` to the
+  catalog — cap cleaning was already live via Creppie but missing from this app entirely.
+  Known limitation: a Creppie customer isn't automatically linked to their app account if
+  they later sign up — no account-merge exists yet, by design (kept simple for this first
+  cut); revisit if that becomes worth the added complexity.
 
 ## Going live
 
