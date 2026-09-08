@@ -16,7 +16,22 @@ export function RecoveryRedirect() {
 
   useEffect(() => {
     if (pathname === '/auth/reset-password') return;
+    // Constructing the client kicks off Supabase's own detectSessionInUrl
+    // handling of the recovery token below.
     const supabase = createClient();
+
+    // onAuthStateChange below can race the client's own URL-session
+    // detection on first page load — the PASSWORD_RECOVERY event has been
+    // observed firing before this listener finishes attaching. Checking the
+    // URL directly is a synchronous fallback that doesn't depend on event
+    // timing.
+    const hasRecoveryMarker =
+      window.location.hash.includes('type=recovery') ||
+      new URLSearchParams(window.location.search).get('type') === 'recovery';
+    if (hasRecoveryMarker) {
+      router.replace('/auth/reset-password');
+    }
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
