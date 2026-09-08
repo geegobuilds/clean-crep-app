@@ -254,7 +254,7 @@ function OrderRowView({
           <div style={{ fontSize: 10, color: colors.caption, marginTop: 2 }}>
             {contactName(order)}
             {order.source === 'creppie' && (
-              <span style={{ marginLeft: 6, color: '#25D366', fontWeight: 500 }}>&middot; WhatsApp</span>
+              <span style={{ marginLeft: 6, color: colors.blue, fontWeight: 500 }}>&middot; Creppie</span>
             )}
           </div>
         </td>
