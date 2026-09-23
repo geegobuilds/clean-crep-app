@@ -5,3 +5,5 @@
   can hand to a Cowork session, rather than doing the work directly in this session. Don't
   just describe the task in prose; produce the prompt. Same when relaying Cowork's response
   back: draft the reply as a ready message to paste back, not just a summary.
+
+- Git author: always commit as `geegobuilds <318375370+geegobuilds@users.noreply.github.com>`. Set `git config user.name` and `user.email` to that before the first commit. Never commit as Claude, so the work counts on the GitHub contribution graph.
