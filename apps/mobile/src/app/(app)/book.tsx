@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors, formatPrice, type Service } from '@clean-crep/shared';
@@ -7,6 +7,9 @@ import { Icon, type IconName } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
 import { useServices } from '@/hooks/use-services';
 import { supabase } from '@/lib/supabase';
+import { friendlyError } from '@/lib/errors';
+import { SignInForm } from '@/components/sign-in-form';
+import { EmptyState, ErrorState, SkeletonList } from '@/components/states';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 
@@ -20,7 +23,7 @@ interface Day {
 export default function BookingScreen() {
   const router = useRouter();
   const { session } = useAuth();
-  const { services } = useServices();
+  const { services, loading: servicesLoading, error: servicesError, reload: reloadServices } = useServices();
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [selected, setSelected] = useState<Service | null>(null);
   const [dropoff, setDropoff] = useState(true);
@@ -29,6 +32,10 @@ export default function BookingScreen() {
   const [shoeType, setShoeType] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Guests fill in the whole booking, then sign in here at the last step.
+  // This is a sheet over the Book screen (not a route change), so every
+  // selection above stays in state through sign-in.
+  const [signInOpen, setSignInOpen] = useState(false);
 
   const days: Day[] = useMemo(() => {
     const today = new Date();
@@ -44,12 +51,30 @@ export default function BookingScreen() {
     });
   }, []);
 
-  async function confirmBooking() {
-    if (!session || !selected) return;
+  function confirmBooking() {
+    if (!selected) return;
+    if (!session) {
+      setSignInOpen(true);
+      return;
+    }
+    placeBooking();
+  }
+
+  async function placeBooking() {
+    if (!selected) return;
     setSubmitting(true);
     setError(null);
+    // Read the session fresh: right after in-sheet sign-in, the `session`
+    // captured by this render is still null.
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user.id;
+    if (!userId) {
+      setSubmitting(false);
+      setSignInOpen(true);
+      return;
+    }
     const { error: insertError } = await supabase.from('orders').insert({
-      customer_id: session.user.id,
+      customer_id: userId,
       service_id: selected.id,
       location_id: selected.location_id,
       item_name: shoeType || selected.name,
@@ -61,7 +86,7 @@ export default function BookingScreen() {
     });
     setSubmitting(false);
     if (insertError) {
-      setError(insertError.message);
+      setError(friendlyError(insertError, 'booking'));
       return;
     }
     setStep(2);
@@ -213,7 +238,14 @@ export default function BookingScreen() {
             />
           </View>
 
-          {error && <Text style={{ fontSize: 12, color: '#993C1D', fontFamily: 'DMSans_400Regular' }}>{error}</Text>}
+          {error && (
+            <View style={{ gap: 6 }}>
+              <Text style={{ fontSize: 12, color: '#993C1D', fontFamily: 'DMSans_400Regular' }}>{error}</Text>
+              <Pressable onPress={() => Linking.openURL(WHATSAPP_URL)}>
+                <Text style={{ fontSize: 12, color: colors.blue, fontFamily: 'DMSans_500Medium' }}>Message us on WhatsApp</Text>
+              </Pressable>
+            </View>
+          )}
 
           <Pressable
             onPress={confirmBooking}
@@ -224,7 +256,34 @@ export default function BookingScreen() {
               {submitting ? 'Booking…' : 'Confirm Booking'}
             </Text>
           </Pressable>
+          {!session && (
+            <Text style={{ fontSize: 11, color: colors.caption, textAlign: 'center', fontFamily: 'DMSans_400Regular' }}>
+              You&apos;ll sign in or create an account to confirm. Your details stay filled in.
+            </Text>
+          )}
         </ScrollView>
+
+        <Modal visible={signInOpen} animationType="slide" transparent onRequestClose={() => setSignInOpen(false)}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10,31,68,0.55)' }}>
+            <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.navy, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+              <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.white }}>One last step</Text>
+                  <Pressable onPress={() => setSignInOpen(false)} hitSlop={12}>
+                    <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.softBlue }}>Cancel</Text>
+                  </Pressable>
+                </View>
+                <SignInForm
+                  subtitle={`Sign in to confirm your ${selected.name}. We'll use this to send you updates on your pair.`}
+                  onSuccess={() => {
+                    setSignInOpen(false);
+                    placeBooking();
+                  }}
+                />
+              </ScrollView>
+            </SafeAreaView>
+          </KeyboardAvoidingView>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -237,6 +296,16 @@ export default function BookingScreen() {
       </View>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 10 }}>
         <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 4 }}>AVAILABLE SERVICES</Text>
+        {servicesLoading && services.length === 0 && <SkeletonList count={4} variant="service" />}
+        {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
+        {!servicesLoading && !servicesError && services.length === 0 && (
+          <EmptyState
+            title="No services listed right now"
+            body="Message us on WhatsApp and we'll sort out your clean directly."
+            actionLabel="WhatsApp Us"
+            onAction={() => Linking.openURL(WHATSAPP_URL)}
+          />
+        )}
         {services.map((svc) => (
           <Pressable
             key={svc.id}

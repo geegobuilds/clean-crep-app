@@ -1,17 +1,20 @@
 import type { ColorValue } from 'react-native';
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { colors } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
+import { ScreenSkeleton } from '@/components/states';
 import { useAuth } from '@/lib/auth';
 
 function TabBarIcon({ iconName, color }: { iconName: IconName; color: ColorValue }) {
   return <Icon name={iconName} size={22} color={color as string} />;
 }
 
+// No auth gate here: guests can browse Home and Book (services are public-read).
+// Sign-in is asked for only at Confirm Booking, and Orders/Inbox/Profile show a
+// sign-in prompt for guests instead of redirecting.
 export default function AppGroupLayout() {
-  const { session, initializing } = useAuth();
-  if (initializing) return null;
-  if (!session) return <Redirect href="/sign-in" />;
+  const { initializing } = useAuth();
+  if (initializing) return <ScreenSkeleton />;
 
   return (
     <Tabs

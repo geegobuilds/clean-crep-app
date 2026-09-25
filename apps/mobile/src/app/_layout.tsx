@@ -10,13 +10,19 @@ import { AuthProvider } from '@/lib/auth';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({ DMSans_400Regular, DMSans_500Medium });
+  const [fontsLoaded, fontError] = useFonts({ DMSans_400Regular, DMSans_500Medium });
+  // If the fonts fail to load, carry on with system fonts rather than leaving
+  // the user stuck on the splash screen forever.
+  const ready = fontsLoaded || fontError != null;
 
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+    if (fontError) console.warn('[fonts]', fontError);
+    if (ready) SplashScreen.hideAsync();
+  }, [ready, fontError]);
 
-  if (!fontsLoaded) return null;
+  // The native splash screen stays up until `ready` (preventAutoHideAsync
+  // above), so nothing blank is ever visible here.
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

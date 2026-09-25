@@ -12,6 +12,12 @@ _Last updated: 2026-09-25_
   (`apps/web`), and Supabase schema (`supabase/migrations/0001`–`0004`) are built on `main`.
   Latest shipped work: staff password-reset page, password-recovery race fix, Creppie orders
   labelled by system name in the dashboard.
+- **Pre-launch UX fixes (PR open, 2026-09-25)**: guest browsing (sign-in only at Confirm
+  Booking, via an in-screen sheet that keeps the booking), friendly error copy
+  (`apps/mobile/src/lib/errors.ts` — no raw Supabase/JS errors on screen), and skeleton /
+  empty / error-with-retry states on every data screen (`apps/mobile/src/components/states.tsx`).
+  Also: customers profile row is now auto-created on first sign-in (fixes bookings failing for
+  accounts created while email confirmation is on).
 - **Creppie dual-write is live**: the n8n workflow (`clean-crep-systems/creppie.json`) writes
   WhatsApp/IG bookings to Airtable _and_ to this app's `orders` table as guest orders
   (`source = 'creppie'`). The two Postgres nodes live only in n8n, not in either repo.
@@ -38,6 +44,13 @@ _Last updated: 2026-09-25_
   verification. (Don't let verification block launch.)
 - **2026-09-25** — HANDOFF.md is the single source of session state; CLAUDE.md now requires
   reading it at session start and updating it at session end.
+- **2026-09-25** — Growth-transcript filter (batch 1): adopt guest browsing, friendly errors,
+  loading/empty/error states, push notifications with a clear reason, and a single rating ask
+  after an order is Completed (send happy customers to **Google Maps reviews**, not the store).
+  Skip App Clips (iOS-only; Android-first launch; Creppie WhatsApp already covers no-install
+  booking).
+- **2026-09-25** — Creppie mascot in UI states: build states through one component now, swap
+  in mascot art (Lottie + PNG, 5 poses: loading / empty / error / offline / success) later.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -45,14 +58,19 @@ _Last updated: 2026-09-25_
 
 ## Next Steps
 
-1. **Send the Google Play support request** (if not already sent) and log the send date +
+1. **Review + merge the pre-launch UX PR**, then smoke-test on a device against a real
+   Supabase: guest → browse → book → sign up in the sheet → order lands in the dashboard.
+2. **Push notifications for order status changes** (next build task): store Expo push tokens
+   per customer, send from a Supabase function/trigger on `orders` status change, reuse the
+   existing notification copy from `handle_order_status_change`. Include the one-time rating
+   ask (→ Google Maps reviews) when an order hits Completed.
+3. **Send the Google Play support request** (if not already sent) and log the send date +
    ticket/case number here.
-2. Set a deadline for Google's reply (suggest ~7 days from send). If no useful answer by then,
+4. Set a deadline for Google's reply (suggest ~7 days from send). If no useful answer by then,
    **enroll the individual developer account** and proceed to first internal-testing build.
-3. Filter the app-growth video transcripts (Geego to share) for tactics that actually transfer
-   to a hyper-local, single-shop service app; turn survivors into concrete tasks here.
-4. Stand up hosted Supabase + fill the EAS production env, then `eas build -p android`.
-5. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` from WhatsApp to the Play Store link
+5. Keep filtering app-growth transcripts as Geego sends them (batch 1 done — see Decisions).
+6. Stand up hosted Supabase + fill the EAS production env, then `eas build -p android`.
+7. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` from WhatsApp to the Play Store link
    once the listing exists.
 
 ## Open Questions

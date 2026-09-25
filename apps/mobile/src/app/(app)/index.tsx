@@ -7,6 +7,7 @@ import { StatusTag } from '@/components/status-tag';
 import { useAuth } from '@/lib/auth';
 import { useServices } from '@/hooks/use-services';
 import { useOrders } from '@/hooks/use-orders';
+import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
 
 const logo = require('../../../assets/brand/logo.png');
 const WHATSAPP_URL = 'https://wa.me/18765072163';
@@ -20,9 +21,9 @@ function formatEta(dateIso: string): string {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { customer } = useAuth();
-  const { services } = useServices();
-  const { orders } = useOrders();
+  const { session, customer } = useAuth();
+  const { services, loading: servicesLoading, error: servicesError, reload: reloadServices } = useServices();
+  const { orders, loading: ordersLoading, error: ordersError, reload: reloadOrders } = useOrders();
   const activeOrders = orders.filter((o) => o.status !== 'completed').slice(0, 3);
 
   return (
@@ -41,7 +42,7 @@ export default function HomeScreen() {
         >
           <Image source={logo} style={{ width: 36, height: 36, borderRadius: 18 }} />
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>WELCOME BACK</Text>
+            <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>{session ? 'WELCOME BACK' : 'WELCOME'}</Text>
             <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.navy }}>
               Hi, {customer?.name ?? 'there'} 👋
             </Text>
@@ -95,7 +96,17 @@ export default function HomeScreen() {
             <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 10 }}>
               SERVICES
             </Text>
+            {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
             <View style={{ flexDirection: 'row', gap: 8 }}>
+              {servicesLoading &&
+                services.length === 0 &&
+                [0, 1, 2].map((i) => (
+                  <View key={i} style={{ flex: 1, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, alignItems: 'center', gap: 6 }}>
+                    <Skeleton width={36} height={36} style={{ borderRadius: 10 }} />
+                    <Skeleton width="80%" height={11} />
+                    <Skeleton width="50%" height={11} />
+                  </View>
+                ))}
               {services.map((s) => (
                 <Pressable
                   key={s.id}
@@ -131,10 +142,24 @@ export default function HomeScreen() {
               </Pressable>
             </View>
             <View style={{ gap: 8 }}>
-              {activeOrders.length === 0 && (
-                <Text style={{ fontSize: 12, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>No active orders right now.</Text>
+              {!session && (
+                <SignInPrompt
+                  title="Track your cleans here"
+                  body="Sign in to see live updates on your pairs."
+                  onSignIn={() => router.push('/sign-in?next=/')}
+                />
               )}
-              {activeOrders.map((o) => {
+              {session && ordersLoading && <SkeletonCard />}
+              {session && !ordersLoading && ordersError && <ErrorState message={ordersError} onRetry={reloadOrders} />}
+              {session && !ordersLoading && !ordersError && activeOrders.length === 0 && (
+                <EmptyState
+                  title="No active orders right now"
+                  body="Drop your next pair in and track it here."
+                  actionLabel="Book a Clean"
+                  onAction={() => router.push('/book')}
+                />
+              )}
+              {session && !ordersLoading && activeOrders.map((o) => {
                 const pct = Math.round((stepFromStatus(o.status) / TRACKER_STEPS.length) * 100);
                 return (
                   <Pressable

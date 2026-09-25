@@ -1,10 +1,12 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { colors, formatPrice } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { StatusTag } from '@/components/status-tag';
 import { useAuth } from '@/lib/auth';
 import { useOrders } from '@/hooks/use-orders';
+import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
 
 const LOYALTY_GOAL = 500;
 
@@ -27,11 +29,30 @@ function memberSince(dateIso: string): string {
 }
 
 export default function ProfileScreen() {
-  const { customer, signOut } = useAuth();
-  const { orders } = useOrders();
+  const router = useRouter();
+  const { session, customer, signOut } = useAuth();
+  const { orders, loading, error, reload } = useOrders();
   const pastOrders = orders.filter((o) => o.status === 'completed');
   const points = customer?.loyalty_points ?? 0;
   const pctToGoal = Math.min(100, Math.round((points / LOYALTY_GOAL) * 100));
+
+  if (!session) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
+        <View style={{ backgroundColor: colors.white, padding: 20, paddingTop: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <Text style={{ fontSize: 20, fontFamily: 'DMSans_500Medium', color: colors.navy }}>Profile</Text>
+          <Text style={{ fontSize: 13, color: colors.caption, marginTop: 4, fontFamily: 'DMSans_400Regular' }}>Your cleans, points and rewards.</Text>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 20 }}>
+          <SignInPrompt
+            title="Sign in to see your profile"
+            body={`Every clean earns loyalty points. Hit ${LOYALTY_GOAL} and your next clean is free.`}
+            onSignIn={() => router.push('/sign-in?next=/profile')}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
@@ -40,8 +61,17 @@ export default function ProfileScreen() {
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
             <Text style={{ fontSize: 22, fontFamily: 'DMSans_500Medium', color: colors.white }}>{initials(customer?.name ?? '?')}</Text>
           </View>
-          <Text style={{ fontSize: 18, fontFamily: 'DMSans_500Medium', color: colors.white }}>{customer?.name ?? 'Customer'}</Text>
-          <Text style={{ fontSize: 12, color: colors.softBlue, marginTop: 3, fontFamily: 'DMSans_400Regular' }}>{customer?.email ?? ''}</Text>
+          {customer ? (
+            <>
+              <Text style={{ fontSize: 18, fontFamily: 'DMSans_500Medium', color: colors.white }}>{customer.name}</Text>
+              <Text style={{ fontSize: 12, color: colors.softBlue, marginTop: 3, fontFamily: 'DMSans_400Regular' }}>{customer.email ?? ''}</Text>
+            </>
+          ) : (
+            <View style={{ alignItems: 'center', gap: 6 }}>
+              <Skeleton width={120} height={18} style={{ opacity: 0.3 }} />
+              <Skeleton width={160} height={12} style={{ opacity: 0.3 }} />
+            </View>
+          )}
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 24, marginTop: 20 }}>
             {[
               { label: 'CLEANS', val: String(pastOrders.length) },
@@ -79,36 +109,45 @@ export default function ProfileScreen() {
           {/* Past orders */}
           <View>
             <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 8 }}>PAST ORDERS</Text>
-            <View style={{ backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
-              {pastOrders.length === 0 && (
-                <Text style={{ padding: 16, fontSize: 12, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>No completed orders yet.</Text>
-              )}
-              {pastOrders.map((o, i) => (
-                <View
-                  key={o.id}
-                  style={{
-                    padding: 13,
-                    paddingHorizontal: 16,
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderBottomWidth: i < pastOrders.length - 1 ? 1 : 0,
-                    borderBottomColor: colors.border,
-                  }}
-                >
-                  <View>
-                    <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.navy }}>{o.item_name}</Text>
-                    <Text style={{ fontSize: 11, color: colors.caption, marginTop: 2, fontFamily: 'DMSans_400Regular' }}>
-                      {o.service.name} · {new Date(o.scheduled_date).toLocaleDateString('en-JM', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </Text>
+            {loading && <SkeletonCard />}
+            {!loading && error && <ErrorState message={error} onRetry={reload} />}
+            {!loading && !error && pastOrders.length === 0 && (
+              <EmptyState
+                title="No completed cleans yet"
+                body="Finished orders and the points they earned show up here."
+                actionLabel="Book a Clean"
+                onAction={() => router.push('/book')}
+              />
+            )}
+            {!loading && !error && pastOrders.length > 0 && (
+              <View style={{ backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+                {pastOrders.map((o, i) => (
+                  <View
+                    key={o.id}
+                    style={{
+                      padding: 13,
+                      paddingHorizontal: 16,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      borderBottomWidth: i < pastOrders.length - 1 ? 1 : 0,
+                      borderBottomColor: colors.border,
+                    }}
+                  >
+                    <View>
+                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.navy }}>{o.item_name}</Text>
+                      <Text style={{ fontSize: 11, color: colors.caption, marginTop: 2, fontFamily: 'DMSans_400Regular' }}>
+                        {o.service.name} · {new Date(o.scheduled_date).toLocaleDateString('en-JM', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue }}>{formatPrice(o.price_cents)}</Text>
+                      <StatusTag status="completed" />
+                    </View>
                   </View>
-                  <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                    <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue }}>{formatPrice(o.price_cents)}</Text>
-                    <StatusTag status="completed" />
-                  </View>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            )}
           </View>
 
           {/* Settings */}
