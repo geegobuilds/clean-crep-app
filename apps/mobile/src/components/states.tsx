@@ -79,7 +79,7 @@ export function ScreenSkeleton() {
       </View>
       <View style={{ padding: 20, gap: 16 }}>
         <View style={{ alignItems: 'center', paddingVertical: 12, gap: 10 }}>
-          <CreppieArt mood="loading" size={64} />
+          <CreppieArt mood="loading" size={112} />
           <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.caption }}>{MOODS.loading.title}</Text>
         </View>
         <SkeletonList count={2} />

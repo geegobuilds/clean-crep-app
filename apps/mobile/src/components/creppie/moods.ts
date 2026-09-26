@@ -6,7 +6,7 @@ import type { IconName } from '@/components/icon';
 //
 // Every loading / empty / error / offline / success / sign-in state in the app
 // renders through <CreppieState>/<CreppieArt>, which look up the mood here.
-// Right now each mood uses a placeholder icon. To swap in real art:
+// Art lives in assets/creppie/ (cut from the 2026-09 mascot renders). To change a pose:
 //   1. Drop the PNGs into apps/mobile/assets/creppie/ (see the README there).
 //   2. Set `art: require('../../../assets/creppie/<mood>.png')` for that mood.
 // No screen code changes. (For animated Lottie poses later: add
@@ -28,37 +28,38 @@ export interface MoodConfig {
 
 export const MOODS: Record<CreppieMood, MoodConfig> = {
   loading: {
-    art: null, // pose: scrubbing a shoe
+    art: require('../../../assets/creppie/loading.png'), // scrubbing a shoe
     icon: 'clock',
     title: "Creppie's on it…",
     body: 'Getting everything fresh for you.',
   },
   empty: {
-    art: null, // pose: shrug next to an empty shoe rack
+    art: require('../../../assets/creppie/empty.png'), // shrug
     icon: 'pkg',
     title: 'No kicks in the queue yet.',
     body: "Let's fix that.",
   },
   error: {
-    art: null, // pose: slipped on a wet sole / sweating
+    art: require('../../../assets/creppie/error.png'), // slipping on a wet sole
     icon: 'help',
     title: 'Creppie slipped on a wet sole.',
     body: 'Something went wrong on our end. Try again?',
   },
   offline: {
-    art: null, // pose: holding a phone with no signal
+    art: require('../../../assets/creppie/offline.png'), // no-wifi bubble
     icon: 'help',
     title: "Can't reach the shop.",
     body: 'Check your connection and try again.',
   },
   success: {
-    art: null, // pose: thumbs up holding a clean shoe
+    art: require('../../../assets/creppie/success.png'), // thumbs up with a clean shoe
     icon: 'check',
     title: "Locked in. Creppie's got your pair.",
     body: '',
   },
   signin: {
-    art: null, // pose: waving at the door
+    // No dedicated pose yet (a wave at the shop door would fit) — reuses the thumbs up.
+    art: require('../../../assets/creppie/success.png'),
     icon: 'profile',
     title: 'Sign in to see this',
     body: '',

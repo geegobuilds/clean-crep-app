@@ -108,7 +108,7 @@ export default function BookingScreen() {
         <Header title="Confirm Booking" onBack={() => setStep(1)} />
         <ScrollView contentContainerStyle={{ padding: 20, alignItems: 'center' }}>
           <View style={{ marginBottom: 16 }}>
-            <CreppieArt mood="success" size={72} />
+            <CreppieArt mood="success" size={136} />
           </View>
           <Text style={{ fontSize: 22, fontFamily: 'DMSans_500Medium', color: colors.navy, marginBottom: 4 }}>You&apos;re booked.</Text>
           <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue, marginBottom: 8 }}>{MOODS.success.title}</Text>

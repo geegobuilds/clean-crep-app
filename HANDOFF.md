@@ -28,8 +28,9 @@ _Last updated: 2026-09-26_
     Profile › Notifications, tap → Orders). Server side is tested; **delivery to a real phone
     is not** (needs the EAS/Firebase setup below).
   - **Google review ask** — once, after a completed order (`components/review-ask.tsx`).
-  - **Creppie mascot slot** — every loading/empty/error/offline/success/sign-in state goes
-    through `components/creppie/`; art swaps in via `moods.ts` only. Placeholder icons for now.
+  - **Creppie mascot** — every loading/empty/error/offline/success/sign-in state goes through
+    `components/creppie/`; real art (cut from Geego's renders) is in `assets/creppie/`, wired
+    via `moods.ts`. Sign-in reuses the thumbs-up pose until a wave pose exists.
 - **Creppie dual-write is live**: the n8n workflow (`clean-crep-systems/creppie.json`) writes
   WhatsApp/IG bookings to Airtable _and_ to this app's `orders` table as guest orders
   (`source = 'creppie'`). The two Postgres nodes live only in n8n, not in either repo.
@@ -45,7 +46,6 @@ _Last updated: 2026-09-26_
 | Google Play Console **organization** verification needs a D-U-N-S number; Dun & Bradstreet doesn't issue them in Jamaica. | Geego | Google Play support reply to our request for an alternative verification method (support request drafted, approved, cleared to send). |
 | Production build env: `apps/mobile/eas.json` `preview` / `production` profiles still have `EXPO_PUBLIC_SUPABASE_URL` / `ANON_KEY` set to `set-me`. | Geego | Hosted Supabase project URL + anon key to paste in (or set as EAS secrets) before the first real build. |
 | Push delivery on real phones | Geego | `eas init` (writes the EAS projectId into app.json), a Firebase project + `google-services.json` for Android (FCM), and the FCM V1 key uploaded to EAS. Until then the app skips push registration. |
-| Creppie mascot art | Geego | 6 poses per `apps/mobile/assets/creppie/README.md` (designer / Canva). |
 | Apple App Store release | Geego | Apple Developer enrollment ($99/yr) — not started as far as the repo shows. |
 
 ## Decisions Made
@@ -70,6 +70,9 @@ _Last updated: 2026-09-26_
   bugs; native-only behaviour still needs a device build.
 - **2026-09-26** — Push is sent from Postgres via pg_net (no Edge Function to deploy). Permission
   is asked only after a booking, with an explainer first.
+- **2026-09-26** — Creppie art: background-removed cutouts of Geego's 5 renders (512px PNG);
+  moods: scrubbing=loading, thumbs-up=success (+sign-in), shrug=empty, no-wifi=offline,
+  slipping=error.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -84,8 +87,8 @@ _Last updated: 2026-09-26_
    see a real "Ready for Pickup" push.
 3. **Replace `GOOGLE_REVIEW_URL`** in `apps/mobile/src/components/review-ask.tsx` with the shop's
    direct Google "Write a review" link.
-4. **Commission Creppie art** (6 poses, spec in `apps/mobile/assets/creppie/README.md`); drop
-   in via `moods.ts`.
+4. Optional: a 6th Creppie pose (waving at the shop door) for the sign-in prompts, and the
+   same poses as Lottie for subtle animation. Drop-in via `moods.ts`.
 5. **Send the Google Play support request** (if not already sent) and log the date + case number.
 6. ~7 days after sending with no answer → **enroll the individual developer account** and do the
    first internal-testing build.

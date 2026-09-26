@@ -48,8 +48,8 @@ export function CreppieState({
   const bodyText = body ?? copy.body;
   return (
     <View style={{ backgroundColor: colors.white, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, padding: 24, alignItems: 'center' }}>
-      <View style={{ marginBottom: 12 }}>
-        <CreppieArt mood={mood} size={64} />
+      <View style={{ marginBottom: 8 }}>
+        <CreppieArt mood={mood} size={104} />
       </View>
       <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.navy, textAlign: 'center', marginBottom: bodyText ? 4 : 0 }}>
         {title ?? copy.title}
