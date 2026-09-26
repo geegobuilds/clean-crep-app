@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { colors, type Notification, type NotificationType } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { useNotifications } from '@/hooks/use-notifications';
+import { useAuth } from '@/lib/auth';
+import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
 
 const ICON_MAP: Record<NotificationType, { icon: IconName; bg: string; color: string }> = {
   ready: { icon: 'truck', bg: '#E8F1FB', color: '#0A1F44' },
@@ -25,7 +27,8 @@ function formatTime(iso: string): string {
 
 export default function InboxScreen() {
   const router = useRouter();
-  const { notifications, markRead, markAllRead } = useNotifications();
+  const { session } = useAuth();
+  const { notifications, loading, error, reload, markRead, markAllRead } = useNotifications();
   const unread = notifications.filter((n) => !n.read).length;
   const today = notifications.filter((n) => isToday(n.created_at));
   const earlier = notifications.filter((n) => !isToday(n.created_at));
@@ -41,7 +44,7 @@ export default function InboxScreen() {
         <View>
           <Text style={{ fontSize: 20, fontFamily: 'DMSans_500Medium', color: colors.navy }}>Inbox</Text>
           <Text style={{ fontSize: 13, color: colors.caption, marginTop: 3, fontFamily: 'DMSans_400Regular' }}>
-            {unread > 0 ? `${unread} unread notification${unread > 1 ? 's' : ''}` : 'All caught up.'}
+            {!session ? 'Order updates land here.' : unread > 0 ? `${unread} unread notification${unread > 1 ? 's' : ''}` : 'All caught up.'}
           </Text>
         </View>
         {unread > 0 && (
@@ -52,11 +55,25 @@ export default function InboxScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, gap: 20 }}>
-        {notifications.length === 0 && (
-          <Text style={{ fontSize: 13, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>Nothing here yet.</Text>
+        {!session && (
+          <SignInPrompt
+            title="Sign in to see your updates"
+            body="We'll let you know the moment your pair is cleaned and ready."
+            onSignIn={() => router.push('/sign-in?next=/inbox')}
+          />
         )}
-        {today.length > 0 && <NotificationSection label="TODAY" items={today} onPress={handlePress} />}
-        {earlier.length > 0 && <NotificationSection label="EARLIER" items={earlier} onPress={handlePress} />}
+        {session && loading && <SkeletonList count={3} />}
+        {session && !loading && error && <ErrorState message={error} onRetry={reload} />}
+        {session && !loading && !error && notifications.length === 0 && (
+          <EmptyState
+            title="Quiet in here."
+            body="Updates on your pairs land here: received, being cleaned, ready for pickup. Book a clean to get started."
+            actionLabel="Book a Clean"
+            onAction={() => router.push('/book')}
+          />
+        )}
+        {session && !loading && today.length > 0 && <NotificationSection label="TODAY" items={today} onPress={handlePress} />}
+        {session && !loading && earlier.length > 0 && <NotificationSection label="EARLIER" items={earlier} onPress={handlePress} />}
       </ScrollView>
     </SafeAreaView>
   );

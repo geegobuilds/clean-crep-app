@@ -1,17 +1,27 @@
+import { useEffect } from 'react';
 import type { ColorValue } from 'react-native';
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs, useRouter, type Href } from 'expo-router';
 import { colors } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
+import { ScreenSkeleton } from '@/components/states';
 import { useAuth } from '@/lib/auth';
+import { onPushTap } from '@/lib/push';
 
 function TabBarIcon({ iconName, color }: { iconName: IconName; color: ColorValue }) {
   return <Icon name={iconName} size={22} color={color as string} />;
 }
 
+// No auth gate here: guests can browse Home and Book (services are public-read).
+// Sign-in is asked for only at Confirm Booking, and Orders/Inbox/Profile show a
+// sign-in prompt for guests instead of redirecting.
 export default function AppGroupLayout() {
-  const { session, initializing } = useAuth();
-  if (initializing) return null;
-  if (!session) return <Redirect href="/sign-in" />;
+  const router = useRouter();
+  const { initializing } = useAuth();
+
+  // Tapping an order-update push opens the screen it points at (Orders).
+  useEffect(() => onPushTap((url) => router.push(url as Href)), [router]);
+
+  if (initializing) return <ScreenSkeleton />;
 
   return (
     <Tabs

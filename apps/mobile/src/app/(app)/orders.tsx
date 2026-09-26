@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { colors, TRACKER_STEPS, stepFromStatus } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { StatusTag } from '@/components/status-tag';
 import { useOrders } from '@/hooks/use-orders';
+import { useAuth } from '@/lib/auth';
+import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 
@@ -16,7 +19,9 @@ function formatEta(dateIso: string): string {
 }
 
 export default function OrdersScreen() {
-  const { orders } = useOrders();
+  const router = useRouter();
+  const { session } = useAuth();
+  const { orders, loading, error, reload } = useOrders();
   const [active, setActive] = useState<number | null>(null);
   const sel = orders[active ?? 0];
 
@@ -28,11 +33,25 @@ export default function OrdersScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-        {!sel && (
-          <Text style={{ fontSize: 13, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>No orders yet — book a clean to get started.</Text>
+        {!session && (
+          <SignInPrompt
+            title="Sign in to see your orders"
+            body="Track every pair from drop-off to pickup, live."
+            onSignIn={() => router.push('/sign-in?next=/orders')}
+          />
+        )}
+        {session && loading && <SkeletonList count={3} />}
+        {session && !loading && error && <ErrorState message={error} onRetry={reload} />}
+        {session && !loading && !error && orders.length === 0 && (
+          <EmptyState
+            title="No kicks in the queue yet."
+            body="Let's fix that. Book your first clean and track it right here."
+            actionLabel="Book a Clean"
+            onAction={() => router.push('/book')}
+          />
         )}
 
-        {sel && (
+        {session && !loading && sel && (
           <View style={{ backgroundColor: colors.white, borderRadius: 14, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
             <View style={{ backgroundColor: colors.navy, padding: 16, paddingBottom: 20 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -66,7 +85,7 @@ export default function OrdersScreen() {
           </View>
         )}
 
-        {orders.length > 0 && (
+        {session && !loading && orders.length > 0 && (
           <View>
             <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 8 }}>ALL ORDERS</Text>
             <View style={{ gap: 8 }}>

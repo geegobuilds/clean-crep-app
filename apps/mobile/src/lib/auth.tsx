@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 import type { Customer } from '@clean-crep/shared';
 import { supabase } from './supabase';
+import { syncPushTokenIfAllowed, unregisterPush } from './push';
 
 interface AuthContextValue {
   session: Session | null;
@@ -11,6 +12,16 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
 }
 
+/**
+ * Idempotently creates the customers row for a user (no-op if it exists).
+ * Safe to race between sign-up and the auth listener.
+ */
+export function ensureCustomerProfile(user: User, name: string) {
+  return supabase
+    .from('customers')
+    .upsert({ id: user.id, name, email: user.email ?? null }, { onConflict: 'id', ignoreDuplicates: true });
+}
+
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -18,21 +29,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [initializing, setInitializing] = useState(true);
 
-  const loadCustomer = useCallback(async (userId: string) => {
-    const { data } = await supabase.from('customers').select('*').eq('id', userId).maybeSingle();
-    setCustomer((data as Customer | null) ?? null);
+  const loadCustomer = useCallback(async (user: User) => {
+    const { data } = await supabase.from('customers').select('*').eq('id', user.id).maybeSingle();
+    if (data) {
+      setCustomer(data as Customer);
+      return;
+    }
+    // No profile row yet — e.g. the account was created while email confirmation
+    // was pending, so sign-up couldn't insert it. orders.customer_id references
+    // customers, so create it now or the first booking would fail.
+    const fallbackName = user.email?.split('@')[0] ?? 'Customer';
+    const name = typeof user.user_metadata?.name === 'string' && user.user_metadata.name ? user.user_metadata.name : fallbackName;
+    const { error } = await ensureCustomerProfile(user, name);
+    if (error) console.warn('[auth] could not create customer profile', error);
+    const { data: created } = await supabase.from('customers').select('*').eq('id', user.id).maybeSingle();
+    setCustomer((created as Customer | null) ?? null);
   }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session) loadCustomer(data.session.user.id);
+      if (data.session) loadCustomer(data.session.user);
       setInitializing(false);
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
-      if (newSession) loadCustomer(newSession.user.id);
+      if (newSession) loadCustomer(newSession.user);
+      // Push tokens can rotate; refresh ours whenever a session starts/restores.
+      // Deferred: supabase-js advises against calling Supabase from inside this
+      // callback synchronously (it can deadlock the auth lock).
+      if (newSession && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        setTimeout(() => syncPushTokenIfAllowed(), 0);
+      }
       else setCustomer(null);
     });
 
@@ -40,10 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadCustomer]);
 
   const refreshCustomer = useCallback(async () => {
-    if (session) await loadCustomer(session.user.id);
+    if (session) await loadCustomer(session.user);
   }, [session, loadCustomer]);
 
   const signOut = useCallback(async () => {
+    // Detach this phone first (needs the session) so the next person to sign
+    // in here doesn't receive this customer's order updates.
+    await unregisterPush();
     await supabase.auth.signOut();
   }, []);
 
