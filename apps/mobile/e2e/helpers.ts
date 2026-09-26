@@ -60,6 +60,11 @@ export function text(page: Page, value: string | RegExp, exact = true): Locator 
     .first();
 }
 
+/** The Creppie mascot slot for a mood, on the active screen. */
+export function mascot(page: Page, mood: 'loading' | 'empty' | 'error' | 'offline' | 'success' | 'signin'): Locator {
+  return page.getByTestId(`creppie-${mood}`).and(onActiveScreen(page)).first();
+}
+
 export function placeholder(page: Page, value: string): Locator {
   return page.getByPlaceholder(value).and(onActiveScreen(page)).first();
 }

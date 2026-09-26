@@ -66,9 +66,8 @@ export default function InboxScreen() {
         {session && !loading && error && <ErrorState message={error} onRetry={reload} />}
         {session && !loading && !error && notifications.length === 0 && (
           <EmptyState
-            icon="bell"
-            title="Nothing here yet"
-            body="Updates on your orders will show up here. Book a clean to get started."
+            title="Quiet in here."
+            body="Updates on your pairs land here: received, being cleaned, ready for pickup. Book a clean to get started."
             actionLabel="Book a Clean"
             onAction={() => router.push('/book')}
           />

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { adminSelect, newCustomer, placeholder, RAW_ERROR_PATTERNS, shot, tab, text } from './helpers';
+import { adminSelect, mascot, newCustomer, placeholder, RAW_ERROR_PATTERNS, shot, tab, text } from './helpers';
 
 // Core customer journeys, run in an emulated Pixel 7 against local Supabase.
 // Each test starts signed out (fresh browser context = fresh install).
@@ -47,6 +47,7 @@ test('guest books, signs up in the sheet, and the order is placed with details k
   await text(page, 'Create Account').click();
 
   await expect(text(page, "You're booked.", false)).toBeVisible();
+  await expect(mascot(page, 'success')).toBeVisible();
   await expect(text(page, 'Jordan 4 Bred', false)).toBeVisible();
   // Push permission is offered here — after a booking, with the reason — never cold on launch.
   await expect(text(page, "Get a heads-up when it's ready?", false)).toBeVisible();
@@ -72,6 +73,7 @@ test('signed-out tabs show a sign-in prompt, and sign-in returns to that tab', a
   await page.goto('/');
   await tab(page, 'Orders');
   await expect(text(page, 'Sign in to see your orders', false)).toBeVisible();
+  await expect(mascot(page, 'signin')).toBeVisible();
   await tab(page, 'Inbox');
   await expect(text(page, 'Sign in to see your updates', false)).toBeVisible();
   await tab(page, 'Profile');
@@ -88,7 +90,8 @@ test('signed-out tabs show a sign-in prompt, and sign-in returns to that tab', a
   await text(page, 'Create Account').click();
 
   await expect(page).toHaveURL(/\/orders$/);
-  await expect(text(page, 'No orders yet', false)).toBeVisible();
+  await expect(text(page, 'No kicks in the queue yet.', false)).toBeVisible();
+  await expect(mascot(page, 'empty')).toBeVisible();
   await shot(page, '08-orders-empty');
 });
 
@@ -107,7 +110,8 @@ test('services failing to load shows an error with retry, then recovers', async 
   await page.route('**/rest/v1/services**', (route) => (fail ? route.abort('internetdisconnected') : route.continue()));
   await page.goto('/');
   await tab(page, 'Book');
-  await expect(text(page, 'Something went wrong', false)).toBeVisible();
+  await expect(text(page, "Can't reach the shop.", false)).toBeVisible();
+  await expect(mascot(page, 'offline')).toBeVisible();
   await expectNoRawErrors(page);
   await shot(page, '10-book-error');
 
@@ -143,4 +147,16 @@ test('a failed booking insert shows friendly copy and a WhatsApp fallback', asyn
   await expect(placeholder(page, 'e.g. Nike Air Force 1, Clarks Desert Boot')).toHaveValue('Desert Boot');
   await expectNoRawErrors(page);
   await shot(page, '11-booking-error');
+});
+
+test('a server error (not offline) shows the error mascot with Creppie copy', async ({ page }) => {
+  await page.route('**/rest/v1/services**', (route) =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'internal error', code: 'XX000' }) })
+  );
+  await page.goto('/');
+  await tab(page, 'Book');
+  await expect(text(page, 'Creppie slipped on a wet sole.', false)).toBeVisible();
+  await expect(mascot(page, 'error')).toBeVisible();
+  await expectNoRawErrors(page);
+  await shot(page, '13-server-error');
 });

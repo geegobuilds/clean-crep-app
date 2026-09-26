@@ -11,6 +11,7 @@ import { friendlyError } from '@/lib/errors';
 import { SignInForm } from '@/components/sign-in-form';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/states';
 import { PushOffer } from '@/components/push-offer';
+import { CreppieArt, MOODS } from '@/components/creppie';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 
@@ -106,10 +107,11 @@ export default function BookingScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
         <Header title="Confirm Booking" onBack={() => setStep(1)} />
         <ScrollView contentContainerStyle={{ padding: 20, alignItems: 'center' }}>
-          <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#DCFCE7', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-            <Icon name="check" size={26} color="#16A34A" strokeWidth={2} />
+          <View style={{ marginBottom: 16 }}>
+            <CreppieArt mood="success" size={72} />
           </View>
-          <Text style={{ fontSize: 22, fontFamily: 'DMSans_500Medium', color: colors.navy, marginBottom: 6 }}>You&apos;re booked.</Text>
+          <Text style={{ fontSize: 22, fontFamily: 'DMSans_500Medium', color: colors.navy, marginBottom: 4 }}>You&apos;re booked.</Text>
+          <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue, marginBottom: 8 }}>{MOODS.success.title}</Text>
           <Text style={{ fontSize: 13, color: colors.caption, lineHeight: 20, marginBottom: 24, textAlign: 'center', fontFamily: 'DMSans_400Regular' }}>
             Bring in your {selected?.name === 'Clarks Clean' ? 'Clarks' : 'creps'} on{' '}
             <Text style={{ color: colors.navy, fontFamily: 'DMSans_500Medium' }}>

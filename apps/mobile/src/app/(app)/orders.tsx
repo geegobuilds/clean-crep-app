@@ -44,8 +44,8 @@ export default function OrdersScreen() {
         {session && !loading && error && <ErrorState message={error} onRetry={reload} />}
         {session && !loading && !error && orders.length === 0 && (
           <EmptyState
-            title="No orders yet"
-            body="Book your first clean and track it right here."
+            title="No kicks in the queue yet."
+            body="Let's fix that. Book your first clean and track it right here."
             actionLabel="Book a Clean"
             onAction={() => router.push('/book')}
           />

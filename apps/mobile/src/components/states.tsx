@@ -1,8 +1,8 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, Pressable, Text, View, type DimensionValue, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius } from '@clean-crep/shared';
-import { Icon, type IconName } from '@/components/icon';
+import { CreppieArt, CreppieState, MOODS } from '@/components/creppie';
 
 // Shared loading / empty / error / signed-out states so every data screen
 // tells those cases apart instead of rendering a blank or misleading list.
@@ -78,23 +78,13 @@ export function ScreenSkeleton() {
         </View>
       </View>
       <View style={{ padding: 20, gap: 16 }}>
-        <Skeleton height={150} style={{ borderRadius: 16 }} />
+        <View style={{ alignItems: 'center', paddingVertical: 12, gap: 10 }}>
+          <CreppieArt mood="loading" size={64} />
+          <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.caption }}>{MOODS.loading.title}</Text>
+        </View>
         <SkeletonList count={2} />
       </View>
     </SafeAreaView>
-  );
-}
-
-function StateShell({ icon, title, body, children }: { icon: IconName; title: string; body: string; children?: ReactNode }) {
-  return (
-    <View style={{ backgroundColor: colors.white, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, padding: 24, alignItems: 'center' }}>
-      <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: colors.ice, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-        <Icon name={icon} size={22} color={colors.blue} />
-      </View>
-      <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.navy, textAlign: 'center', marginBottom: 4 }}>{title}</Text>
-      <Text style={{ fontSize: 12, color: colors.caption, fontFamily: 'DMSans_400Regular', textAlign: 'center', lineHeight: 18 }}>{body}</Text>
-      {children && <View style={{ marginTop: 16, alignSelf: 'stretch' }}>{children}</View>}
-    </View>
   );
 }
 
@@ -106,26 +96,28 @@ export function PrimaryButton({ label, onPress }: { label: string; onPress: () =
   );
 }
 
-export function EmptyState({ icon = 'pkg', title, body, actionLabel, onAction }: { icon?: IconName; title: string; body: string; actionLabel?: string; onAction?: () => void }) {
+export function EmptyState({ title, body, actionLabel, onAction }: { title?: string; body?: string; actionLabel?: string; onAction?: () => void }) {
   return (
-    <StateShell icon={icon} title={title} body={body}>
+    <CreppieState mood="empty" title={title} body={body}>
       {actionLabel && onAction && <PrimaryButton label={actionLabel} onPress={onAction} />}
-    </StateShell>
+    </CreppieState>
   );
 }
 
+/** `message` comes from friendlyError(); offline gets its own Creppie mood. */
 export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const offline = message.startsWith("You're offline");
   return (
-    <StateShell icon="help" title="Something went wrong" body={message}>
+    <CreppieState mood={offline ? 'offline' : 'error'} body={message}>
       <PrimaryButton label="Try Again" onPress={onRetry} />
-    </StateShell>
+    </CreppieState>
   );
 }
 
 export function SignInPrompt({ title, body, onSignIn }: { title: string; body: string; onSignIn: () => void }) {
   return (
-    <StateShell icon="profile" title={title} body={body}>
+    <CreppieState mood="signin" title={title} body={body}>
       <PrimaryButton label="Sign In" onPress={onSignIn} />
-    </StateShell>
+    </CreppieState>
   );
 }
