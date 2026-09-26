@@ -18,6 +18,8 @@ fi
 if ! (cd "$ROOT" && npx supabase status >/dev/null 2>&1); then
   (cd "$ROOT" && npx supabase start -x studio,imgproxy,logflare,vector,supavisor,postgres-meta)
 fi
+# After a container restart the DB can still be booting; wait until status succeeds.
+for _ in $(seq 1 60); do (cd "$ROOT" && npx supabase status >/dev/null 2>&1) && break; sleep 2; done
 eval "$(cd "$ROOT" && npx supabase status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY|DB_URL)=')"
 export EXPO_PUBLIC_SUPABASE_URL="$API_URL" EXPO_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
 export E2E_SUPABASE_URL="$API_URL" E2E_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" E2E_ANON_KEY="$ANON_KEY" E2E_DB_URL="$DB_URL"
