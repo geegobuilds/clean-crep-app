@@ -76,7 +76,10 @@ _Last updated: 2026-09-26_
   was found **paused** (free-tier inactivity pause) — which also meant Creppie's n8n dual-write
   to Postgres was failing (Airtable copy unaffected). Restored with Geego's OK. EAS
   `preview`/`production` now point at it (URL + publishable key; both public by design, RLS is
-  the security boundary).
+  the security boundary). Live DB had 0001–0004 already (applied by hand: 6 services, 2 orders,
+  1 customer, 1 staff); **0005 push + 0006 security hardening applied** the same day via the
+  Supabase connector. Linter now clean except intended items (is_staff / push RPCs callable by
+  design; `service_aliases` read only by a definer function) and leaked-password protection.
 - **2026-09-26** — **Supabase Pro (US$25/mo) at launch** so the live DB never pauses; stay on
   free while testing.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
@@ -96,10 +99,21 @@ _Last updated: 2026-09-26_
 5. **Send the Google Play support request** (if not already sent) and log the date + case number.
 6. ~7 days after sending with no answer → **enroll the individual developer account** and do the
    first internal-testing build.
-7. **Launch week: upgrade Supabase to Pro** (billing in the Supabase dashboard), then
-   `eas build -p android --profile production`.
+7. **Launch week: upgrade Supabase to Pro** (billing in the Supabase dashboard), turn on
+   **Auth → Leaked password protection**, then `eas build -p android --profile production`.
 8. Keep filtering app-growth transcripts as Geego sends them.
 9. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
+
+## Gotchas
+
+- **Live migration history ≠ repo numbering.** 0001–0004 were pasted into the SQL editor (no
+  history); 0005/0006 were recorded as `20260926221201` / `20260926221359`. Before ever running
+  `supabase db push` against the live project, run:
+  `supabase migration repair --status reverted 20260926221201 20260926221359` then
+  `supabase migration repair --status applied 0001 0002 0003 0004 0005 0006`.
+  (Or keep applying new migrations through the Supabase connector, one file at a time.)
+- The cloud sandbox's network proxy blocks direct HTTPS to `*.supabase.co`; use the Supabase
+  connector (MCP) for anything against the live project.
 
 ## Open Questions
 
