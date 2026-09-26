@@ -15,15 +15,15 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "set-me",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "set-me"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://gymchhmohcggvesrsupc.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_90XcuZ2VMzSIJRX_jFUlGw_tmIkZM4L"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "set-me",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "set-me"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://gymchhmohcggvesrsupc.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_90XcuZ2VMzSIJRX_jFUlGw_tmIkZM4L"
       }
     }
   },

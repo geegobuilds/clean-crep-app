@@ -44,7 +44,6 @@ _Last updated: 2026-09-26_
 | Blocker | Owner | Waiting on |
 | --- | --- | --- |
 | Google Play Console **organization** verification needs a D-U-N-S number; Dun & Bradstreet doesn't issue them in Jamaica. | Geego | Google Play support reply to our request for an alternative verification method (support request drafted, approved, cleared to send). |
-| Production build env: `apps/mobile/eas.json` `preview` / `production` profiles still have `EXPO_PUBLIC_SUPABASE_URL` / `ANON_KEY` set to `set-me`. | Geego | Hosted Supabase project URL + anon key to paste in (or set as EAS secrets) before the first real build. |
 | Push delivery on real phones | Geego | `eas init` (writes the EAS projectId into app.json), a Firebase project + `google-services.json` for Android (FCM), and the FCM V1 key uploaded to EAS. Until then the app skips push registration. |
 | Apple App Store release | Geego | Apple Developer enrollment ($99/yr) — not started as far as the repo shows. |
 
@@ -73,6 +72,13 @@ _Last updated: 2026-09-26_
 - **2026-09-26** — Creppie art: background-removed cutouts of Geego's 5 renders (512px PNG);
   moods: scrubbing=loading, thumbs-up=success (+sign-in), shrug=empty, no-wifi=offline,
   slipping=error, waving at the door=sign-in (added same day).
+- **2026-09-26** — Live Supabase project `clean-crep-jamaica` (`gymchhmohcggvesrsupc`, us-east-1)
+  was found **paused** (free-tier inactivity pause) — which also meant Creppie's n8n dual-write
+  to Postgres was failing (Airtable copy unaffected). Restored with Geego's OK. EAS
+  `preview`/`production` now point at it (URL + publishable key; both public by design, RLS is
+  the security boundary).
+- **2026-09-26** — **Supabase Pro (US$25/mo) at launch** so the live DB never pauses; stay on
+  free while testing.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -90,12 +96,15 @@ _Last updated: 2026-09-26_
 5. **Send the Google Play support request** (if not already sent) and log the date + case number.
 6. ~7 days after sending with no answer → **enroll the individual developer account** and do the
    first internal-testing build.
-7. Stand up hosted Supabase (`supabase db push` applies 0001–0005, enable `pg_net`) + fill the
-   EAS production env, then `eas build -p android`.
+7. **Launch week: upgrade Supabase to Pro** (billing in the Supabase dashboard), then
+   `eas build -p android --profile production`.
 8. Keep filtering app-growth transcripts as Geego sends them.
 9. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
 
 ## Open Questions
+
+- Creppie orders that arrived while the DB was paused exist only in Airtable. Backfill them into
+  `orders` (one-off import) or accept the gap?
 
 - **Address mismatch**: registered address on the Google request is York Town P.A., Clarendon;
   the app README and landing page list the shop at Shop 19, Pristine Plaza, Half Way Tree,
