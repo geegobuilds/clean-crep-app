@@ -63,6 +63,20 @@ To get into the **operator dashboard** (`/staff/login`), a user needs a row in t
 table — there's no self-service staff signup by design. Create one via Studio: sign up (or use
 an existing) user in Auth, then insert a row into `public.staff` with that same `id`.
 
+## Automated phone checks (`npm run e2e`)
+
+`npm run e2e` runs the customer app's core journeys in an **emulated Pixel 7** (Chromium
+with mobile viewport, touch and user-agent) against a **real local Supabase** with this
+repo's migrations and seed — guest browsing, booking + sign-up in the confirm sheet (and
+verifying the order row in the database), sign-in prompts on Orders/Inbox/Profile, friendly
+error copy, and retry after a failed load. `scripts/e2e.sh` starts Docker, `supabase start`
+and the Expo web server itself. `E2E_SHOTS=1 npm run e2e` saves a screenshot of each step
+to `apps/mobile/e2e/.shots/`.
+
+This is the app rendered through react-native-web, not a native Android runtime — it
+catches flow, layout and data bugs, but native-only behaviour (push delivery, native
+modules, Android back button) still needs a real device or `eas build --profile preview`.
+
 ## Architecture notes
 
 - **One Supabase backend** (Postgres + Auth + Realtime) serves both apps. RLS policies (in
@@ -90,12 +104,9 @@ an existing) user in Auth, then insert a row into `public.staff` with that same 
 - **"Book Now" on the landing page currently opens WhatsApp**, not an app store link
   (`apps/web/src/app/page.tsx`, `BOOK_NOW_URL`) — there's nothing to link to until the app is
   published. Swap that constant once you have real App Store / Play Store URLs.
-- **This sandbox has no Docker daemon**, so the Supabase migrations were validated against a
-  plain local Postgres with a hand-written stub of the `auth` schema (proved the schema,
-  triggers, and RLS policies all apply and the status-change trigger correctly writes audit
-  events, notifications, and loyalty points — see git history / ask if you want the stub script
-  again) rather than the full `supabase start` stack. Run `supabase start` yourself once to
-  confirm end-to-end before deploying.
+- ~~No Docker in the sandbox~~ **Resolved**: the full `supabase start` stack now runs in the
+  cloud sandbox (`scripts/e2e.sh` starts Docker), all migrations + seed apply cleanly, and the
+  e2e suite exercises sign-up, booking and the status-change trigger against it.
 - ~~Two separate order pipelines exist right now~~ **Resolved**: Creppie (the n8n workflow in
   the sibling `clean-crep-systems` repo that takes WhatsApp/IG bookings via ManyChat) now
   dual-writes. Its original Airtable write is untouched; two new parallel Postgres nodes

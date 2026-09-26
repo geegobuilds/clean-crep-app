@@ -11,6 +11,7 @@ import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/
 
 const logo = require('../../../assets/brand/logo.png');
 const WHATSAPP_URL = 'https://wa.me/18765072163';
+const SERVICE_CARD_WIDTH = 104;
 
 function formatEta(dateIso: string): string {
   const today = new Date();
@@ -97,11 +98,13 @@ export default function HomeScreen() {
               SERVICES
             </Text>
             {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            {/* Horizontal swipe row with fixed-width cards: the catalog grew from 3 to 6
+                services, and squeezing them into one flex row made cards unreadable. */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}>
               {servicesLoading &&
                 services.length === 0 &&
                 [0, 1, 2].map((i) => (
-                  <View key={i} style={{ flex: 1, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, alignItems: 'center', gap: 6 }}>
+                  <View key={i} style={{ width: SERVICE_CARD_WIDTH, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, alignItems: 'center', gap: 6 }}>
                     <Skeleton width={36} height={36} style={{ borderRadius: 10 }} />
                     <Skeleton width="80%" height={11} />
                     <Skeleton width="50%" height={11} />
@@ -112,7 +115,7 @@ export default function HomeScreen() {
                   key={s.id}
                   onPress={() => router.push('/book')}
                   style={{
-                    flex: 1,
+                    width: SERVICE_CARD_WIDTH,
                     backgroundColor: colors.white,
                     borderWidth: 1,
                     borderColor: colors.border,
@@ -130,7 +133,7 @@ export default function HomeScreen() {
                   <Text style={{ fontSize: 11, color: colors.blue, fontFamily: 'DMSans_500Medium' }}>{formatPrice(s.price_cents)}</Text>
                 </Pressable>
               ))}
-            </View>
+            </ScrollView>
           </View>
 
           {/* Active orders */}

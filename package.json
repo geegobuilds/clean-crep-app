@@ -10,7 +10,8 @@
     "mobile": "npm run start --workspace=apps/mobile",
     "web": "npm run dev --workspace=apps/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "e2e": "npm run e2e --workspace=apps/mobile --"
   },
   "overrides": {
     "react": "19.1.0",
