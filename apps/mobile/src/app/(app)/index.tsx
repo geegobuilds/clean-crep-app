@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { useServices } from '@/hooks/use-services';
 import { useOrders } from '@/hooks/use-orders';
 import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
+import { ReviewAsk } from '@/components/review-ask';
 
 const logo = require('../../../assets/brand/logo.png');
 const WHATSAPP_URL = 'https://wa.me/18765072163';
@@ -26,6 +27,7 @@ export default function HomeScreen() {
   const { services, loading: servicesLoading, error: servicesError, reload: reloadServices } = useServices();
   const { orders, loading: ordersLoading, error: ordersError, reload: reloadOrders } = useOrders();
   const activeOrders = orders.filter((o) => o.status !== 'completed').slice(0, 3);
+  const lastCompleted = orders.find((o) => o.status === 'completed') ?? null;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
@@ -135,6 +137,8 @@ export default function HomeScreen() {
               ))}
             </ScrollView>
           </View>
+
+          {session && !ordersLoading && <ReviewAsk itemName={lastCompleted?.item_name ?? null} />}
 
           {/* Active orders */}
           <View>

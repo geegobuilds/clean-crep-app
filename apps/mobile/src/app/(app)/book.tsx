@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { SignInForm } from '@/components/sign-in-form';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/states';
+import { PushOffer } from '@/components/push-offer';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 
@@ -116,6 +117,8 @@ export default function BookingScreen() {
             </Text>
             .{'\n'}Shop 19, Pristine Plaza, Half Way Tree.
           </Text>
+
+          <PushOffer />
 
           <View style={{ backgroundColor: colors.ice, borderRadius: 12, padding: 16, width: '100%', marginBottom: 20 }}>
             <Text style={{ fontSize: 10, color: colors.caption, letterSpacing: 2, marginBottom: 12, fontFamily: 'DMSans_500Medium' }}>

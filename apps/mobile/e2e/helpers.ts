@@ -1,7 +1,10 @@
+import { execFileSync } from 'node:child_process';
 import type { Locator, Page } from '@playwright/test';
 
 const SUPABASE_URL = process.env.E2E_SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const SERVICE_KEY = process.env.E2E_SERVICE_ROLE_KEY ?? '';
+const ANON_KEY = process.env.E2E_ANON_KEY ?? '';
+const DB_URL = process.env.E2E_DB_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
 
 /** Unique throwaway customer per run. Local Supabase has email confirmation off. */
 export function newCustomer() {
@@ -59,4 +62,37 @@ export function text(page: Page, value: string | RegExp, exact = true): Locator 
 
 export function placeholder(page: Page, value: string): Locator {
   return page.getByPlaceholder(value).and(onActiveScreen(page)).first();
+}
+
+/** Run SQL against the local database (for internals REST can't see, e.g. pg_net's queue). */
+export function sql(query: string): string {
+  return execFileSync('psql', [DB_URL, '-Atc', query], { encoding: 'utf8' }).trim();
+}
+
+/** Sign up through Supabase Auth's API (no UI) and return the user's session. */
+export async function apiSignUp(c: { email: string; password: string; name: string }) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+    method: 'POST',
+    headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: c.email, password: c.password, data: { name: c.name } }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(`signup: ${res.status} ${JSON.stringify(body)}`);
+  return { userId: body.user.id as string, accessToken: body.access_token as string };
+}
+
+/** Call PostgREST as a signed-in user (RLS applies). */
+export async function asUser(accessToken: string, path: string, init: { method?: string; body?: unknown } = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: init.method ?? 'GET',
+    headers: {
+      apikey: ANON_KEY,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+  });
+  const text = await res.text();
+  return { status: res.status, body: text ? JSON.parse(text) : null };
 }

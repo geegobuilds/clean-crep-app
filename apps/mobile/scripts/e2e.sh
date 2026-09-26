@@ -20,7 +20,9 @@ if ! (cd "$ROOT" && npx supabase status >/dev/null 2>&1); then
 fi
 eval "$(cd "$ROOT" && npx supabase status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY|DB_URL)=')"
 export EXPO_PUBLIC_SUPABASE_URL="$API_URL" EXPO_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
-export E2E_SUPABASE_URL="$API_URL" E2E_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+export E2E_SUPABASE_URL="$API_URL" E2E_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" E2E_ANON_KEY="$ANON_KEY" E2E_DB_URL="$DB_URL"
+# Web can't receive pushes; this lets the checks walk the push explainer flow.
+export EXPO_PUBLIC_PUSH_PREVIEW=1
 
 # Prefer the pre-installed Chromium in cloud sandboxes (no browser download).
 if [ -z "${PW_CHROMIUM_PATH:-}" ] && [ -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome ]; then

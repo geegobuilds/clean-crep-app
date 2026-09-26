@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors, formatPrice } from '@clean-crep/shared';
@@ -6,6 +6,7 @@ import { Icon, type IconName } from '@/components/icon';
 import { StatusTag } from '@/components/status-tag';
 import { useAuth } from '@/lib/auth';
 import { useOrders } from '@/hooks/use-orders';
+import { enablePush, pushStatus } from '@/lib/push';
 import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
 
 const LOYALTY_GOAL = 500;
@@ -26,6 +27,20 @@ function memberSince(dateIso: string): string {
   );
   if (months < 12) return `${months}mo`;
   return `${Math.round(months / 12)}yr`;
+}
+
+async function openNotificationSettings() {
+  const status = await pushStatus();
+  if (status === 'unsupported') {
+    Alert.alert('Order updates', 'Push notifications work in the Clean Crep app on your phone.');
+  } else if (status === 'granted') {
+    Alert.alert('Order updates are on', "We'll ping you when your pair is received, being cleaned, and ready for pickup.");
+  } else if (status === 'denied') {
+    // The app can't re-ask once denied; send them to the OS settings.
+    Linking.openSettings();
+  } else {
+    await enablePush();
+  }
 }
 
 export default function ProfileScreen() {
@@ -156,7 +171,7 @@ export default function ProfileScreen() {
             <View style={{ backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
               {(
                 [
-                  { icon: 'bell', label: 'Notifications' },
+                  { icon: 'bell', label: 'Notifications', onPress: openNotificationSettings },
                   { icon: 'help', label: 'Help & Support' },
                   { icon: 'settings', label: 'Account Settings' },
                   { icon: 'logout', label: 'Sign Out', danger: true, onPress: signOut },

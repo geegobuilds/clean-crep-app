@@ -48,7 +48,11 @@ test('guest books, signs up in the sheet, and the order is placed with details k
 
   await expect(text(page, "You're booked.", false)).toBeVisible();
   await expect(text(page, 'Jordan 4 Bred', false)).toBeVisible();
+  // Push permission is offered here — after a booking, with the reason — never cold on launch.
+  await expect(text(page, "Get a heads-up when it's ready?", false)).toBeVisible();
   await shot(page, '05-booked');
+  await text(page, 'Turn on updates').click();
+  await expect(text(page, "Updates on. We'll ping you the moment your pair is ready.", false)).toBeVisible();
 
   const [customer] = await adminSelect<{ id: string; name: string }>('customers', `email=eq.${encodeURIComponent(c.email)}&select=id,name`);
   expect(customer?.name).toBe(c.name);

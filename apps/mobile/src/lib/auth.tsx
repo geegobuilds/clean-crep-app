@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session, User } from '@supabase/supabase-js';
 import type { Customer } from '@clean-crep/shared';
 import { supabase } from './supabase';
+import { syncPushTokenIfAllowed, unregisterPush } from './push';
 
 interface AuthContextValue {
   session: Session | null;
@@ -52,9 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setInitializing(false);
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       if (newSession) loadCustomer(newSession.user);
+      // Push tokens can rotate; refresh ours whenever a session starts/restores.
+      // Deferred: supabase-js advises against calling Supabase from inside this
+      // callback synchronously (it can deadlock the auth lock).
+      if (newSession && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        setTimeout(() => syncPushTokenIfAllowed(), 0);
+      }
       else setCustomer(null);
     });
 
@@ -66,6 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session, loadCustomer]);
 
   const signOut = useCallback(async () => {
+    // Detach this phone first (needs the session) so the next person to sign
+    // in here doesn't receive this customer's order updates.
+    await unregisterPush();
     await supabase.auth.signOut();
   }, []);
 
