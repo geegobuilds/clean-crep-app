@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import type { Locator, Page } from '@playwright/test';
+import { test, type Locator, type Page } from '@playwright/test';
 
 const SUPABASE_URL = process.env.E2E_SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const SERVICE_KEY = process.env.E2E_SERVICE_ROLE_KEY ?? '';
@@ -33,7 +33,8 @@ export async function adminUpdate(table: string, query: string, body: Record<str
 /** Save a step screenshot when E2E_SHOTS=1 (for eyeballing layouts). */
 export async function shot(page: Page, name: string) {
   if (!process.env.E2E_SHOTS) return;
-  await page.screenshot({ path: `e2e/.shots/${name}.png` });
+  // One folder per device, e.g. e2e/.shots/iphone-15-pro/05-booked.png
+  await page.screenshot({ path: `e2e/.shots/${test.info().project.name}/${name}.png` });
 }
 
 /** Tap a bottom tab by its label. */

@@ -64,8 +64,8 @@ _Last updated: 2026-09-26_
   booking).
 - **2026-09-25** — Creppie mascot in UI states: build states through one component now, swap
   in mascot art (Lottie + PNG, 5 poses: loading / empty / error / offline / success) later.
-- **2026-09-26** — "Phone emulator" = Playwright + Expo web in an emulated Pixel 7 against local
-  Supabase (no KVM in the sandbox, so a real Android emulator can't run). Catches flow/UI/data
+- **2026-09-26** — "Phone emulator" = Playwright + Expo web in an emulated Pixel 7 **and iPhone 15
+  Pro** (both Chromium) against local Supabase (no KVM in the sandbox, so a real Android emulator can't run). Catches flow/UI/data
   bugs; native-only behaviour still needs a device build.
 - **2026-09-26** — Push is sent from Postgres via pg_net (no Edge Function to deploy). Permission
   is asked only after a booking, with an explainer first.

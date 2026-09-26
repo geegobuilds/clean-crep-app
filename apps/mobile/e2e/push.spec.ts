@@ -6,6 +6,11 @@ import { adminUpdate, apiSignUp, asUser, newCustomer, placeholder, shot, sql, te
 // change produces the right push message and hands it to pg_net.
 // Actual delivery to a phone needs a real device + EAS project (see HANDOFF).
 
+// The first three checks are database-only (no screen), so run them once.
+function dbOnly() {
+  test.skip(test.info().project.name !== 'android-pixel-7', 'database-only check; runs on one device');
+}
+
 async function customerWithOrder() {
   const c = newCustomer();
   const { userId, accessToken } = await apiSignUp(c);
@@ -30,6 +35,7 @@ async function customerWithOrder() {
 }
 
 test('status change pushes the order update to the customer\'s phone', async () => {
+  dbOnly();
   const { userId, accessToken, orderId } = await customerWithOrder();
   const token = `ExponentPushToken[e2e-${userId}]`;
 
@@ -59,6 +65,7 @@ test('status change pushes the order update to the customer\'s phone', async () 
 });
 
 test('a phone\'s token moves to whoever signs in on it, and sign-out detaches it', async () => {
+  dbOnly();
   const a = await customerWithOrder();
   const b = await customerWithOrder();
   const token = `ExponentPushToken[e2e-shared-${a.userId}]`;
@@ -78,6 +85,7 @@ test('a phone\'s token moves to whoever signs in on it, and sign-out detaches it
 });
 
 test('push tokens are private and validated', async () => {
+  dbOnly();
   const a = await customerWithOrder();
   const b = await customerWithOrder();
   await asUser(a.accessToken, 'rpc/register_push_token', { method: 'POST', body: { p_token: `ExponentPushToken[e2e-priv-${a.userId}]`, p_platform: 'android' } });

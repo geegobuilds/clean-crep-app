@@ -6,7 +6,7 @@ import { chromium, type FullConfig } from '@playwright/test';
  * app once here — generous timeout — so every test starts against a built bundle.
  */
 export default async function globalSetup(config: FullConfig) {
-  const { baseURL, launchOptions } = config.projects[0].use;
+  const { baseURL, launchOptions } = config.projects[0].use; // any device works for warm-up
   const browser = await chromium.launch(launchOptions);
   const page = await browser.newPage();
   await page.goto(baseURL ?? 'http://localhost:8081', { timeout: 300_000 });

@@ -65,17 +65,19 @@ an existing) user in Auth, then insert a row into `public.staff` with that same 
 
 ## Automated phone checks (`npm run e2e`)
 
-`npm run e2e` runs the customer app's core journeys in an **emulated Pixel 7** (Chromium
-with mobile viewport, touch and user-agent) against a **real local Supabase** with this
+`npm run e2e` runs the customer app's core journeys on **two emulated phones — a Pixel 7 and
+an iPhone 15 Pro** (Chromium with each phone's viewport, pixel density, touch and user-agent) against a **real local Supabase** with this
 repo's migrations and seed — guest browsing, booking + sign-up in the confirm sheet (and
 verifying the order row in the database), sign-in prompts on Orders/Inbox/Profile, friendly
 error copy, and retry after a failed load. `scripts/e2e.sh` starts Docker, `supabase start`
 and the Expo web server itself. `E2E_SHOTS=1 npm run e2e` saves a screenshot of each step
-to `apps/mobile/e2e/.shots/`.
+to `apps/mobile/e2e/.shots/<device>/`.
 
-This is the app rendered through react-native-web, not a native Android runtime — it
-catches flow, layout and data bugs, but native-only behaviour (push delivery, native
-modules, Android back button) still needs a real device or `eas build --profile preview`.
+This is the app rendered through react-native-web, not a native Android/iOS runtime (the
+iPhone profile uses Chromium, not Safari/WebKit, and has no notch) — it catches flow, layout
+and data bugs at both screen sizes, but native-only behaviour (push delivery, native modules,
+notch/safe-area insets, Android back button) still needs a real device: Expo Go on a phone,
+or `eas build --profile preview`. The real iOS Simulator needs a Mac with Xcode.
 
 ## Architecture notes
 
