@@ -12,13 +12,13 @@ _Last updated: 2026-09-26_
   (`apps/web`), and Supabase schema (`supabase/migrations/0001`–`0004`) are built on `main`.
   Latest shipped work: staff password-reset page, password-recovery race fix, Creppie orders
   labelled by system name in the dashboard.
-- **Pre-launch UX fixes (PR open, 2026-09-25)**: guest browsing (sign-in only at Confirm
+- **Pre-launch UX fixes (merged in PR #2, 2026-09-26)**: guest browsing (sign-in only at Confirm
   Booking, via an in-screen sheet that keeps the booking), friendly error copy
   (`apps/mobile/src/lib/errors.ts` — no raw Supabase/JS errors on screen), and skeleton /
   empty / error-with-retry states on every data screen (`apps/mobile/src/components/states.tsx`).
   Also: customers profile row is now auto-created on first sign-in (fixes bookings failing for
   accounts created while email confirmation is on).
-- **Same PR, added 2026-09-26**:
+- **Also in PR #2 (merged 2026-09-26)**:
   - **Automated phone checks** — `npm run e2e`: 11 journeys in an emulated Pixel 7 against a
     real local Supabase (Docker works in the cloud sandbox). Run after every change. They
     caught a **crash on `main`** (duplicate realtime channel names → opening Orders crashed
@@ -30,7 +30,7 @@ _Last updated: 2026-09-26_
   - **Google review ask** — once, after a completed order (`components/review-ask.tsx`).
   - **Creppie mascot** — every loading/empty/error/offline/success/sign-in state goes through
     `components/creppie/`; real art (cut from Geego's renders) is in `assets/creppie/`, wired
-    via `moods.ts`. Sign-in reuses the thumbs-up pose until a wave pose exists.
+    via `moods.ts`. All 6 poses in place (incl. waving for sign-in prompts).
 - **Creppie dual-write is live**: the n8n workflow (`clean-crep-systems/creppie.json`) writes
   WhatsApp/IG bookings to Airtable _and_ to this app's `orders` table as guest orders
   (`source = 'creppie'`). The two Postgres nodes live only in n8n, not in either repo.
@@ -72,7 +72,7 @@ _Last updated: 2026-09-26_
   is asked only after a booking, with an explainer first.
 - **2026-09-26** — Creppie art: background-removed cutouts of Geego's 5 renders (512px PNG);
   moods: scrubbing=loading, thumbs-up=success (+sign-in), shrug=empty, no-wifi=offline,
-  slipping=error.
+  slipping=error, waving at the door=sign-in (added same day).
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -80,15 +80,13 @@ _Last updated: 2026-09-26_
 
 ## Next Steps
 
-1. **Review + merge PR #2** (pre-launch UX + phone checks + push + review ask + Creppie slot).
-   Run `npm run e2e` after any change; add a check for each new journey.
+1. Run `npm run e2e` after any change; add a check for each new journey.
 2. **Push setup (Geego, ~30 min)**: `npx eas init`, create a Firebase project, add
    `google-services.json`, upload the FCM V1 key in EAS, then a `preview` build on your phone to
    see a real "Ready for Pickup" push.
 3. **Replace `GOOGLE_REVIEW_URL`** in `apps/mobile/src/components/review-ask.tsx` with the shop's
    direct Google "Write a review" link.
-4. Optional: a 6th Creppie pose (waving at the shop door) for the sign-in prompts, and the
-   same poses as Lottie for subtle animation. Drop-in via `moods.ts`.
+4. Optional: the same Creppie poses as Lottie for subtle animation. Drop-in via `moods.ts`.
 5. **Send the Google Play support request** (if not already sent) and log the date + case number.
 6. ~7 days after sending with no answer → **enroll the individual developer account** and do the
    first internal-testing build.

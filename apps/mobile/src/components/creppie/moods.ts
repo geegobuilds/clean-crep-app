@@ -58,8 +58,7 @@ export const MOODS: Record<CreppieMood, MoodConfig> = {
     body: '',
   },
   signin: {
-    // No dedicated pose yet (a wave at the shop door would fit) — reuses the thumbs up.
-    art: require('../../../assets/creppie/success.png'),
+    art: require('../../../assets/creppie/signin.png'), // waving you in at the shop door
     icon: 'profile',
     title: 'Sign in to see this',
     body: '',

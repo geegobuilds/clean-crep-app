@@ -1,7 +1,6 @@
 # Creppie mascot art
 
-The mascot poses live here (cut out of the 2026-09 renders; `signin` reuses `success.png`
-until a wave pose exists). To change one, replace the PNG or point the mood at a new file in
+The mascot poses live here (cut out of the 2026-09 renders). To change one, replace the PNG or point the mood at a new file in
 `src/components/creppie/moods.ts` (`art: require('../../../assets/creppie/<file>')`).
 Nothing else in the app needs to change.
 
