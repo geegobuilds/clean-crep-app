@@ -44,7 +44,6 @@ _Last updated: 2026-09-26_
 | Blocker | Owner | Waiting on |
 | --- | --- | --- |
 | Google Play Console **organization** verification needs a D-U-N-S number; Dun & Bradstreet doesn't issue them in Jamaica. | Geego | Google Play support reply to our request for an alternative verification method (support request drafted, approved, cleared to send). |
-| Production build env: `apps/mobile/eas.json` `preview` / `production` profiles still have `EXPO_PUBLIC_SUPABASE_URL` / `ANON_KEY` set to `set-me`. | Geego | Hosted Supabase project URL + anon key to paste in (or set as EAS secrets) before the first real build. |
 | Push delivery on real phones | Geego | `eas init` (writes the EAS projectId into app.json), a Firebase project + `google-services.json` for Android (FCM), and the FCM V1 key uploaded to EAS. Until then the app skips push registration. |
 | Apple App Store release | Geego | Apple Developer enrollment ($99/yr) — not started as far as the repo shows. |
 
@@ -65,14 +64,24 @@ _Last updated: 2026-09-26_
   booking).
 - **2026-09-25** — Creppie mascot in UI states: build states through one component now, swap
   in mascot art (Lottie + PNG, 5 poses: loading / empty / error / offline / success) later.
-- **2026-09-26** — "Phone emulator" = Playwright + Expo web in an emulated Pixel 7 against local
-  Supabase (no KVM in the sandbox, so a real Android emulator can't run). Catches flow/UI/data
+- **2026-09-26** — "Phone emulator" = Playwright + Expo web in an emulated Pixel 7 **and iPhone 15
+  Pro** (both Chromium) against local Supabase (no KVM in the sandbox, so a real Android emulator can't run). Catches flow/UI/data
   bugs; native-only behaviour still needs a device build.
 - **2026-09-26** — Push is sent from Postgres via pg_net (no Edge Function to deploy). Permission
   is asked only after a booking, with an explainer first.
 - **2026-09-26** — Creppie art: background-removed cutouts of Geego's 5 renders (512px PNG);
   moods: scrubbing=loading, thumbs-up=success (+sign-in), shrug=empty, no-wifi=offline,
   slipping=error, waving at the door=sign-in (added same day).
+- **2026-09-26** — Live Supabase project `clean-crep-jamaica` (`gymchhmohcggvesrsupc`, us-east-1)
+  was found **paused** (free-tier inactivity pause) — which also meant Creppie's n8n dual-write
+  to Postgres was failing (Airtable copy unaffected). Restored with Geego's OK. EAS
+  `preview`/`production` now point at it (URL + publishable key; both public by design, RLS is
+  the security boundary). Live DB had 0001–0004 already (applied by hand: 6 services, 2 orders,
+  1 customer, 1 staff); **0005 push + 0006 security hardening applied** the same day via the
+  Supabase connector. Linter now clean except intended items (is_staff / push RPCs callable by
+  design; `service_aliases` read only by a definer function) and leaked-password protection.
+- **2026-09-26** — **Supabase Pro (US$25/mo) at launch** so the live DB never pauses; stay on
+  free while testing.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -90,12 +99,26 @@ _Last updated: 2026-09-26_
 5. **Send the Google Play support request** (if not already sent) and log the date + case number.
 6. ~7 days after sending with no answer → **enroll the individual developer account** and do the
    first internal-testing build.
-7. Stand up hosted Supabase (`supabase db push` applies 0001–0005, enable `pg_net`) + fill the
-   EAS production env, then `eas build -p android`.
+7. **Launch week: upgrade Supabase to Pro** (billing in the Supabase dashboard), turn on
+   **Auth → Leaked password protection**, then `eas build -p android --profile production`.
 8. Keep filtering app-growth transcripts as Geego sends them.
 9. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
 
+## Gotchas
+
+- **Live migration history ≠ repo numbering.** 0001–0004 were pasted into the SQL editor (no
+  history); 0005/0006 were recorded as `20260926221201` / `20260926221359`. Before ever running
+  `supabase db push` against the live project, run:
+  `supabase migration repair --status reverted 20260926221201 20260926221359` then
+  `supabase migration repair --status applied 0001 0002 0003 0004 0005 0006`.
+  (Or keep applying new migrations through the Supabase connector, one file at a time.)
+- The cloud sandbox's network proxy blocks direct HTTPS to `*.supabase.co`; use the Supabase
+  connector (MCP) for anything against the live project.
+
 ## Open Questions
+
+- Creppie orders that arrived while the DB was paused exist only in Airtable. Backfill them into
+  `orders` (one-off import) or accept the gap?
 
 - **Address mismatch**: registered address on the Google request is York Town P.A., Clarendon;
   the app README and landing page list the shop at Shop 19, Pristine Plaza, Half Way Tree,
