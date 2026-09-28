@@ -12,7 +12,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "e2e": "npm run e2e --workspace=apps/mobile --",
-    "postinstall": "patch-package"
+    "postinstall": "node scripts/postinstall.js"
   },
   "overrides": {
     "react": "19.1.0",
