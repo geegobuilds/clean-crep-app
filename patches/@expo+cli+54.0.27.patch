@@ -1,0 +1,100 @@
+diff --git a/node_modules/@expo/cli/build/src/start/doctor/apple/SimulatorAppPrerequisite.js b/node_modules/@expo/cli/build/src/start/doctor/apple/SimulatorAppPrerequisite.js
+index 886f915..8742d6a 100644
+--- a/node_modules/@expo/cli/build/src/start/doctor/apple/SimulatorAppPrerequisite.js
++++ b/node_modules/@expo/cli/build/src/start/doctor/apple/SimulatorAppPrerequisite.js
+@@ -86,6 +86,10 @@ const debug = require('debug')('expo:doctor:apple:simulatorApp');
+     try {
+         return (await (0, _osascript().execAsync)('id of app "Simulator"')).trim();
+     } catch  {
++        // [clean-crep patch] Xcode 27 replaced Simulator.app with Device Hub.
++        try {
++            return (await (0, _osascript().execAsync)('id of app id "com.apple.dt.Devices"')).trim();
++        } catch  {}
+     // This error may occur in CI where the user intends to install just the simulators but no
+     // Xcode, or when Simulator.app is not registered in LaunchServices (e.g. Xcode on an
+     // external or renamed volume).
+@@ -124,7 +128,7 @@ class SimulatorAppPrerequisite extends _Prerequisite.Prerequisite {
+             // This error may occur in CI where the users intends to install just the simulators but no Xcode.
+             throw new _Prerequisite.PrerequisiteCommandError('SIMULATOR_APP', "Can't determine id of Simulator app; the Simulator is most likely not installed on this machine. Run `sudo xcode-select -s /Applications/Xcode.app`");
+         }
+-        if (result !== 'com.apple.iphonesimulator' && result !== 'com.apple.CoreSimulator.SimulatorTrampoline') {
++        if (result !== 'com.apple.iphonesimulator' && result !== 'com.apple.CoreSimulator.SimulatorTrampoline' && result !== 'com.apple.dt.Devices') {
+             throw new _Prerequisite.PrerequisiteCommandError('SIMULATOR_APP', "Simulator is installed but is identified as '" + result + "'; don't know what that is.");
+         }
+         debug(`Simulator app id: ${result}`);
+diff --git a/node_modules/@expo/cli/build/src/start/platforms/ios/AppleDeviceManager.js b/node_modules/@expo/cli/build/src/start/platforms/ios/AppleDeviceManager.js
+index 725db8a..628af96 100644
+--- a/node_modules/@expo/cli/build/src/start/platforms/ios/AppleDeviceManager.js
++++ b/node_modules/@expo/cli/build/src/start/platforms/ios/AppleDeviceManager.js
+@@ -269,7 +269,8 @@ class AppleDeviceManager extends _DeviceManager.DeviceManager {
+     async activateWindowAsync() {
+         await (0, _ensureSimulatorAppRunning.ensureSimulatorAppRunningAsync)(this.device);
+         // TODO: Focus the individual window
+-        await _osascript().execAsync(`tell application "Simulator" to activate`);
++        // [clean-crep patch] by bundle id, so it works for Simulator.app and Xcode 27's Device Hub
++        await _osascript().execAsync(`tell application id "${await (0, _ensureSimulatorAppRunning.getSimulatorAppBundleIdAsync)()}" to activate`);
+     }
+     getExpoGoAppId() {
+         return EXPO_GO_BUNDLE_IDENTIFIER;
+diff --git a/node_modules/@expo/cli/build/src/start/platforms/ios/ensureSimulatorAppRunning.js b/node_modules/@expo/cli/build/src/start/platforms/ios/ensureSimulatorAppRunning.js
+index 31296bc..397d2b2 100644
+--- a/node_modules/@expo/cli/build/src/start/platforms/ios/ensureSimulatorAppRunning.js
++++ b/node_modules/@expo/cli/build/src/start/platforms/ios/ensureSimulatorAppRunning.js
+@@ -8,6 +8,32 @@ Object.defineProperty(exports, "ensureSimulatorAppRunningAsync", {
+         return ensureSimulatorAppRunningAsync;
+     }
+ });
++Object.defineProperty(exports, "getSimulatorAppBundleIdAsync", {
++    enumerable: true,
++    get: function() {
++        return getSimulatorAppBundleIdAsync;
++    }
++});
++// [clean-crep patch] Xcode 27 replaced Simulator.app with Device Hub (com.apple.dt.Devices).
++// Detect which one is installed: prefer the classic Simulator (Xcode <= 26), fall back to
++// Device Hub. `id of app` fails cleanly (no "Where is Simulator?" dialog) when missing.
++// Remove this patch when upgrading to Expo SDK 56+, which supports Device Hub natively.
++const DEVICE_HUB_BUNDLE_ID = 'com.apple.dt.Devices';
++let simulatorAppBundleIdPromise = null;
++function getSimulatorAppBundleIdAsync() {
++    if (!simulatorAppBundleIdPromise) {
++        simulatorAppBundleIdPromise = (async ()=>{
++            try {
++                return (await _osascript().execAsync('id of app "Simulator"')).trim();
++            } catch  {}
++            try {
++                return (await _osascript().execAsync(`id of app id "${DEVICE_HUB_BUNDLE_ID}"`)).trim();
++            } catch  {}
++            return 'com.apple.iphonesimulator';
++        })();
++    }
++    return simulatorAppBundleIdPromise;
++}
+ function _osascript() {
+     const data = /*#__PURE__*/ _interop_require_wildcard(require("@expo/osascript"));
+     _osascript = function() {
+@@ -95,7 +121,8 @@ async function waitForSimulatorAppToStart({ maxWaitTime } = {}) {
+ // I think the app can be open while no simulators are booted.
+ async function isSimulatorAppRunningAsync() {
+     try {
+-        const zeroMeansNo = (await _osascript().execAsync('tell app "System Events" to count processes whose name is "Simulator"')).trim();
++        const processFilter = await getSimulatorAppBundleIdAsync() === DEVICE_HUB_BUNDLE_ID ? `bundle identifier is "${DEVICE_HUB_BUNDLE_ID}"` : 'name is "Simulator"';
++        const zeroMeansNo = (await _osascript().execAsync(`tell app "System Events" to count processes whose ${processFilter}`)).trim();
+         if (zeroMeansNo === '0') {
+             return false;
+         }
+@@ -108,6 +135,14 @@ async function isSimulatorAppRunningAsync() {
+     return true;
+ }
+ async function openSimulatorAppAsync(device) {
++    if (await getSimulatorAppBundleIdAsync() === DEVICE_HUB_BUNDLE_ID) {
++        // Device Hub doesn't take -CurrentDeviceUDID; it reopens the last-used device.
++        await (0, _spawnasync().default)('open', [
++            '-b',
++            DEVICE_HUB_BUNDLE_ID
++        ]);
++        return;
++    }
+     const args = [
+         '-a',
+         'Simulator'
