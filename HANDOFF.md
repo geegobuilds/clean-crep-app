@@ -88,6 +88,9 @@ _Last updated: 2026-09-28_
   SDK 54 can't find → `patches/@expo+cli+54.0.27.patch` (patch-package, root `postinstall`)
   makes Expo use Simulator when present and fall back to Device Hub. Diagnosed + first patched
   by Cowork on the Mac; made Xcode 26/27-compatible and tested here.
+  Desktop launcher (Cowork-built, tested on the Mac): `scripts/mac/Clean Crep.command` —
+  auto-pulls, installs only on dependency changes, resets a lockfile-only local diff so pulls
+  can't be blocked.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
