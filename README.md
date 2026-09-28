@@ -83,6 +83,13 @@ Expo Go runs everything except remote push notifications (needs a development bu
 physical phone). Save a file and the simulator hot-reloads; `Shift+i` in the terminal picks a
 different iPhone model.
 
+**One-click launcher:** `scripts/mac/Clean Crep.command` pulls the latest code, runs
+`npm install` only when dependencies changed, then `npm run ios`. Copy it to the Desktop once
+(`cp ~/clean-crep-app/scripts/mac/"Clean Crep.command" ~/Desktop/`) and double-click it; it
+gives itself the Creppie icon on first run. If `package-lock.json` is the only local change
+(newer npm on the Mac reformats it), it resets that file before pulling so updates are never
+blocked; any other local change is left alone and it runs the code you already have.
+
 **Xcode 27 note:** Xcode 27 replaced Simulator.app with **Device Hub** (`com.apple.dt.Devices`),
 which Expo SDK 54's CLI doesn't know about ("Can't determine id of Simulator app"). The repo
 carries `patches/@expo+cli+54.0.27.patch`, applied automatically by `patch-package` on every
