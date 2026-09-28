@@ -63,6 +63,35 @@ To get into the **operator dashboard** (`/staff/login`), a user needs a row in t
 table — there's no self-service staff signup by design. Create one via Studio: sign up (or use
 an existing) user in Auth, then insert a row into `public.staff` with that same `id`.
 
+## Running on the iOS Simulator (Mac)
+
+Needs a Mac with Xcode (App Store) and Node 20+ (the nodejs.org LTS installer is easiest).
+Run each command on its own line — zsh doesn't treat `#` comments as comments when pasted.
+
+```bash
+git clone https://github.com/geegobuilds/clean-crep-app.git
+cd clean-crep-app
+npm install
+printf 'EXPO_PUBLIC_SUPABASE_URL=https://gymchhmohcggvesrsupc.supabase.co\nEXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_90XcuZ2VMzSIJRX_jFUlGw_tmIkZM4L\n' > apps/mobile/.env
+cd apps/mobile
+npm run ios
+```
+
+That points the app at the **live** Supabase project (URL + publishable key are public by
+design) — test accounts/bookings land in the real dashboard, so use a `+test` email.
+Expo Go runs everything except remote push notifications (needs a development build + a
+physical phone). Save a file and the simulator hot-reloads; `Shift+i` in the terminal picks a
+different iPhone model.
+
+**Xcode 27 note:** Xcode 27 replaced Simulator.app with **Device Hub** (`com.apple.dt.Devices`),
+which Expo SDK 54's CLI doesn't know about ("Can't determine id of Simulator app"). The repo
+carries `patches/@expo+cli+54.0.27.patch`, applied automatically by `patch-package` on every
+`npm install`: it uses the classic Simulator when present (Xcode ≤ 26) and falls back to Device
+Hub. With Device Hub, Expo can't pick the device — it opens whichever one you last booted
+(boot one first from Xcode → Open Developer Tool if needed). **Delete the patch when upgrading
+to Expo SDK 56+**, which supports Device Hub natively (patch-package will error on the version
+mismatch as a reminder).
+
 ## Automated phone checks (`npm run e2e`)
 
 `npm run e2e` runs the customer app's core journeys on **two emulated phones — a Pixel 7 and

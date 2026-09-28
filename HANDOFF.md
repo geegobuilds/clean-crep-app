@@ -4,7 +4,7 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-09-26_
+_Last updated: 2026-09-28_
 
 ## Current Status
 
@@ -82,6 +82,12 @@ _Last updated: 2026-09-26_
   design; `service_aliases` read only by a definer function) and leaked-password protection.
 - **2026-09-26** — **Supabase Pro (US$25/mo) at launch** so the live DB never pauses; stay on
   free while testing.
+- **2026-09-28** — Geego has a **MacBook Air with Xcode 27**; the app runs in the iOS Simulator
+  (iPhone 18 Pro Max, iOS 27) via Expo Go against the live Supabase. Setup steps in README
+  ("Running on the iOS Simulator"). Xcode 27 replaced Simulator.app with Device Hub, which Expo
+  SDK 54 can't find → `patches/@expo+cli+54.0.27.patch` (patch-package, root `postinstall`)
+  makes Expo use Simulator when present and fall back to Device Hub. Diagnosed + first patched
+  by Cowork on the Mac; made Xcode 26/27-compatible and tested here.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -105,6 +111,12 @@ _Last updated: 2026-09-26_
 9. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
 
 ## Gotchas
+
+- **Expo SDK 54 + Xcode 27:** relies on `patches/@expo+cli+54.0.27.patch`. When upgrading Expo
+  (SDK 56+ supports Device Hub natively) delete the patch — patch-package fails the install on
+  a version mismatch as a reminder. Dev builds on iOS 27 may also need the UIKit scene lifecycle
+  change (SDK 54–56); check before the first `eas build -p ios`.
+- On a Mac, zsh doesn't treat pasted `# comments` as comments — keep commands comment-free.
 
 - **Live migration history ≠ repo numbering.** 0001–0004 were pasted into the SQL editor (no
   history); 0005/0006 were recorded as `20260926221201` / `20260926221359`. Before ever running

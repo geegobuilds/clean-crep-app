@@ -11,10 +11,14 @@
     "web": "npm run dev --workspace=apps/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "e2e": "npm run e2e --workspace=apps/mobile --"
+    "e2e": "npm run e2e --workspace=apps/mobile --",
+    "postinstall": "node scripts/postinstall.js"
   },
   "overrides": {
     "react": "19.1.0",
     "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "patch-package": "^8.0.1"
   }
 }
