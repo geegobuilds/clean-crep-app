@@ -70,7 +70,6 @@ _Last updated: 2026-09-30_
 | --- | --- | --- |
 | Google Play Console **organization** verification needs a D-U-N-S number; Dun & Bradstreet doesn't issue them in Jamaica. | Geego | Google Play support reply to our request for an alternative verification method (support request drafted, approved, cleared to send). |
 | Push delivery on real phones | Geego | `eas init` (writes the EAS projectId into app.json), a Firebase project + `google-services.json` for Android (FCM), and the FCM V1 key uploaded to EAS. Until then the app skips push registration. |
-| **cleancrep.com is down: domain suspended by Namecheap** (2026-09-30) for an unverified registrant contact email; nameservers now point to Namecheap's verification holding page, so the site "refuses to connect". Vercel itself is fine: clean-crep-app-web.vercel.app works. | Geego | Namecheap → Domain List → cleancrep.com → resend/verify contact email (fix the address if wrong) → confirm nameservers point back to Vercel. Use the vercel.app link in bios meanwhile. |
 | Apple App Store release | Geego | Apple Developer enrollment ($99/yr) — not started as far as the repo shows. |
 
 ## Decisions Made
@@ -134,8 +133,11 @@ _Last updated: 2026-09-30_
   the dashboard (5).
 - **2026-09-30** — Creppie drop-off date verified on a real IG booking ("Friday" → 2026-10-02).
   Seen in the same test: Creppie skipped the Sole Refresh upsell and didn't repeat the drop-off
-  day back to the customer — prompt tweak proposed (offer the add-on once per booking before
-  the summary; include the day in the summary).
+  day back — fixed and published the same day (see below).
+- **2026-09-30** — cleancrep.com was suspended by Namecheap (unverified registrant email);
+  Geego verified it the same day and it's back on Vercel. Creppie upsell fix published: add-on
+  offered once per booking (inside the summary if the customer is ready), and the summary always
+  states the drop-off / pickup day (n8n `Prompt Tweaks` step; previous version `79f3836c`).
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
