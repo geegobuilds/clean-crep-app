@@ -35,7 +35,9 @@ _Last updated: 2026-09-30_
   Sole Refresh / 2 kits and charges the J$1,000 pickup fee, priced by the database (migration
   `0007_add_ons.sql`, **applied to live** the same day). Landing page has an "Ask Creppie" chat
   bubble (his face; waving upper body greets you inside) relayed to the n8n Creppie webhook;
-  dark until `CREPPIE_WEBHOOK_URL` is set on Vercel.
+  dark until `CREPPIE_WEBHOOK_URL` is set on Vercel. **"Need help?" nudge** (PR open): once per
+  visit, context copy for Services / Location, face bounces; snoozed 7 days after ✕, never shown
+  to someone who has chatted.
 - **Creppie dual-write is live**: the n8n workflow (`clean-crep-systems/creppie.json`) writes
   WhatsApp/IG bookings to Airtable _and_ to this app's `orders` table as guest orders
   (`source = 'creppie'`). The two Postgres nodes live only in n8n, not in either repo.
