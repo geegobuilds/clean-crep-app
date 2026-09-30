@@ -48,7 +48,10 @@ _Last updated: 2026-09-30_
   (`UjdxjuN7UPPNs3D7`, exported to `clean-crep-systems/creppie.json`) reads prices, zones, open
   orders and chat history from this database and writes bookings to `orders` — no Airtable calls.
   2.9.0 and the Airtable prune job are off; chat pruning is a pg_cron job (0009). Website chat
-  messages (`web-*`) get their reply in the webhook response (draft published per Geego's OK).
+  messages (`web-*`) get their reply in the webhook response (published 2026-09-30 with Geego's OK;
+  previous version `3a30baad` to roll back to). **Proven end to end 2026-09-30**: an Instagram test
+  booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Known quirk: a
+  drop-off booked "for tomorrow" was stored with today's `scheduled_date`.
 - **Staff login has "Forgot password?"** (2026-09-30) — emails a reset link to the staff address.
   The only staff account is `walkergiovani+ccjsmoketest@gmail.com` (a leftover test alias);
   create a proper shop login before hiring.
@@ -66,7 +69,6 @@ _Last updated: 2026-09-30_
 | --- | --- | --- |
 | Google Play Console **organization** verification needs a D-U-N-S number; Dun & Bradstreet doesn't issue them in Jamaica. | Geego | Google Play support reply to our request for an alternative verification method (support request drafted, approved, cleared to send). |
 | Push delivery on real phones | Geego | `eas init` (writes the EAS projectId into app.json), a Firebase project + `google-services.json` for Android (FCM), and the FCM V1 key uploaded to EAS. Until then the app skips push registration. |
-| **Creppie 3.0 not yet proven end to end**: only 1 Creppie order has ever reached `orders` (2026-09-08). | Geego | One real test booking on Instagram → confirm it shows in the staff dashboard with extras; then switch on the website chat (`CREPPIE_WEBHOOK_URL` on Vercel). |
 | Apple App Store release | Geego | Apple Developer enrollment ($99/yr) — not started as far as the repo shows. |
 
 ## Decisions Made
@@ -153,11 +155,11 @@ _Last updated: 2026-09-30_
       `airtable_id` columns (0010) make the copy re-runnable.
    5. Prices & Zones page in the staff dashboard (edit services / add_ons / zones), then
       downgrade Airtable.
-   6. Real Instagram test booking → dashboard; then the website chat go-live below.
+   6. ~~Real Instagram test booking → dashboard~~ (passed 2026-09-30); website chat go-live below.
 10. Revisit prices in `services` + `add_ons` (Supabase table editor; the app reads them live).
     Sole Refresh is both a service and a J$1,500 add-on (live price J$1,500 on both; Creppie
     only quotes the add-on) — decide whether the app should keep offering it standalone.
-11. **Website chat go-live** (after the Instagram test booking in 9.6): add `CREPPIE_WEBHOOK_URL` in Vercel →
+11. **Website chat go-live** (ready — Instagram test passed): add `CREPPIE_WEBHOOK_URL` in Vercel →
     Production env, redeploy, test one chat + one booking end to end.
 12. **Club pilot**: finalise the offer, sell 10 memberships on WhatsApp.
 13. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
