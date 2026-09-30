@@ -50,8 +50,9 @@ _Last updated: 2026-09-30_
   2.9.0 and the Airtable prune job are off; chat pruning is a pg_cron job (0009). Website chat
   messages (`web-*`) get their reply in the webhook response (published 2026-09-30 with Geego's OK;
   previous version `3a30baad` to roll back to). **Proven end to end 2026-09-30**: an Instagram test
-  booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Known quirk: a
-  drop-off booked "for tomorrow" was stored with today's `scheduled_date`.
+  booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
+  fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
+  `Pick Scheduled Date`); blank or odd dates fall back to today.
 - **Staff login has "Forgot password?"** (2026-09-30) — emails a reset link to the staff address.
   The only staff account is `walkergiovani+ccjsmoketest@gmail.com` (a leftover test alias);
   create a proper shop login before hiring.
@@ -69,6 +70,7 @@ _Last updated: 2026-09-30_
 | --- | --- | --- |
 | Google Play Console **organization** verification needs a D-U-N-S number; Dun & Bradstreet doesn't issue them in Jamaica. | Geego | Google Play support reply to our request for an alternative verification method (support request drafted, approved, cleared to send). |
 | Push delivery on real phones | Geego | `eas init` (writes the EAS projectId into app.json), a Firebase project + `google-services.json` for Android (FCM), and the FCM V1 key uploaded to EAS. Until then the app skips push registration. |
+| **cleancrep.com is down: domain suspended by Namecheap** (2026-09-30) for an unverified registrant contact email; nameservers now point to Namecheap's verification holding page, so the site "refuses to connect". Vercel itself is fine: clean-crep-app-web.vercel.app works. | Geego | Namecheap → Domain List → cleancrep.com → resend/verify contact email (fix the address if wrong) → confirm nameservers point back to Vercel. Use the vercel.app link in bios meanwhile. |
 | Apple App Store release | Geego | Apple Developer enrollment ($99/yr) — not started as far as the repo shows. |
 
 ## Decisions Made
@@ -130,6 +132,10 @@ _Last updated: 2026-09-30_
   Supabase is the single source of truth for prices, zones, orders and chats. Still to do before
   dropping Airtable entirely: import historical Airtable orders (4) and a Prices & Zones editor in
   the dashboard (5).
+- **2026-09-30** — Creppie drop-off date verified on a real IG booking ("Friday" → 2026-10-02).
+  Seen in the same test: Creppie skipped the Sole Refresh upsell and didn't repeat the drop-off
+  day back to the customer — prompt tweak proposed (offer the add-on once per booking before
+  the summary; include the day in the summary).
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -159,7 +165,8 @@ _Last updated: 2026-09-30_
 10. Revisit prices in `services` + `add_ons` (Supabase table editor; the app reads them live).
     Sole Refresh is both a service and a J$1,500 add-on (live price J$1,500 on both; Creppie
     only quotes the add-on) — decide whether the app should keep offering it standalone.
-11. **Website chat go-live** (ready — Instagram test passed): add `CREPPIE_WEBHOOK_URL` in Vercel →
+11. ~~**Website chat go-live**~~ — live 2026-09-30 (`CREPPIE_WEBHOOK_URL` set on Vercel Production;
+    tested on clean-crep-app-web.vercel.app). Was: add `CREPPIE_WEBHOOK_URL` in Vercel →
     Production env, redeploy, test one chat + one booking end to end.
 12. **Club pilot**: finalise the offer, sell 10 memberships on WhatsApp.
 13. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
