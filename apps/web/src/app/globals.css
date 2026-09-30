@@ -261,6 +261,12 @@ footer { background: var(--navy); padding: clamp(40px, 5vw, 60px) clamp(20px, 5v
   flex: 1; overflow-y: auto; padding: 16px 14px;
   display: flex; flex-direction: column; gap: 8px; background: var(--offwhite);
 }
+.creppie-hello { align-self: center; margin: 4px 0 2px; }
+.creppie-hello img {
+  display: block; width: 138px; height: 120px; animation: creppie-wave-in 500ms ease-out both;
+  -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent); mask-image: linear-gradient(to bottom, #000 78%, transparent);
+}
+@keyframes creppie-wave-in { from { opacity: 0; transform: translateY(10px) scale(0.92); } to { opacity: 1; transform: none; } }
 .creppie-msg {
   max-width: 85%; padding: 10px 13px; border-radius: 14px;
   font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere;

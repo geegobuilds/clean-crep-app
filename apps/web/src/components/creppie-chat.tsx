@@ -129,6 +129,9 @@ export function CreppieChat() {
           </div>
 
           <div className="creppie-list" ref={listRef}>
+            <div className="creppie-hello">
+              <Image src="/assets/creppie-wave-upper.png" alt="Creppie waving" width={138} height={120} priority />
+            </div>
             <div className="creppie-msg creppie">{GREETING}</div>
             {msgs.map((m, i) => (
               <div key={i} className={`creppie-msg ${m.role}`}>
