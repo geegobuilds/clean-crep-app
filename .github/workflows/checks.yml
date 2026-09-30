@@ -1,0 +1,53 @@
+# Runs on every PR and every push to main. A red check means don't merge.
+#   quick  — typecheck + lint for mobile, web and shared (~2 min)
+#   phones — the `npm run e2e` journeys on an emulated Pixel 7 + iPhone 15 Pro
+#            against a throwaway local Supabase (Docker), same as locally (~10 min)
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quick:
+    name: Typecheck + lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+
+  phones:
+    name: Phone checks (Pixel 7 + iPhone 15 Pro)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium for Playwright
+        working-directory: apps/mobile
+        run: npx playwright install --with-deps chromium
+      - name: Run phone checks
+        run: npm run e2e
+      - name: Keep failure screenshots + traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phone-check-failures
+          path: apps/mobile/e2e/.results
+          retention-days: 7
