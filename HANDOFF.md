@@ -128,13 +128,13 @@ _Last updated: 2026-09-30_
 7. **Launch week: upgrade Supabase to Pro** (billing in the Supabase dashboard), turn on
    **Auth → Leaked password protection**, then `eas build -p android --profile production`.
 8. Keep filtering app-growth transcripts as Geego sends them.
-10. **At merge of the add-ons PR**: apply `0007_add_ons.sql` to live (Supabase connector), then
+9. **At merge of the add-ons PR**: apply `0007_add_ons.sql` to live (Supabase connector), then
     pull on the Mac. Revisit prices in `services` + `add_ons` (Sole Refresh is both a
     quote-priced service and a J$1,500 add-on — pick one).
-11. **Website chat go-live** (after the Airtable fix): add `CREPPIE_WEBHOOK_URL` in Vercel →
+10. **Website chat go-live** (after the Airtable fix): add `CREPPIE_WEBHOOK_URL` in Vercel →
     Production env, redeploy, test one chat + one booking end to end.
-12. **Club pilot**: finalise the offer, sell 10 memberships on WhatsApp.
-9. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
+11. **Club pilot**: finalise the offer, sell 10 memberships on WhatsApp.
+12. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
 
 ## Gotchas
 
