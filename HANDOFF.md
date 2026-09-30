@@ -50,8 +50,9 @@ _Last updated: 2026-09-30_
   2.9.0 and the Airtable prune job are off; chat pruning is a pg_cron job (0009). Website chat
   messages (`web-*`) get their reply in the webhook response (published 2026-09-30 with Geego's OK;
   previous version `3a30baad` to roll back to). **Proven end to end 2026-09-30**: an Instagram test
-  booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Known quirk: a
-  drop-off booked "for tomorrow" was stored with today's `scheduled_date`.
+  booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
+  fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
+  `Pick Scheduled Date`); blank or odd dates fall back to today.
 - **Staff login has "Forgot password?"** (2026-09-30) — emails a reset link to the staff address.
   The only staff account is `walkergiovani+ccjsmoketest@gmail.com` (a leftover test alias);
   create a proper shop login before hiring.
