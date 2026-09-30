@@ -120,3 +120,37 @@ test('after a completed order, Home asks once for a Google review', async ({ pag
   await expect(text(page, 'ACTIVE ORDERS', false)).toBeVisible();
   await expect(text(page, 'How did your AF1 Triple White come out?', false)).toHaveCount(0);
 });
+
+test('the database, not the phone, prices an app order', async () => {
+  dbOnly();
+  const c = newCustomer();
+  const { userId, accessToken } = await apiSignUp(c);
+  await asUser(accessToken, 'customers', { method: 'POST', body: { id: userId, name: c.name, email: c.email } });
+  const [service] = (await asUser(accessToken, 'services?select=id,location_id,currency&name=eq.Sneaker%20Clean')).body;
+  const addOns: { id: string; slug: string }[] = (await asUser(accessToken, 'add_ons?select=id,slug')).body;
+  const bySlug = (s: string) => addOns.find((a) => a.slug === s)!.id;
+
+  // A tampered request: J$1 price, a pre-completed status (would farm loyalty
+  // points), the pickup fee smuggled in on a drop-off, and a made-up add-on.
+  const order = await asUser(accessToken, 'orders', {
+    method: 'POST',
+    body: {
+      customer_id: userId,
+      service_id: service.id,
+      location_id: service.location_id,
+      item_name: 'Tamper test',
+      drop_method: 'dropoff',
+      scheduled_date: new Date().toISOString().slice(0, 10),
+      price_cents: 100,
+      status: 'completed',
+      currency: service.currency,
+      add_ons: [{ id: bySlug('sole-refresh') }, { id: bySlug('pickup-delivery') }, { id: '00000000-0000-0000-0000-000000000000' }],
+    },
+  });
+  expect(order.status).toBe(201);
+  const row = order.body[0];
+  expect(row.price_cents).toBe(200000 + 150000);
+  expect(row.status).toBe('received');
+  expect(row.add_ons.map((a: { name: string }) => a.name)).toEqual(['Sole Refresh']);
+  expect(sql(`select loyalty_points from customers where id = '${userId}'`)).toBe('0');
+});

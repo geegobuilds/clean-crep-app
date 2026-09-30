@@ -48,6 +48,35 @@ export interface Service {
   currency: string; // ISO 4217, e.g. "JMD"
 }
 
+export type AddOnKind = 'addon' | 'kit' | 'delivery';
+
+// An extra sold with a clean: a service add-on (Deep Clean), a Crep Care
+// kit (collected at the shop), or the pickup fee (applied automatically
+// when the customer picks Pickup — never chosen directly).
+export interface AddOn {
+  id: string;
+  slug: string;
+  name: string;
+  kind: AddOnKind;
+  price_cents: number | null; // null => priced on inspection
+  description: string;
+  active: boolean;
+  sort_order: number;
+}
+
+/** An add-on as frozen onto an order at booking time. */
+export type OrderAddOn = Pick<AddOn, 'id' | 'name' | 'kind' | 'price_cents'>;
+
+/**
+ * Mirrors the database's price_app_order() so the phone can show the total
+ * the server will charge: service + picked extras + the pickup fee when
+ * picking up. Null (= Quote) when the service is priced on inspection.
+ */
+export function orderTotal(servicePriceCents: number | null, extras: Pick<AddOn, 'price_cents'>[]): number | null {
+  if (servicePriceCents === null) return null;
+  return extras.reduce((sum, a) => sum + (a.price_cents ?? 0), servicePriceCents);
+}
+
 export type OrderSource = 'app' | 'creppie';
 
 export interface Order {
@@ -66,7 +95,8 @@ export interface Order {
   drop_method: DropMethod;
   scheduled_date: string; // ISO date
   notes: string | null;
-  price_cents: number | null;
+  price_cents: number | null; // total incl. add_ons (server-computed for app orders)
+  add_ons: OrderAddOn[];
   currency: string; // ISO 4217, copied from the service at booking time
   source: OrderSource;
   external_ref: string | null; // Airtable record id, for Creppie-sourced orders

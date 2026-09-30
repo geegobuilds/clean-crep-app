@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, formatPrice, type Service } from '@clean-crep/shared';
+import { colors, formatPrice, orderTotal, type AddOn, type Service } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
 import { useServices } from '@/hooks/use-services';
+import { useAddOns } from '@/hooks/use-add-ons';
 import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { SignInForm } from '@/components/sign-in-form';
@@ -28,6 +29,8 @@ export default function BookingScreen() {
   const { services, loading: servicesLoading, error: servicesError, reload: reloadServices } = useServices();
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [selected, setSelected] = useState<Service | null>(null);
+  const addOns = useAddOns();
+  const [picked, setPicked] = useState<string[]>([]);
   const [dropoff, setDropoff] = useState(true);
   const [selDay, setSelDay] = useState(0);
   const [notes, setNotes] = useState('');
@@ -52,6 +55,19 @@ export default function BookingScreen() {
       };
     });
   }, []);
+
+  // Extras the customer ticked, plus the pickup fee when picking up — the
+  // same rule the database applies in price_app_order().
+  const pickable = addOns.filter((a) => a.kind !== 'delivery');
+  const pickupFee = addOns.find((a) => a.kind === 'delivery') ?? null;
+  const extras = pickable.filter((a) => picked.includes(a.id));
+  const charged: AddOn[] = [...extras, ...(!dropoff && pickupFee ? [pickupFee] : [])];
+  const total = selected ? orderTotal(selected.price_cents, charged) : null;
+  const hasKit = extras.some((a) => a.kind === 'kit');
+
+  function togglePick(id: string) {
+    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  }
 
   function confirmBooking() {
     if (!selected) return;
@@ -83,7 +99,10 @@ export default function BookingScreen() {
       drop_method: dropoff ? 'dropoff' : 'pickup',
       scheduled_date: days[selDay].iso,
       notes: notes || null,
-      price_cents: selected.price_cents,
+      // The database re-prices this from add_ons + drop_method; sent for
+      // older schemas only.
+      add_ons: extras.map((a) => ({ id: a.id })),
+      price_cents: total,
       currency: selected.currency,
     });
     setSubmitting(false);
@@ -97,6 +116,7 @@ export default function BookingScreen() {
   function resetAndGoHome() {
     setStep(0);
     setSelected(null);
+    setPicked([]);
     setShoeType('');
     setNotes('');
     router.push('/');
@@ -113,11 +133,11 @@ export default function BookingScreen() {
           <Text style={{ fontSize: 22, fontFamily: 'DMSans_500Medium', color: colors.navy, marginBottom: 4 }}>You&apos;re booked.</Text>
           <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue, marginBottom: 8 }}>{MOODS.success.title}</Text>
           <Text style={{ fontSize: 13, color: colors.caption, lineHeight: 20, marginBottom: 24, textAlign: 'center', fontFamily: 'DMSans_400Regular' }}>
-            Bring in your {selected?.name === 'Clarks Clean' ? 'Clarks' : 'creps'} on{' '}
+            {dropoff ? 'Bring in' : "We'll link you on WhatsApp to collect"} your {selected?.name === 'Clarks Clean' ? 'Clarks' : 'creps'} on{' '}
             <Text style={{ color: colors.navy, fontFamily: 'DMSans_500Medium' }}>
               {days[selDay].short} {days[selDay].num}
             </Text>
-            .{'\n'}Shop 19, Pristine Plaza, Half Way Tree.
+            .{dropoff ? '\nShop 19, Pristine Plaza, Half Way Tree.' : ''}
           </Text>
 
           <PushOffer />
@@ -131,7 +151,9 @@ export default function BookingScreen() {
               ['Shoe Type', shoeType || '—'],
               ['Drop-off', dropoff ? 'In-store drop-off' : 'Pickup requested'],
               ['Date', `${days[selDay].short} ${days[selDay].num} ${days[selDay].month}`],
-              ['Price', selected ? formatPrice(selected.price_cents) : '—'],
+              [selected?.name ?? 'Service', selected ? formatPrice(selected.price_cents) : '—'],
+              ...charged.map((a) => [a.name, a.price_cents === null ? 'On inspection' : `+${formatPrice(a.price_cents)}`]),
+              ['Total', formatPrice(total)],
             ].map(([k, v]) => (
               <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text style={{ fontSize: 12, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>{k}</Text>
@@ -141,6 +163,7 @@ export default function BookingScreen() {
             <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
             <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>
               Payment on drop-off. Cash & transfer accepted.
+              {hasKit ? ' Kits are paid for and collected at the shop.' : ''}
             </Text>
           </View>
 
@@ -200,10 +223,14 @@ export default function BookingScreen() {
                 >
                   <Text style={{ fontSize: 13, fontFamily: dropoff === opt.val ? 'DMSans_500Medium' : 'DMSans_400Regular', color: dropoff === opt.val ? colors.navy : colors.caption }}>
                     {opt.label}
+                    {!opt.val && pickupFee?.price_cents ? ` +${formatPrice(pickupFee.price_cents)}` : ''}
                   </Text>
                 </Pressable>
               ))}
             </View>
+            {!dropoff && pickupFee && (
+              <Text style={{ fontSize: 11, color: colors.caption, marginTop: 6, fontFamily: 'DMSans_400Regular' }}>{pickupFee.description}</Text>
+            )}
           </View>
 
           <View>
@@ -230,6 +257,22 @@ export default function BookingScreen() {
             </ScrollView>
           </View>
 
+          {pickable.length > 0 && (
+            <View>
+              <Label>LEVEL IT UP</Label>
+              <View style={{ gap: 8 }}>
+                {pickable.map((a) => (
+                  <AddOnRow key={a.id} addOn={a} on={picked.includes(a.id)} onPress={() => togglePick(a.id)} />
+                ))}
+              </View>
+              {hasKit && (
+                <Text style={{ fontSize: 11, color: colors.caption, marginTop: 6, fontFamily: 'DMSans_400Regular' }}>
+                  Kits are paid for and collected at the shop. We&apos;ll confirm stock when you drop off.
+                </Text>
+              )}
+            </View>
+          )}
+
           <View>
             <Label>NOTES (OPTIONAL)</Label>
             <TextInput
@@ -251,6 +294,11 @@ export default function BookingScreen() {
               </Pressable>
             </View>
           )}
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Text style={{ fontSize: 12, color: colors.caption, fontFamily: 'DMSans_500Medium', letterSpacing: 1.5 }}>TOTAL</Text>
+            <Text style={{ fontSize: 20, color: colors.navy, fontFamily: 'DMSans_500Medium' }}>{formatPrice(total)}</Text>
+          </View>
 
           <Pressable
             onPress={confirmBooking}
@@ -359,6 +407,53 @@ function Header({ title, onBack }: { title: string; onBack: () => void }) {
       </Pressable>
       <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.navy }}>{title}</Text>
     </View>
+  );
+}
+
+function AddOnRow({ addOn, on, onPress }: { addOn: AddOn; on: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: on }}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        backgroundColor: on ? colors.ice : colors.white,
+        borderWidth: on ? 1.5 : 1,
+        borderColor: on ? colors.blue : colors.border,
+        borderRadius: 10,
+        padding: 12,
+      }}
+    >
+      <View
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: 5,
+          borderWidth: 1.5,
+          borderColor: on ? colors.blue : colors.border,
+          backgroundColor: on ? colors.blue : colors.white,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {on && <Icon name="check" size={12} color={colors.white} />}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.navy }}>
+          {addOn.name}
+          {addOn.kind === 'kit' ? '  ·  Kit' : ''}
+        </Text>
+        {!!addOn.description && (
+          <Text style={{ fontSize: 11, color: colors.caption, marginTop: 2, fontFamily: 'DMSans_400Regular' }}>{addOn.description}</Text>
+        )}
+      </View>
+      <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue }}>
+        {addOn.price_cents === null ? 'Quote' : `+${formatPrice(addOn.price_cents)}`}
+      </Text>
+    </Pressable>
   );
 }
 
