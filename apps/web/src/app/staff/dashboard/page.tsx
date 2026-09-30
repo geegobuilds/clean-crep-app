@@ -32,6 +32,13 @@ function contactPhone(order: OrderRow): string | null {
   return order.customer?.phone ?? order.guest_phone ?? null;
 }
 
+// App orders carry what was sold as `add_ons` (priced by the database);
+// kits are the ones staff need to pull from stock at drop-off.
+function extrasLabel(order: OrderRow): string | null {
+  const names = (order.add_ons ?? []).map((a) => (a.kind === 'kit' ? `${a.name} (kit)` : a.name));
+  return names.length ? `+ ${names.join(', ')}` : null;
+}
+
 const td: React.CSSProperties = { padding: '12px 16px', borderBottom: `1px solid ${colors.border}`, verticalAlign: 'middle' };
 
 export default function DashboardPage() {
@@ -251,6 +258,7 @@ function OrderRowView({
         </td>
         <td style={td}>
           <div style={{ fontSize: 12, fontWeight: 500, color: colors.navy }}>{order.item_name}</div>
+          {extrasLabel(order) && <div style={{ fontSize: 10, color: colors.blue, marginTop: 2 }}>{extrasLabel(order)}</div>}
           <div style={{ fontSize: 10, color: colors.caption, marginTop: 2 }}>
             {contactName(order)}
             {order.source === 'creppie' && (
@@ -283,6 +291,15 @@ function OrderRowView({
               <div>
                 <div style={{ fontSize: 9, color: colors.caption, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 500, marginBottom: 4 }}>CONTACT</div>
                 <div style={{ fontSize: 11, color: colors.navy }}>{contactPhone(order) ?? '—'}</div>
+              </div>
+              <div style={{ width: 1, height: 32, background: colors.border }} />
+              <div>
+                <div style={{ fontSize: 9, color: colors.caption, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 500, marginBottom: 4 }}>
+                  {order.drop_method === 'pickup' ? 'PICKUP' : 'DROP-OFF'}
+                </div>
+                <div style={{ fontSize: 11, color: colors.navy }}>
+                  {new Date(`${order.scheduled_date}T00:00:00`).toLocaleDateString('en-JM', { weekday: 'short', month: 'short', day: 'numeric' })}
+                </div>
               </div>
               <div style={{ width: 1, height: 32, background: colors.border }} />
               <div>

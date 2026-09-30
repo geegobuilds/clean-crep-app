@@ -160,3 +160,39 @@ test('a server error (not offline) shows the error mascot with Creppie copy', as
   await expectNoRawErrors(page);
   await shot(page, '13-server-error');
 });
+
+test('booking with extras + pickup: live total, and the database charges the same', async ({ page }) => {
+  const c = newCustomer();
+  await page.goto('/');
+  await fillBookingDetails(page, 'Sneaker Clean', 'Dunk Low Panda');
+  await expect(text(page, 'LEVEL IT UP', false)).toBeVisible();
+
+  await text(page, 'Deep Clean Upgrade', false).click();
+  await text(page, 'Suede Revive Kit', false).click();
+  await text(page, /^Pickup/).click();
+  // $2,000 + $1,000 deep clean + $4,000 kit + $1,000 pickup
+  await expect(text(page, '$8,000')).toBeVisible();
+  await expect(text(page, /We'll confirm stock/, false)).toBeVisible();
+  await shot(page, '13-add-ons');
+
+  await text(page, 'Confirm Booking').click();
+  await text(page, "Don't have an account? Sign up", false).click();
+  await placeholder(page, 'Geego').fill(c.name);
+  await placeholder(page, 'you@email.com').fill(c.email);
+  await placeholder(page, '••••••••').fill(c.password);
+  await text(page, 'Create Account').click();
+
+  await expect(text(page, "You're booked.", false)).toBeVisible();
+  await expect(text(page, 'Pickup & Delivery', false)).toBeVisible();
+  await expect(text(page, '$8,000')).toBeVisible();
+  await shot(page, '14-booked-with-extras');
+
+  const [customer] = await adminSelect<{ id: string }>('customers', `email=eq.${encodeURIComponent(c.email)}&select=id`);
+  const [order] = await adminSelect<{ price_cents: number; drop_method: string; add_ons: { name: string; kind: string }[] }>(
+    'orders',
+    `customer_id=eq.${customer.id}&select=price_cents,drop_method,add_ons`
+  );
+  expect(order.price_cents).toBe(800000);
+  expect(order.drop_method).toBe('pickup');
+  expect(order.add_ons.map((a) => a.name)).toEqual(['Deep Clean Upgrade', 'Suede Revive Kit', 'Pickup & Delivery']);
+});
