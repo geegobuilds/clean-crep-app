@@ -44,6 +44,14 @@ _Last updated: 2026-09-30_
   only when something's wrong): live DB status, uncollected/stale orders, Creppie sync
   freshness, new security advisors. Needs the Supabase connector attached in the routine's
   settings (couldn't be attached from the session).
+- **Creppie 3.0 is live on Supabase (2026-09-30)**: n8n workflow "Creppie 3.0 (Supabase)"
+  (`UjdxjuN7UPPNs3D7`, exported to `clean-crep-systems/creppie.json`) reads prices, zones, open
+  orders and chat history from this database and writes bookings to `orders` — no Airtable calls.
+  2.9.0 and the Airtable prune job are off; chat pruning is a pg_cron job (0009). Website chat
+  messages (`web-*`) get their reply in the webhook response (draft published per Geego's OK).
+- **Staff login has "Forgot password?"** (2026-09-30) — emails a reset link to the staff address.
+  The only staff account is `walkergiovani+ccjsmoketest@gmail.com` (a leftover test alias);
+  create a proper shop login before hiring.
 - **Creppie dual-write is live**: the n8n workflow (`clean-crep-systems/creppie.json`) writes
   WhatsApp/IG bookings to Airtable _and_ to this app's `orders` table as guest orders
   (`source = 'creppie'`). The two Postgres nodes live only in n8n, not in either repo.
@@ -58,8 +66,7 @@ _Last updated: 2026-09-30_
 | --- | --- | --- |
 | Google Play Console **organization** verification needs a D-U-N-S number; Dun & Bradstreet doesn't issue them in Jamaica. | Geego | Google Play support reply to our request for an alternative verification method (support request drafted, approved, cleared to send). |
 | Push delivery on real phones | Geego | `eas init` (writes the EAS projectId into app.json), a Firebase project + `google-services.json` for Android (FCM), and the FCM V1 key uploaded to EAS. Until then the app skips push registration. |
-| **Airtable free-plan API limit** — CCJ workspace used 2,957 / 1,000 calls in September (Cowork report 2026-09-30); Creppie costs ~6–8 calls per customer message. Creppie still replying for now. Lab OS moved to its own workspace, NC Logger + Morning Brief paused. | Geego | Pause "Prune Old Conversations" (Oct 1 03:00 run, one call per deleted record). Then **Creppie 3.0 on Supabase** (chat history, prices, zones, orders). Don't switch on the website chat until 3.0 is live. |
-| **Creppie → app database sync looks stopped**: last Creppie order in Supabase is 2026-09-08 (only 1 ever), though n8n shows 28 successful Creppie runs in the last 7 days. The Postgres dual-write nodes may be missing from Creppie 2.9.0 (repo `creppie.json` is older than what's live). | Geego / Cowork | Check whether 2.9.0 still has the Postgres nodes and whether any bookings were logged since Sep 26; fold into Creppie 3.0 (Supabase-first). |
+| **Creppie 3.0 not yet proven end to end**: only 1 Creppie order has ever reached `orders` (2026-09-08). | Geego | One real test booking on Instagram → confirm it shows in the staff dashboard with extras; then switch on the website chat (`CREPPIE_WEBHOOK_URL` on Vercel). |
 | Apple App Store release | Geego | Apple Developer enrollment ($99/yr) — not started as far as the repo shows. |
 
 ## Decisions Made
@@ -117,6 +124,10 @@ _Last updated: 2026-09-30_
   instead Creppie coaching comes free with kits (later).
 - **2026-09-30** — Creppie on the website: same n8n workflow as WhatsApp via a server relay (no
   n8n change needed). Creppie inside the app comes after the website version proves out.
+- **2026-09-30** — Airtable retired as Creppie's database (free plan ran 3x over its API limit);
+  Supabase is the single source of truth for prices, zones, orders and chats. Still to do before
+  dropping Airtable entirely: import historical Airtable orders (4) and a Prices & Zones editor in
+  the dashboard (5).
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -137,12 +148,19 @@ _Last updated: 2026-09-30_
 7. **Launch week: upgrade Supabase to Pro** (billing in the Supabase dashboard), turn on
    **Auth → Leaked password protection**, then `eas build -p android --profile production`.
 8. Keep filtering app-growth transcripts as Geego sends them.
-9. Revisit prices in `services` + `add_ons` (Supabase table editor; the app reads them live).
-    Sole Refresh is both a quote-priced service and a J$1,500 add-on — pick one.
-10. **Website chat go-live** (after the Airtable fix): add `CREPPIE_WEBHOOK_URL` in Vercel →
+9. **Migration leftovers (Geego's order: 1–3 done 2026-09-30, then 4–6)**:
+   4. Import historical Airtable Orders (and optionally Conversations) into Supabase — the
+      `airtable_id` columns (0010) make the copy re-runnable.
+   5. Prices & Zones page in the staff dashboard (edit services / add_ons / zones), then
+      downgrade Airtable.
+   6. Real Instagram test booking → dashboard; then the website chat go-live below.
+10. Revisit prices in `services` + `add_ons` (Supabase table editor; the app reads them live).
+    Sole Refresh is both a service and a J$1,500 add-on (live price J$1,500 on both; Creppie
+    only quotes the add-on) — decide whether the app should keep offering it standalone.
+11. **Website chat go-live** (after the Instagram test booking in 9.6): add `CREPPIE_WEBHOOK_URL` in Vercel →
     Production env, redeploy, test one chat + one booking end to end.
-11. **Club pilot**: finalise the offer, sell 10 memberships on WhatsApp.
-12. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
+12. **Club pilot**: finalise the offer, sell 10 memberships on WhatsApp.
+13. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
 
 ## Gotchas
 
@@ -153,10 +171,11 @@ _Last updated: 2026-09-30_
 - On a Mac, zsh doesn't treat pasted `# comments` as comments — keep commands comment-free.
 
 - **Live migration history ≠ repo numbering.** 0001–0004 were pasted into the SQL editor (no
-  history); 0005/0006/0007 were recorded as `20260926221201` / `20260926221359` /
-  `20260930091632`. Before ever running `supabase db push` against the live project, run:
-  `supabase migration repair --status reverted 20260926221201 20260926221359 20260930091632` then
-  `supabase migration repair --status applied 0001 0002 0003 0004 0005 0006 0007`.
+  history); later ones were recorded under timestamps: 0005 `20260926221201`, 0006
+  `20260926221359`, 0007 `20260930091632`, 0008 `20260930102700`, 0009 `20260930103100`, 0010
+  `20260930182330`, 0011 (applied via the connector, check `list_migrations`). Before ever running
+  `supabase db push` against live, `supabase migration repair` those timestamps to reverted and
+  0001–0011 to applied.
   (Or keep applying new migrations through the Supabase connector, one file at a time.)
 - The cloud sandbox's network proxy blocks direct HTTPS to `*.supabase.co`; use the Supabase
   connector (MCP) for anything against the live project.

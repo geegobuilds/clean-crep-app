@@ -46,6 +46,23 @@ export interface Service {
   active: boolean;
   location_id: string;
   currency: string; // ISO 4217, e.g. "JMD"
+  // Read by Creppie (n8n) when quoting; the app doesn't show them yet.
+  turnaround_days: number | null;
+  upsell: string | null;
+  creppie_notes: string | null;
+}
+
+/** A CrepRun pickup zone (Creppie quotes these; rates are round trip). */
+export interface Zone {
+  id: string;
+  name: string;
+  areas: string; // comma-separated neighbourhoods
+  pickup_day: string;
+  rate_cents: number;
+  delivery_rate_cents: number;
+  active: boolean;
+  sort_order: number;
+  location_id: string;
 }
 
 export type AddOnKind = 'addon' | 'kit' | 'delivery';
@@ -103,7 +120,8 @@ export interface Order {
   guest_name: string | null;
   guest_phone: string | null;
   guest_email: string | null;
-  guest_instagram_handle: string | null;
+  guest_instagram_handle: string | null; // for Creppie orders: IG/ManyChat id, or web-<uuid> from the website chat
+  airtable_id: string | null; // set on orders copied over from the old Airtable base
   created_at: string;
   updated_at: string;
 }

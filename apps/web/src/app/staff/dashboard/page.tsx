@@ -301,6 +301,16 @@ function OrderRowView({
                   {new Date(`${order.scheduled_date}T00:00:00`).toLocaleDateString('en-JM', { weekday: 'short', month: 'short', day: 'numeric' })}
                 </div>
               </div>
+              {order.notes && (
+                <>
+                  <div style={{ width: 1, height: 32, background: colors.border }} />
+                  <div style={{ maxWidth: 320 }}>
+                    <div style={{ fontSize: 9, color: colors.caption, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 500, marginBottom: 4 }}>NOTES</div>
+                    {/* Creppie orders carry area/zone and extras here */}
+                    <div style={{ fontSize: 11, color: colors.navy }}>{order.notes}</div>
+                  </div>
+                </>
+              )}
               <div style={{ width: 1, height: 32, background: colors.border }} />
               <div>
                 <div style={{ fontSize: 9, color: colors.caption, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 500, marginBottom: 6 }}>UPDATE STATUS</div>
