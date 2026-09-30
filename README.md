@@ -132,6 +132,15 @@ or `eas build --profile preview`. The real iOS Simulator needs a Mac with Xcode.
 - **Realtime**: both the mobile Order Tracker/Inbox and the web dashboard subscribe to Postgres
   changes on `orders`/`notifications`, so a status update from the dashboard shows up live on
   the customer's phone without a refresh.
+- **Add-ons, kits and the pickup fee** live in the `add_ons` table (migration 0007), editable in
+  the Supabase table editor; the Book screen reads them live. The database prices app orders
+  (`price_app_order` trigger): service + ticked extras + Pickup & Delivery when picking up, and
+  forces new app orders to `received`, so a modified client can't set its own price or status.
+  What was sold is frozen on `orders.add_ons`.
+- **Creppie website chat**: the landing page's "Ask Creppie" bubble posts to `/api/creppie`,
+  which relays `{ user_id: "web-<uuid>", message }` to the same n8n webhook WhatsApp/IG use
+  (`CREPPIE_WEBHOOK_URL`, server-only env var on Vercel). Rate-limited per chat and per IP. With
+  the variable unset, the page shows the plain WhatsApp bubble instead.
 
 ## Known gaps before this is a finished, shippable v1
 

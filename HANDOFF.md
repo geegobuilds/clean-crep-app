@@ -4,7 +4,7 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-09-28_
+_Last updated: 2026-09-30_
 
 ## Current Status
 
@@ -31,6 +31,11 @@ _Last updated: 2026-09-28_
   - **Creppie mascot** — every loading/empty/error/offline/success/sign-in state goes through
     `components/creppie/`; real art (cut from Geego's renders) is in `assets/creppie/`, wired
     via `moods.ts`. All 6 poses in place (incl. waving for sign-in prompts).
+- **Add-ons + Creppie web chat (PR open, 2026-09-30)**: Book screen sells Deep Clean / Sole
+  Refresh / 2 kits and charges the J$1,000 pickup fee, priced by the database (migration
+  `0007_add_ons.sql` — **apply to live at merge**, the new app needs it). Landing page gets an
+  "Ask Creppie" chat bubble relayed to the n8n Creppie webhook; dark until
+  `CREPPIE_WEBHOOK_URL` is set on Vercel.
 - **Creppie dual-write is live**: the n8n workflow (`clean-crep-systems/creppie.json`) writes
   WhatsApp/IG bookings to Airtable _and_ to this app's `orders` table as guest orders
   (`source = 'creppie'`). The two Postgres nodes live only in n8n, not in either repo.
@@ -45,6 +50,7 @@ _Last updated: 2026-09-28_
 | --- | --- | --- |
 | Google Play Console **organization** verification needs a D-U-N-S number; Dun & Bradstreet doesn't issue them in Jamaica. | Geego | Google Play support reply to our request for an alternative verification method (support request drafted, approved, cleared to send). |
 | Push delivery on real phones | Geego | `eas init` (writes the EAS projectId into app.json), a Firebase project + `google-services.json` for Android (FCM), and the FCM V1 key uploaded to EAS. Until then the app skips push registration. |
+| **Airtable API monthly limit hit** (2026-09-30: API returns 429 "billing plan limit exceeded"). Creppie reads/writes Airtable ~4× per message, so WhatsApp/IG Creppie is likely failing until the monthly reset, and the website chat would burn the quota faster. | Geego | Decide: upgrade Airtable (Team plan) short-term, and/or move Creppie's chat history + price list off Airtable onto Supabase (services/add_ons already live there). Don't switch the website chat on until this is solved. |
 | Apple App Store release | Geego | Apple Developer enrollment ($99/yr) — not started as far as the repo shows. |
 
 ## Decisions Made
@@ -91,6 +97,17 @@ _Last updated: 2026-09-28_
   Desktop launcher (Cowork-built, tested on the Mac): `scripts/mac/Clean Crep.command` —
   auto-pulls, installs only on dependency changes, resets a lockfile-only local diff so pulls
   can't be blocked.
+- **2026-09-30** — No new tabs for kits or Clean Crep Club (5 tabs is the max). Kits are sold as
+  booking add-ons, paid/collected at the shop (no in-app stock or payments yet). Pickup &
+  Delivery is J$1,000 in the app too (was free, Creppie charged it). Add-on prices copied from
+  Creppie's list for now; Geego is revisiting all app prices.
+- **2026-09-30** — **Clean Crep Club = subscription membership.** Pilot manually first (≈10
+  members, monthly bank transfer, tracked outside the app); build billing into the app only if
+  members renew. Proposed test offer: J$4,500/mo for 3 sneaker cleans, priority turnaround, 10%
+  off kits, no rollover. Paid "DIY cleaning coach" subscription rejected (cannibalises cleans);
+  instead Creppie coaching comes free with kits (later).
+- **2026-09-30** — Creppie on the website: same n8n workflow as WhatsApp via a server relay (no
+  n8n change needed). Creppie inside the app comes after the website version proves out.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -111,6 +128,12 @@ _Last updated: 2026-09-28_
 7. **Launch week: upgrade Supabase to Pro** (billing in the Supabase dashboard), turn on
    **Auth → Leaked password protection**, then `eas build -p android --profile production`.
 8. Keep filtering app-growth transcripts as Geego sends them.
+10. **At merge of the add-ons PR**: apply `0007_add_ons.sql` to live (Supabase connector), then
+    pull on the Mac. Revisit prices in `services` + `add_ons` (Sole Refresh is both a
+    quote-priced service and a J$1,500 add-on — pick one).
+11. **Website chat go-live** (after the Airtable fix): add `CREPPIE_WEBHOOK_URL` in Vercel →
+    Production env, redeploy, test one chat + one booking end to end.
+12. **Club pilot**: finalise the offer, sell 10 memberships on WhatsApp.
 9. Swap `BOOK_NOW_URL` in `apps/web/src/app/page.tsx` to the Play Store link once listed.
 
 ## Gotchas
