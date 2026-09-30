@@ -104,6 +104,9 @@ export default function DashboardPage() {
         <span style={{ fontSize: 13, fontWeight: 500, color: colors.white }}>Clean Crep JA</span>
         <span style={{ fontSize: 11, color: 'rgba(168,200,240,0.6)', marginLeft: 2 }}>· Operator Dashboard</span>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link href="/staff/dashboard/prices" style={{ fontSize: 12, color: colors.white, textDecoration: 'none', fontWeight: 500 }}>
+            Prices &amp; Zones
+          </Link>
           <span style={{ fontSize: 11, color: colors.softBlue }}>Shop 19 · Pristine Plaza, HWT</span>
           <a
             href="https://wa.me/18765072163"
