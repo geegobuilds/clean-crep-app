@@ -234,6 +234,39 @@ footer { background: var(--navy); padding: clamp(40px, 5vw, 60px) clamp(20px, 5v
 .creppie-fab img { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--white); }
 .creppie-fab-x { width: 52px; text-align: center; font-size: 28px; line-height: 1; }
 .creppie-fab:has(.creppie-fab-x) { padding: 0 4px; }
+.creppie-nudge {
+  position: fixed; bottom: 92px; right: 20px; z-index: 209;
+  display: flex; align-items: center; gap: 2px;
+  background: var(--white); border-radius: 14px; border: 1px solid var(--border);
+  box-shadow: 0 8px 28px rgba(10,31,68,0.25);
+  animation: creppie-nudge-in 280ms ease-out both;
+}
+.creppie-nudge::after { /* tail pointing at Creppie */
+  content: ''; position: absolute; bottom: -7px; right: 34px;
+  width: 12px; height: 12px; background: var(--white);
+  border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  transform: rotate(45deg);
+}
+.creppie-nudge-text {
+  font-family: inherit; font-size: 13.5px; font-weight: 500; color: var(--navy);
+  background: none; border: none; cursor: pointer; padding: 11px 4px 11px 14px;
+}
+.creppie-nudge-x {
+  font-family: inherit; font-size: 18px; line-height: 1; color: var(--caption);
+  background: none; border: none; cursor: pointer; padding: 8px 10px 8px 6px;
+}
+@keyframes creppie-nudge-in { from { opacity: 0; transform: translateY(8px) scale(0.95); } to { opacity: 1; transform: none; } }
+.creppie-fab-bounce img { animation: creppie-bounce 900ms ease-in-out 2; }
+@keyframes creppie-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-9px); }
+  50% { transform: translateY(0); }
+  70% { transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .creppie-nudge, .creppie-fab-bounce img, .creppie-hello img { animation: none; }
+}
+
 .creppie-panel {
   position: fixed; bottom: 92px; right: 20px; z-index: 210;
   width: 370px; height: min(560px, calc(100dvh - 120px));

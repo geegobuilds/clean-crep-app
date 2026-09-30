@@ -31,11 +31,13 @@ _Last updated: 2026-09-30_
   - **Creppie mascot** — every loading/empty/error/offline/success/sign-in state goes through
     `components/creppie/`; real art (cut from Geego's renders) is in `assets/creppie/`, wired
     via `moods.ts`. All 6 poses in place (incl. waving for sign-in prompts).
-- **Add-ons + Creppie web chat (PR open, 2026-09-30)**: Book screen sells Deep Clean / Sole
-  Refresh / 2 kits and charges the J$1,000 pickup fee, priced by the database (migration
-  `0007_add_ons.sql` — **apply to live at merge**, the new app needs it). Landing page gets an
-  "Ask Creppie" chat bubble relayed to the n8n Creppie webhook; dark until
-  `CREPPIE_WEBHOOK_URL` is set on Vercel.
+- **Add-ons + Creppie web chat (merged in PR #7, 2026-09-30)**: Book screen sells Deep Clean /
+  Sole Refresh / 2 kits and charges the J$1,000 pickup fee, priced by the database (migration
+  `0007_add_ons.sql`, **applied to live** the same day). Landing page has an "Ask Creppie" chat
+  bubble (his face; waving upper body greets you inside) relayed to the n8n Creppie webhook;
+  dark until `CREPPIE_WEBHOOK_URL` is set on Vercel. **"Need help?" nudge** (PR open): once per
+  visit, context copy for Services / Location, face bounces; snoozed 7 days after ✕, never shown
+  to someone who has chatted.
 - **Creppie dual-write is live**: the n8n workflow (`clean-crep-systems/creppie.json`) writes
   WhatsApp/IG bookings to Airtable _and_ to this app's `orders` table as guest orders
   (`source = 'creppie'`). The two Postgres nodes live only in n8n, not in either repo.
@@ -128,9 +130,8 @@ _Last updated: 2026-09-30_
 7. **Launch week: upgrade Supabase to Pro** (billing in the Supabase dashboard), turn on
    **Auth → Leaked password protection**, then `eas build -p android --profile production`.
 8. Keep filtering app-growth transcripts as Geego sends them.
-9. **At merge of the add-ons PR**: apply `0007_add_ons.sql` to live (Supabase connector), then
-    pull on the Mac. Revisit prices in `services` + `add_ons` (Sole Refresh is both a
-    quote-priced service and a J$1,500 add-on — pick one).
+9. Revisit prices in `services` + `add_ons` (Supabase table editor; the app reads them live).
+    Sole Refresh is both a quote-priced service and a J$1,500 add-on — pick one.
 10. **Website chat go-live** (after the Airtable fix): add `CREPPIE_WEBHOOK_URL` in Vercel →
     Production env, redeploy, test one chat + one booking end to end.
 11. **Club pilot**: finalise the offer, sell 10 memberships on WhatsApp.
@@ -145,10 +146,10 @@ _Last updated: 2026-09-30_
 - On a Mac, zsh doesn't treat pasted `# comments` as comments — keep commands comment-free.
 
 - **Live migration history ≠ repo numbering.** 0001–0004 were pasted into the SQL editor (no
-  history); 0005/0006 were recorded as `20260926221201` / `20260926221359`. Before ever running
-  `supabase db push` against the live project, run:
-  `supabase migration repair --status reverted 20260926221201 20260926221359` then
-  `supabase migration repair --status applied 0001 0002 0003 0004 0005 0006`.
+  history); 0005/0006/0007 were recorded as `20260926221201` / `20260926221359` /
+  `20260930091632`. Before ever running `supabase db push` against the live project, run:
+  `supabase migration repair --status reverted 20260926221201 20260926221359 20260930091632` then
+  `supabase migration repair --status applied 0001 0002 0003 0004 0005 0006 0007`.
   (Or keep applying new migrations through the Supabase connector, one file at a time.)
 - The cloud sandbox's network proxy blocks direct HTTPS to `*.supabase.co`; use the Supabase
   connector (MCP) for anything against the live project.

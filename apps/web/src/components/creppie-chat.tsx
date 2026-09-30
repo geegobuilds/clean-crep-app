@@ -12,6 +12,32 @@ const STORE_KEY = 'creppie-chat-v1';
 const GREETING = "Wah gwaan! I'm Creppie, Clean Crep's assistant. Ask me about prices, turnaround, pickup, or book a clean right here.";
 const QUICK = ['How much for sneakers?', 'Book a clean', 'Do you do pickup?'];
 
+// "Need help?" nudge: once per visit, at the moment people tend to have a
+// question, and never again for a week once dismissed. Never shown to someone
+// who has already chatted.
+const NUDGES: Record<string, string> = {
+  services: 'Not sure which clean? Ask me 👋',
+  location: 'Need pickup? I got you',
+  default: 'Need help booking? 👋',
+};
+const NUDGE_DELAY_MS = 8_000; // generic nudge if they haven't scrolled to a section by then
+const NUDGE_MIN_MS = 3_000; // don't pounce before they've looked at the page
+const NUDGE_DWELL_MS = 700; // time on a section before it counts
+const NUDGE_SHOW_MS = 8_000;
+const NUDGE_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
+const NUDGE_SEEN_KEY = 'creppie-nudge-seen'; // sessionStorage: once per visit
+const NUDGE_DISMISSED_KEY = 'creppie-nudge-dismissed'; // localStorage: timestamp
+
+function nudgeAllowed(): boolean {
+  try {
+    if (sessionStorage.getItem(NUDGE_SEEN_KEY)) return false;
+    const dismissed = Number(localStorage.getItem(NUDGE_DISMISSED_KEY) ?? 0);
+    return !dismissed || Date.now() - dismissed > NUDGE_SNOOZE_MS;
+  } catch {
+    return false; // can't remember a dismissal, so don't risk nagging
+  }
+}
+
 interface Msg {
   role: 'user' | 'creppie';
   text: string;
@@ -60,6 +86,10 @@ export function CreppieChat() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const [nudge, setNudge] = useState<string | null>(null);
+  const hasChatted = msgs.some((m) => m.role === 'user');
+  const openRef = useRef(false); // read by the nudge timers
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -69,7 +99,78 @@ export function CreppieChat() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot restore from localStorage after mount
     setSessionId(saved.sessionId);
     setMsgs(saved.msgs);
+    setRestored(true);
   }, []);
+
+  // Schedule the one nudge for this visit: whichever comes first of scrolling
+  // to Services / Location (context-specific copy) or NUDGE_DELAY_MS.
+  useEffect(() => {
+    if (!restored || hasChatted || !nudgeAllowed()) return;
+    let fired = false;
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
+    const fire = (key: string) => {
+      // Already talking to him: the nudge is spent for this visit.
+      if (fired || openRef.current) {
+        fired = true;
+        return;
+      }
+      fired = true;
+      try {
+        sessionStorage.setItem(NUDGE_SEEN_KEY, '1');
+      } catch {
+        // ignore
+      }
+      setNudge(NUDGES[key] ?? NUDGES.default);
+      hideTimer = setTimeout(() => setNudge(null), NUDGE_SHOW_MS);
+    };
+    // Only a section the visitor settles on counts, not one smooth-scrolled
+    // past on the way to another (e.g. the nav's Location link).
+    const dwell = new Map<string, ReturnType<typeof setTimeout>>();
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          const id = e.target.id;
+          clearTimeout(dwell.get(id));
+          if (e.isIntersecting) dwell.set(id, setTimeout(() => fire(id), NUDGE_DWELL_MS));
+        }),
+      // A band across the middle of the screen: fires when the section is
+      // actually being read, however tall it is.
+      { rootMargin: '-40% 0px -40% 0px' }
+    );
+    const watchTimer = setTimeout(() => {
+      for (const id of ['services', 'location']) {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      }
+    }, NUDGE_MIN_MS);
+    const fallbackTimer = setTimeout(() => fire('default'), NUDGE_DELAY_MS);
+    return () => {
+      clearTimeout(watchTimer);
+      clearTimeout(fallbackTimer);
+      clearTimeout(hideTimer);
+      observer.disconnect();
+      dwell.forEach(clearTimeout);
+    };
+  }, [restored, hasChatted]);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
+  function openChat() {
+    openRef.current = true;
+    setNudge(null);
+    setOpen(true);
+  }
+
+  function dismissNudge() {
+    setNudge(null);
+    try {
+      localStorage.setItem(NUDGE_DISMISSED_KEY, String(Date.now()));
+    } catch {
+      // ignore
+    }
+  }
 
   useEffect(() => {
     if (!sessionId) return;
@@ -188,7 +289,20 @@ export function CreppieChat() {
         </div>
       )}
 
-      <button className="creppie-fab" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Close chat' : 'Chat with Creppie'} aria-expanded={open}>
+      {nudge && !open && (
+        <div className="creppie-nudge" role="status">
+          <button className="creppie-nudge-text" onClick={openChat}>
+            {nudge}
+          </button>
+          <button className="creppie-nudge-x" onClick={dismissNudge} aria-label="Dismiss">
+            ×
+          </button>
+        </div>
+      )}
+
+      <button
+        className={`creppie-fab${nudge && !open ? ' creppie-fab-bounce' : ''}`}
+        onClick={() => (open ? setOpen(false) : openChat())} aria-label={open ? 'Close chat' : 'Chat with Creppie'} aria-expanded={open}>
         {open ? (
           <span className="creppie-fab-x">×</span>
         ) : (
