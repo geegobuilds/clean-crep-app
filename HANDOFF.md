@@ -138,6 +138,9 @@ _Last updated: 2026-09-30_
   Geego verified it the same day and it's back on Vercel. Creppie upsell fix published: add-on
   offered once per booking (inside the summary if the customer is ready), and the summary always
   states the drop-off / pickup day (n8n `Prompt Tweaks` step; previous version `79f3836c`).
+  Real test showed Creppie still skipped the day, so a code step `Polish Reply` (live version
+  `2faeee65`) now appends it, and replaces the summary on a re-sent booking with "you're already
+  booked" (duplicates were already blocked from the database; per chat only, not per phone).
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
