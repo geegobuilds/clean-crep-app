@@ -4,7 +4,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 
-// Floating "Ask Creppie" chat on the landing page. Talks to /api/creppie,
+// Floating "Ask Creppie" chat on the landing page (bubble = his face, cropped from the waving pose). Talks to /api/creppie,
 // which relays to the same Creppie that answers WhatsApp/IG.
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
@@ -115,7 +115,7 @@ export function CreppieChat() {
       {open && (
         <div className="creppie-panel" role="dialog" aria-label="Chat with Creppie">
           <div className="creppie-head">
-            <Image src="/assets/creppie-wave.png" alt="" width={40} height={40} />
+            <Image src="/assets/creppie-face.png" alt="" width={40} height={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="creppie-name">Creppie</div>
               <div className="creppie-sub">Clean Crep&apos;s assistant · replies in seconds</div>
@@ -190,7 +190,7 @@ export function CreppieChat() {
           <span className="creppie-fab-x">×</span>
         ) : (
           <>
-            <Image src="/assets/creppie-wave.png" alt="" width={52} height={52} />
+            <Image src="/assets/creppie-face.png" alt="" width={52} height={52} />
             <span className="creppie-fab-label">Ask Creppie</span>
           </>
         )}
