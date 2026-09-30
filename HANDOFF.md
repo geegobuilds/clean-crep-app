@@ -38,6 +38,12 @@ _Last updated: 2026-09-30_
   dark until `CREPPIE_WEBHOOK_URL` is set on Vercel. **"Need help?" nudge** (PR open): once per
   visit, context copy for Services / Location, face bounces; snoozed 7 days after ✕, never shown
   to someone who has chatted.
+- **Safety net (2026-09-30)**: GitHub Actions `Checks` runs typecheck + lint + the phone
+  checks on every PR and push to main (`.github/workflows/checks.yml`). Routine **"Clean Crep
+  daily health check"** (`trig_01XVg7G6iEY2aUHZCsw1b68a`, 6:45 AM Jamaica, push to Geego's phone
+  only when something's wrong): live DB status, uncollected/stale orders, Creppie sync
+  freshness, new security advisors. Needs the Supabase connector attached in the routine's
+  settings (couldn't be attached from the session).
 - **Creppie dual-write is live**: the n8n workflow (`clean-crep-systems/creppie.json`) writes
   WhatsApp/IG bookings to Airtable _and_ to this app's `orders` table as guest orders
   (`source = 'creppie'`). The two Postgres nodes live only in n8n, not in either repo.
@@ -52,7 +58,8 @@ _Last updated: 2026-09-30_
 | --- | --- | --- |
 | Google Play Console **organization** verification needs a D-U-N-S number; Dun & Bradstreet doesn't issue them in Jamaica. | Geego | Google Play support reply to our request for an alternative verification method (support request drafted, approved, cleared to send). |
 | Push delivery on real phones | Geego | `eas init` (writes the EAS projectId into app.json), a Firebase project + `google-services.json` for Android (FCM), and the FCM V1 key uploaded to EAS. Until then the app skips push registration. |
-| **Airtable API monthly limit hit** (2026-09-30: API returns 429 "billing plan limit exceeded"). Creppie reads/writes Airtable ~4× per message, so WhatsApp/IG Creppie is likely failing until the monthly reset, and the website chat would burn the quota faster. | Geego | Decide: upgrade Airtable (Team plan) short-term, and/or move Creppie's chat history + price list off Airtable onto Supabase (services/add_ons already live there). Don't switch the website chat on until this is solved. |
+| **Airtable free-plan API limit** — CCJ workspace used 2,957 / 1,000 calls in September (Cowork report 2026-09-30); Creppie costs ~6–8 calls per customer message. Creppie still replying for now. Lab OS moved to its own workspace, NC Logger + Morning Brief paused. | Geego | Pause "Prune Old Conversations" (Oct 1 03:00 run, one call per deleted record). Then **Creppie 3.0 on Supabase** (chat history, prices, zones, orders). Don't switch on the website chat until 3.0 is live. |
+| **Creppie → app database sync looks stopped**: last Creppie order in Supabase is 2026-09-08 (only 1 ever), though n8n shows 28 successful Creppie runs in the last 7 days. The Postgres dual-write nodes may be missing from Creppie 2.9.0 (repo `creppie.json` is older than what's live). | Geego / Cowork | Check whether 2.9.0 still has the Postgres nodes and whether any bookings were logged since Sep 26; fold into Creppie 3.0 (Supabase-first). |
 | Apple App Store release | Geego | Apple Developer enrollment ($99/yr) — not started as far as the repo shows. |
 
 ## Decisions Made
