@@ -264,8 +264,8 @@ function OrderRowView({
           {extrasLabel(order) && <div style={{ fontSize: 10, color: colors.blue, marginTop: 2 }}>{extrasLabel(order)}</div>}
           <div style={{ fontSize: 10, color: colors.caption, marginTop: 2 }}>
             {contactName(order)}
-            {order.source === 'creppie' && (
-              <span style={{ marginLeft: 6, color: colors.blue, fontWeight: 500 }}>&middot; Creppie</span>
+            {order.source !== 'app' && (
+              <span style={{ marginLeft: 6, color: colors.blue, fontWeight: 500 }}>&middot; {order.source === 'web' ? 'Website' : 'Creppie'}</span>
             )}
           </div>
         </td>

@@ -94,7 +94,7 @@ export function orderTotal(servicePriceCents: number | null, extras: Pick<AddOn,
   return extras.reduce((sum, a) => sum + (a.price_cents ?? 0), servicePriceCents);
 }
 
-export type OrderSource = 'app' | 'creppie';
+export type OrderSource = 'app' | 'creppie' | 'web';
 
 export interface Order {
   id: string;
