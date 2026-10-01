@@ -53,15 +53,26 @@ _Last updated: 2026-10-01_
   booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
   fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
   `Pick Scheduled Date`); blank or odd dates fall back to today.
-- **Ask Creppie in the app (2026-10-01, PR open)**: floating face button on Home and Book opens a
+- **Website Quick Book + flip tiles (2026-10-01, PR open)**: the hero is now a 3-step booking card
+  (service/pairs/extras → drop-off day or CrepRun zone → name, phone, **email required**); every
+  "Book Now" scrolls to it instead of WhatsApp. Services are flip cards (front: price + best for;
+  back: what's done, turnaround, upsell, "Book this"). Migration `0013_web_quick_book.sql`:
+  `book_web_order()` prices (service and extras per pair, kits once, zone rate for pickup) and dates
+  it (drop-off Mon–Sat within 2 weeks; pickup = zone's next day), `source = 'web'`; a new account
+  claims guest orders with its **verified** email (`claim_guest_orders()` on customers insert).
+  After booking, the site emails a sign-in link (Supabase OTP) to `/account/confirm` → `/account`
+  (set a password for the app, see bookings). **Live setup still needed** (Cowork): custom SMTP in
+  Supabase Auth (the built-in sender only reaches team addresses), redirect URL
+  `https://www.cleancrep.com/account/confirm`, and branded Magic Link / Confirm signup templates.
+  Open question: the app charges a flat J$1,000 pickup, while the website and Creppie use zone rates.
+- **Ask Creppie in the app (merged in PR #15, 2026-10-01; n8n published)**: floating face button on Home and Book opens a
   full-screen chat (`components/creppie-chat.tsx`, `lib/creppie.ts`) talking to the website relay
   (`EXPO_PUBLIC_CREPPIE_URL`, default `https://www.cleancrep.com/api/creppie`) with
   `channel: "app"`. Anyone can ask questions; **booking needs an account**: the relay verifies the
   Supabase token and sends `subscriber_id: cust-<user id>`, and Creppie puts the order on that
   account (Orders tab, push, points). A guest who tries to book gets "sign in first" plus a sign-in
   card; after signing in the chat asks Creppie to go ahead. The website still takes guest bookings.
-  The n8n side is a **draft** (dry-run 2026-10-01: guest blocked, signed-in order routed,
-  web + IG unchanged); publish only on Geego's "publish". Live version to roll back to: `2faeee65`.
+  n8n version `45e65142` published 2026-10-01 (roll back to `2faeee65`).
 - **Staff login has "Forgot password?"** (2026-09-30) — emails a reset link to the staff address.
   The only staff account is `walkergiovani+ccjsmoketest@gmail.com` (a leftover test alias);
   create a proper shop login before hiring.

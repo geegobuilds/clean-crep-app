@@ -1,15 +1,16 @@
 import type { ReactElement } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Service } from '@clean-crep/shared';
+import type { AddOn, Service, Zone } from '@clean-crep/shared';
 import { formatPrice } from '@clean-crep/shared';
 import { createClient } from '@/lib/supabase/server';
 import { CreppieChat } from '@/components/creppie-chat';
+import { QuickBook } from '@/components/quick-book';
+import { ServiceTiles } from '@/components/service-tiles';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
-// TODO once the mobile app is published: swap these to the App Store /
-// Play Store links (see the "Book Now" plan note in the top-level README).
-const BOOK_NOW_URL = WHATSAPP_URL;
+// Every "Book" button goes to the Quick Book card in the hero.
+const BOOK_NOW_URL = '#book';
 
 const SERVICE_ICONS: Record<string, ReactElement> = {
   pkg: (
@@ -39,8 +40,14 @@ const SERVICE_CATEGORY: Record<string, string> = {
 
 export default async function LandingPage() {
   const supabase = await createClient();
-  const { data } = await supabase.from('services').select('*').eq('active', true).order('sort_order');
+  const [{ data }, { data: addOnRows }, { data: zoneRows }] = await Promise.all([
+    supabase.from('services').select('*').eq('active', true).order('sort_order'),
+    supabase.from('add_ons').select('*').eq('active', true).order('sort_order'),
+    supabase.from('zones').select('*').eq('active', true).order('sort_order'),
+  ]);
   const services = (data ?? []) as Service[];
+  const addOns = (addOnRows ?? []) as AddOn[];
+  const zones = (zoneRows ?? []) as Zone[];
 
   return (
     <>
@@ -55,7 +62,7 @@ export default async function LandingPage() {
             <a href="#how">How It Works</a>
             <a href="#location">Location</a>
             <a href="#faq">FAQ</a>
-            <a href={BOOK_NOW_URL} target="_blank" rel="noopener noreferrer" className="btn-primary nav-cta" style={{ padding: '8px 18px', fontSize: 13 }}>
+            <a href={BOOK_NOW_URL} className="btn-primary nav-cta" style={{ padding: '8px 18px', fontSize: 13 }}>
               Book Now
             </a>
           </div>
@@ -71,78 +78,35 @@ export default async function LandingPage() {
               <span>Clean Step.</span>
             </h1>
             <p className="hero-body">
-              Premium sneaker and Clarks cleaning service. Drop in at Shop 19, Pristine Plaza — or link us on WhatsApp to book.
+              Premium sneaker and Clarks cleaning in Half Way Tree. Book in under a minute: drop off at Shop 19, Pristine Plaza, or let CrepRun
+              collect from your door.
             </p>
+            <ul className="hero-points">
+              <li>Open today · 9:00 AM – 6:00 PM</li>
+              <li>CrepRun pickup across Kingston, Portmore &amp; Spanish Town</li>
+              <li>Not happy? We re-clean free</li>
+            </ul>
             <div className="hero-actions">
-              <a href={BOOK_NOW_URL} target="_blank" rel="noopener noreferrer" className="btn-order">
-                <div className="btn-order-lines">
-                  <div className="btn-order-row">
-                    <span className="btn-order-label">Service · </span>
-                    <span className="btn-order-value">Sneaker &amp; Clarks Clean</span>
-                  </div>
-                  <div className="btn-order-row emphasis">
-                    <span className="btn-order-label">Drop-off · </span>
-                    <span className="btn-order-value">Book today</span>
-                  </div>
-                </div>
-                <span className="btn-order-arrow">→</span>
-              </a>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-ghost">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                 </svg>
-                Link Us on WhatsApp
+                Rather talk? Link us on WhatsApp
               </a>
             </div>
           </div>
 
-          <div className="hero-visual">
-            {services.map((s) => (
-              <div className="hero-card" key={s.id}>
-                <div className="hero-card-icon">{SERVICE_ICONS[s.icon]}</div>
-                <div>
-                  <div className="hero-card-title">{s.name}</div>
-                  <div className="hero-card-sub">{s.description.split('.')[0]}</div>
-                </div>
-                <div className="hero-card-price">{formatPrice(s.price_cents)}</div>
-              </div>
-            ))}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 4px' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#25D366', flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: 'rgba(168,200,240,0.6)' }}>Open today · 9:00 AM – 6:00 PM</span>
-            </div>
-          </div>
+          <QuickBook services={services} addOns={addOns} zones={zones} />
         </div>
       </section>
 
       <section id="services">
         <div className="section-inner">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 24 }}>
-            <div>
-              <div className="section-label">What We Do</div>
-              <h2 className="section-title">Services &amp; Pricing</h2>
-              <p className="section-body">Every pair gets the same attention — thorough, careful, and returned looking right.</p>
-            </div>
-            <a href={BOOK_NOW_URL} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ alignSelf: 'flex-end', marginBottom: 16 }}>
-              Book Now
-            </a>
-          </div>
+          <div className="section-label">What We Do</div>
+          <h2 className="section-title">Services &amp; Pricing</h2>
+          <p className="section-body">Every pair gets the same attention. Tap a card to see what&apos;s included and how long it takes.</p>
 
-          <div className="services-grid">
-            {services.map((s) => (
-              <div className={`service-card${s.popular ? ' featured' : ''}`} key={s.id}>
-                {s.popular && <div className="service-badge">Most Popular</div>}
-                <div className="service-icon">{SERVICE_ICONS[s.icon]}</div>
-                <div className="service-cat">{SERVICE_CATEGORY[s.name] ?? ''}</div>
-                <div className="service-name">{s.name}</div>
-                <p className="service-desc">{s.description}</p>
-                <div>
-                  <span className="service-price">{formatPrice(s.price_cents)}</span>
-                  <span className="service-note">{s.note}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ServiceTiles services={services} icons={SERVICE_ICONS} categories={SERVICE_CATEGORY} />
         </div>
       </section>
 
@@ -154,7 +118,7 @@ export default async function LandingPage() {
 
           <div className="steps-grid">
             {[
-              ['Book or Drop In', 'Use the app to book a date, or just walk into Shop 19 at Pristine Plaza, Half Way Tree.'],
+              ['Book or Drop In', 'Book here in under a minute, have CrepRun collect from your door, or just walk into Shop 19 at Pristine Plaza.'],
               ['We Assess', 'We check your pair, confirm the service and price, and give you an estimated ready time.'],
               ['We Clean', 'Your shoes get the full treatment. We update your order status as we go — track it in the app.'],
               ['Pickup & Pay', "Collect your clean pair at the shop. We'll WhatsApp you when they're ready. Cash & bank transfer accepted."],
@@ -208,7 +172,7 @@ export default async function LandingPage() {
               </div>
             ))}
             <div style={{ marginTop: 8, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <a href={BOOK_NOW_URL} target="_blank" rel="noopener noreferrer" className="btn-primary">
+              <a href={BOOK_NOW_URL} className="btn-primary">
                 Book a Clean
               </a>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-primary btn-wa">
@@ -273,7 +237,7 @@ export default async function LandingPage() {
               </div>
 
               <div className="location-actions">
-                <a href={BOOK_NOW_URL} target="_blank" rel="noopener noreferrer" className="btn-primary">
+                <a href={BOOK_NOW_URL} className="btn-primary">
                   Book Online
                 </a>
                 <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-primary btn-wa">
@@ -310,7 +274,9 @@ export default async function LandingPage() {
               ],
               [
                 'Do you offer pickup and delivery?',
-                'Right now it’s walk-in at Shop 19, Pristine Plaza, Half Way Tree. Link us on WhatsApp if you need pickup arranged.',
+                `Yes: CrepRun collects and returns your pairs on a set day for each area. ${zones
+                  .map((z) => `${z.areas.split(',')[0].trim()} and nearby: ${z.pickup_day}s, ${formatPrice(z.rate_cents)} round trip`)
+                  .join('. ')}. Pick CrepRun pickup when you book.`,
               ],
               [
                 'What if my shoes already have damage?',
