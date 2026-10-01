@@ -6,7 +6,7 @@ import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
 import { colors, formatPrice } from '@clean-crep/shared';
 import { createClient } from '@/lib/supabase/client';
-import { accountConfirmUrl } from '@/lib/account';
+import { accountConfirmUrl, friendlyAuthError } from '@/lib/account';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 
@@ -85,7 +85,7 @@ export default function AccountPage() {
     setError(null);
     const { error: err } = await supabase.auth.updateUser({ password });
     setBusy(false);
-    if (err) return setError(err.message);
+    if (err) return setError(friendlyAuthError(err, 'savePassword'));
     setSaved(true);
   }
 
@@ -99,7 +99,7 @@ export default function AccountPage() {
       options: { emailRedirectTo: accountConfirmUrl(), shouldCreateUser: true },
     });
     setBusy(false);
-    if (err) return setError(err.message);
+    if (err) return setError(friendlyAuthError(err, 'sendLink'));
     setSent(true);
   }
 

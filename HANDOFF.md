@@ -53,6 +53,11 @@ _Last updated: 2026-10-01_
   booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
   fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
   `Pick Scheduled Date`); blank or odd dates fall back to today.
+- **Customer emails live (2026-10-01)**: Supabase Auth sends through Gmail SMTP
+  (cleancrepja@gmail.com, app password; 60/h), branded "Confirm signup" + "Magic link" templates
+  with token_hash links to /account/confirm. Tested end to end: inbox (not spam), signed in,
+  profile created. Gmail is fine for now; move to a transactional sender (e.g. Resend) when volume
+  grows. The account page now shows friendly copy for auth errors (`friendlyAuthError`).
 - **Health check tune-up (2026-10-01)**: migration 0016 pins `search_path` on `jm_today()` /
   `next_pickup_date()` (advisor warning; applied to live). The daily routine's known list now
   includes `book_web_order` (public by design) and `claim_my_guest_orders`; its Creppie check only
