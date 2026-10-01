@@ -53,7 +53,13 @@ _Last updated: 2026-10-01_
   booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
   fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
   `Pick Scheduled Date`); blank or odd dates fall back to today.
-- **Website Quick Book + flip tiles (2026-10-01, PR open)**: the hero is now a 3-step booking card
+- **App pickups priced by CrepRun zone (2026-10-01, PR open; Geego's call)**: Book › Pickup now asks
+  for the area (zone list with day + rate); the order stores `zone_id` and `price_app_order()`
+  (migration `0015_app_pickup_zones.sql`) adds the zone's round-trip rate and sets the date to its
+  next pickup day, same as the website and Creppie. The flat J$1,000 `pickup-delivery` add-on is
+  retired (inactive). Drop-off days skip Sundays. App builds from before this can't book pickups
+  (the database now requires a zone); none are in the stores yet.
+- **Website Quick Book + flip tiles (merged in PR #16, 2026-10-01; 0013 + 0014 live)**: the hero is now a 3-step booking card
   (service/pairs/extras → drop-off day or CrepRun zone → name, phone, **email required**); every
   "Book Now" scrolls to it instead of WhatsApp. Services are flip cards (front: price + best for;
   back: what's done, turnaround, upsell, "Book this"). Migration `0013_web_quick_book.sql`:
@@ -65,7 +71,6 @@ _Last updated: 2026-10-01_
   picks up bookings made later with the same verified email). **Live setup still needed** (Cowork): custom SMTP in
   Supabase Auth (the built-in sender only reaches team addresses), redirect URL
   `https://www.cleancrep.com/account/confirm`, and branded Magic Link / Confirm signup templates.
-  Open question: the app charges a flat J$1,000 pickup, while the website and Creppie use zone rates.
 - **Ask Creppie in the app (merged in PR #15, 2026-10-01; n8n published)**: floating face button on Home and Book opens a
   full-screen chat (`components/creppie-chat.tsx`, `lib/creppie.ts`) talking to the website relay
   (`EXPO_PUBLIC_CREPPIE_URL`, default `https://www.cleancrep.com/api/creppie`) with

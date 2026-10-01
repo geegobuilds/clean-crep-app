@@ -114,6 +114,7 @@ export interface Order {
   notes: string | null;
   price_cents: number | null; // total incl. add_ons (server-computed for app orders)
   add_ons: OrderAddOn[];
+  zone_id: string | null; // CrepRun zone for pickups
   currency: string; // ISO 4217, copied from the service at booking time
   source: OrderSource;
   external_ref: string | null; // Airtable record id, for Creppie-sourced orders

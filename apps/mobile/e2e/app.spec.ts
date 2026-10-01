@@ -161,7 +161,7 @@ test('a server error (not offline) shows the error mascot with Creppie copy', as
   await shot(page, '13-server-error');
 });
 
-test('booking with extras + pickup: live total, and the database charges the same', async ({ page }) => {
+test('booking with extras + CrepRun pickup: zone rate and day, and the database charges the same', async ({ page }) => {
   const c = newCustomer();
   await page.goto('/');
   await fillBookingDetails(page, 'Sneaker Clean', 'Dunk Low Panda');
@@ -170,8 +170,13 @@ test('booking with extras + pickup: live total, and the database charges the sam
   await text(page, 'Deep Clean Upgrade', false).click();
   await text(page, 'Suede Revive Kit', false).click();
   await text(page, /^Pickup/).click();
-  // $2,000 + $1,000 deep clean + $4,000 kit + $1,000 pickup
-  await expect(text(page, '$8,000')).toBeVisible();
+  // No area picked yet: Confirm asks for one instead of booking.
+  await text(page, 'Confirm Booking').click();
+  await expect(text(page, /Pick your area/)).toBeVisible();
+  await text(page, 'Zone 2 · Wednesdays', false).click();
+  await expect(text(page, /CrepRun collects on Wed/)).toBeVisible();
+  // $2,000 + $1,000 deep clean + $4,000 kit + $2,000 CrepRun Zone 2
+  await expect(text(page, '$9,000')).toBeVisible();
   await expect(text(page, /We'll confirm stock/, false)).toBeVisible();
   await shot(page, '13-add-ons');
 
@@ -183,16 +188,18 @@ test('booking with extras + pickup: live total, and the database charges the sam
   await text(page, 'Create Account').click();
 
   await expect(text(page, "You're booked.", false)).toBeVisible();
-  await expect(text(page, 'Pickup & Delivery', false)).toBeVisible();
-  await expect(text(page, '$8,000')).toBeVisible();
+  await expect(text(page, 'CrepRun Zone 2 (Wednesday)', false)).toBeVisible();
+  await expect(text(page, '$9,000')).toBeVisible();
   await shot(page, '14-booked-with-extras');
 
   const [customer] = await adminSelect<{ id: string }>('customers', `email=eq.${encodeURIComponent(c.email)}&select=id`);
-  const [order] = await adminSelect<{ price_cents: number; drop_method: string; add_ons: { name: string; kind: string }[] }>(
+  const [order] = await adminSelect<{ price_cents: number; drop_method: string; scheduled_date: string; zone_id: string; add_ons: { name: string; kind: string }[] }>(
     'orders',
-    `customer_id=eq.${customer.id}&select=price_cents,drop_method,add_ons`
+    `customer_id=eq.${customer.id}&select=price_cents,drop_method,scheduled_date,zone_id,add_ons`
   );
-  expect(order.price_cents).toBe(800000);
+  expect(order.price_cents).toBe(900000);
   expect(order.drop_method).toBe('pickup');
-  expect(order.add_ons.map((a) => a.name)).toEqual(['Deep Clean Upgrade', 'Suede Revive Kit', 'Pickup & Delivery']);
+  expect(order.zone_id).toBeTruthy();
+  expect(new Date(`${order.scheduled_date}T12:00:00Z`).getUTCDay()).toBe(3); // Wednesday
+  expect(order.add_ons.map((a) => a.name)).toEqual(['Deep Clean Upgrade', 'Suede Revive Kit', 'CrepRun Zone 2 (Wednesday)']);
 });

@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, formatPrice, orderTotal, type AddOn, type Service } from '@clean-crep/shared';
+import { colors, formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
 import { useServices } from '@/hooks/use-services';
 import { useAddOns } from '@/hooks/use-add-ons';
+import { useZones } from '@/hooks/use-zones';
 import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { SignInForm } from '@/components/sign-in-form';
@@ -24,6 +25,25 @@ interface Day {
   iso: string;
 }
 
+function toDay(d: Date): Day {
+  return {
+    short: d.toLocaleDateString('en-JM', { weekday: 'short' }),
+    num: d.getDate(),
+    month: d.toLocaleDateString('en-JM', { month: 'short' }),
+    iso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+  };
+}
+
+/** The zone's next CrepRun day, from tomorrow on. Mirrors next_pickup_date() in the database. */
+function nextPickup(zone: Zone): Day | null {
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    if (d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() === zone.pickup_day.trim().toLowerCase()) return toDay(d);
+  }
+  return null;
+}
+
 export default function BookingScreen() {
   const router = useRouter();
   const { session } = useAuth();
@@ -31,6 +51,8 @@ export default function BookingScreen() {
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [selected, setSelected] = useState<Service | null>(null);
   const addOns = useAddOns();
+  const zones = useZones();
+  const [zoneId, setZoneId] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const [dropoff, setDropoff] = useState(true);
   const [selDay, setSelDay] = useState(0);
@@ -43,26 +65,26 @@ export default function BookingScreen() {
   // selection above stays in state through sign-in.
   const [signInOpen, setSignInOpen] = useState(false);
 
+  // Drop-off: the next 7 shop days (closed Sundays).
   const days: Day[] = useMemo(() => {
-    const today = new Date();
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      return {
-        short: d.toLocaleDateString('en-JM', { weekday: 'short' }),
-        num: d.getDate(),
-        month: d.toLocaleDateString('en-JM', { month: 'short' }),
-        iso: d.toISOString().slice(0, 10),
-      };
-    });
+    const out: Day[] = [];
+    for (let i = 0; out.length < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      if (d.getDay() !== 0) out.push(toDay(d));
+    }
+    return out;
   }, []);
 
-  // Extras the customer ticked, plus the pickup fee when picking up — the
-  // same rule the database applies in price_app_order().
+  // Extras the customer ticked, plus their CrepRun zone's rate when picking
+  // up: the same rule the database applies in price_app_order().
   const pickable = addOns.filter((a) => a.kind !== 'delivery');
-  const pickupFee = addOns.find((a) => a.kind === 'delivery') ?? null;
   const extras = pickable.filter((a) => picked.includes(a.id));
-  const charged: AddOn[] = [...extras, ...(!dropoff && pickupFee ? [pickupFee] : [])];
+  const zone = zones.find((z) => z.id === zoneId) ?? null;
+  const pickupDay = zone ? nextPickup(zone) : null;
+  const date: Day | null = dropoff ? days[selDay] : pickupDay;
+  const creprun = !dropoff && zone ? { name: `CrepRun ${zone.name} (${zone.pickup_day})`, price_cents: zone.rate_cents } : null;
+  const charged: Pick<AddOn, 'name' | 'price_cents'>[] = [...extras, ...(creprun ? [creprun] : [])];
   const total = selected ? orderTotal(selected.price_cents, charged) : null;
   const hasKit = extras.some((a) => a.kind === 'kit');
 
@@ -72,6 +94,11 @@ export default function BookingScreen() {
 
   function confirmBooking() {
     if (!selected) return;
+    if (!dropoff && !zone) {
+      setError('Pick your area so we know which day CrepRun collects.');
+      return;
+    }
+    setError(null);
     if (!session) {
       setSignInOpen(true);
       return;
@@ -92,16 +119,19 @@ export default function BookingScreen() {
       setSignInOpen(true);
       return;
     }
+    if (!date) return;
     const { error: insertError } = await supabase.from('orders').insert({
       customer_id: userId,
       service_id: selected.id,
       location_id: selected.location_id,
       item_name: shoeType || selected.name,
       drop_method: dropoff ? 'dropoff' : 'pickup',
-      scheduled_date: days[selDay].iso,
+      zone_id: dropoff ? null : zoneId,
+      // For pickups the database sets this to the zone's next CrepRun day.
+      scheduled_date: date.iso,
       notes: notes || null,
-      // The database re-prices this from add_ons + drop_method; sent for
-      // older schemas only.
+      // The database re-prices this from add_ons + zone; sent for older
+      // schemas only.
       add_ons: extras.map((a) => ({ id: a.id })),
       price_cents: total,
       currency: selected.currency,
@@ -134,9 +164,9 @@ export default function BookingScreen() {
           <Text style={{ fontSize: 22, fontFamily: 'DMSans_500Medium', color: colors.navy, marginBottom: 4 }}>You&apos;re booked.</Text>
           <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue, marginBottom: 8 }}>{MOODS.success.title}</Text>
           <Text style={{ fontSize: 13, color: colors.caption, lineHeight: 20, marginBottom: 24, textAlign: 'center', fontFamily: 'DMSans_400Regular' }}>
-            {dropoff ? 'Bring in' : "We'll link you on WhatsApp to collect"} your {selected?.name === 'Clarks Clean' ? 'Clarks' : 'creps'} on{' '}
+            {dropoff ? 'Bring in' : 'CrepRun collects'} your {selected?.name === 'Clarks Clean' ? 'Clarks' : 'creps'} on{' '}
             <Text style={{ color: colors.navy, fontFamily: 'DMSans_500Medium' }}>
-              {days[selDay].short} {days[selDay].num}
+              {date?.short} {date?.num}
             </Text>
             .{dropoff ? '\nShop 19, Pristine Plaza, Half Way Tree.' : ''}
           </Text>
@@ -150,8 +180,8 @@ export default function BookingScreen() {
             {[
               ['Service', selected?.name ?? '—'],
               ['Shoe Type', shoeType || '—'],
-              ['Drop-off', dropoff ? 'In-store drop-off' : 'Pickup requested'],
-              ['Date', `${days[selDay].short} ${days[selDay].num} ${days[selDay].month}`],
+              ['Drop-off', dropoff ? 'In-store drop-off' : `CrepRun pickup · ${zone?.name ?? ''}`],
+              ['Date', date ? `${date.short} ${date.num} ${date.month}` : '—'],
               [selected?.name ?? 'Service', selected ? formatPrice(selected.price_cents) : '—'],
               ...charged.map((a) => [a.name, a.price_cents === null ? 'On inspection' : `+${formatPrice(a.price_cents)}`]),
               ['Total', formatPrice(total)],
@@ -163,7 +193,7 @@ export default function BookingScreen() {
             ))}
             <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
             <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>
-              Payment on drop-off. Cash & transfer accepted.
+              {dropoff ? 'Payment on drop-off.' : "We'll WhatsApp you on collection day."} Cash & transfer accepted.
               {hasKit ? ' Kits are paid for and collected at the shop.' : ''}
             </Text>
           </View>
@@ -224,16 +254,44 @@ export default function BookingScreen() {
                 >
                   <Text style={{ fontSize: 13, fontFamily: dropoff === opt.val ? 'DMSans_500Medium' : 'DMSans_400Regular', color: dropoff === opt.val ? colors.navy : colors.caption }}>
                     {opt.label}
-                    {!opt.val && pickupFee?.price_cents ? ` +${formatPrice(pickupFee.price_cents)}` : ''}
                   </Text>
                 </Pressable>
               ))}
             </View>
-            {!dropoff && pickupFee && (
-              <Text style={{ fontSize: 11, color: colors.caption, marginTop: 6, fontFamily: 'DMSans_400Regular' }}>{pickupFee.description}</Text>
-            )}
           </View>
 
+          {!dropoff && (
+            <View>
+              <Label>YOUR AREA · CREPRUN</Label>
+              {zones.length === 0 ? (
+                <Text style={{ fontSize: 12, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>
+                  Couldn&apos;t load pickup areas. Message us on WhatsApp to arrange pickup.
+                </Text>
+              ) : (
+                <View style={{ gap: 8 }}>
+                  {zones.map((z) => (
+                    <ZoneRow key={z.id} zone={z} on={z.id === zoneId} onPress={() => setZoneId(z.id)} />
+                  ))}
+                  <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>
+                    We collect and bring them back clean. Area not listed? Message us on WhatsApp.
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {!dropoff ? (
+            pickupDay && (
+              <View style={{ backgroundColor: colors.ice, borderRadius: 10, padding: 12 }}>
+                <Text style={{ fontSize: 12, color: colors.navy, fontFamily: 'DMSans_400Regular' }}>
+                  CrepRun collects on{' '}
+                  <Text style={{ fontFamily: 'DMSans_500Medium' }}>
+                    {pickupDay.short} {pickupDay.num} {pickupDay.month}
+                  </Text>
+                </Text>
+              </View>
+            )
+          ) : (
           <View>
             <Label>SELECT DATE</Label>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -257,6 +315,7 @@ export default function BookingScreen() {
               ))}
             </ScrollView>
           </View>
+          )}
 
           {pickable.length > 0 && (
             <View>
@@ -409,6 +468,34 @@ function Header({ title, onBack }: { title: string; onBack: () => void }) {
       </Pressable>
       <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.navy }}>{title}</Text>
     </View>
+  );
+}
+
+function ZoneRow({ zone, on, onPress }: { zone: Zone; on: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: on }}
+      style={{
+        backgroundColor: on ? colors.ice : colors.white,
+        borderWidth: on ? 1.5 : 1,
+        borderColor: on ? colors.blue : colors.border,
+        borderRadius: 10,
+        padding: 12,
+        flexDirection: 'row',
+        gap: 12,
+        alignItems: 'center',
+      }}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.navy }}>
+          {zone.name} · {zone.pickup_day}s
+        </Text>
+        <Text style={{ fontSize: 11, color: colors.caption, marginTop: 2, fontFamily: 'DMSans_400Regular' }}>{zone.areas}</Text>
+      </View>
+      <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue }}>+{formatPrice(zone.rate_cents)}</Text>
+    </Pressable>
   );
 }
 
