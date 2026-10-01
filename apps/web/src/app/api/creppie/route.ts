@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 // Relays the website's Creppie chat to the same n8n workflow WhatsApp/IG use
 // (clean-crep-systems/creppie.json). That webhook takes { user_id, message }
@@ -10,6 +11,16 @@ import { NextResponse } from 'next/server';
 // private, user_id is ours to shape (n8n drops it into an Airtable formula, so
 // it must never be free text), and each message costs Claude API credit and
 // Airtable API calls, so it's rate-limited here.
+//
+// Two channels share this relay:
+//   website: user_id "web-<session>"
+//   app ("channel": "app"): user_id "app-<session>", so the conversation stays the
+//     same before and after the customer signs in. If the request carries a
+//     valid Supabase access token, subscriber_id is "cust-<user id>": Creppie
+//     then takes the booking onto that account. Without one (a guest),
+//     subscriber_id = user_id and Creppie asks them to sign in before booking
+//     (it answers with needsSignIn). The customer id only ever comes from a
+//     verified token, never from the request body.
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 const FALLBACK = `Creppie can't answer right now. Link us on WhatsApp and the team will sort you out: ${WHATSAPP_URL}`;
@@ -43,7 +54,7 @@ export async function POST(req: Request) {
   const webhook = process.env.CREPPIE_WEBHOOK_URL;
   if (!webhook) return NextResponse.json({ reply: FALLBACK }, { status: 503 });
 
-  let body: { sessionId?: unknown; message?: unknown };
+  let body: { sessionId?: unknown; message?: unknown; channel?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -64,20 +75,43 @@ export async function POST(req: Request) {
     );
   }
 
+  const isApp = body.channel === 'app';
+  const userId = `${isApp ? 'app' : 'web'}-${sessionId}`;
+  let subscriberId = userId;
+  if (isApp) {
+    const customerId = await verifiedUserId(req.headers.get('authorization'));
+    if (customerId) subscriberId = `cust-${customerId}`;
+  }
+
   try {
     const res = await fetch(webhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: `web-${sessionId}`, message }),
+      body: JSON.stringify({ user_id: userId, subscriber_id: subscriberId, message }),
       signal: AbortSignal.timeout(45_000),
     });
     if (!res.ok) throw new Error(`n8n ${res.status}`);
-    const data = (await res.json()) as { reply?: unknown };
+    const data = (await res.json()) as { reply?: unknown; needsSignIn?: unknown };
     const reply = typeof data.reply === 'string' && data.reply.trim() ? data.reply.trim() : null;
     if (!reply) throw new Error('empty reply');
-    return NextResponse.json({ reply });
+    return NextResponse.json({ reply, needsSignIn: data.needsSignIn === true });
   } catch (e) {
     console.error('creppie relay failed', e);
     return NextResponse.json({ reply: FALLBACK }, { status: 502 });
+  }
+}
+
+/** The signed-in app customer's id from a "Bearer <supabase access token>" header, or null. */
+async function verifiedUserId(authorization: string | null): Promise<string | null> {
+  const token = authorization?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!token || !url || !key) return null;
+  try {
+    const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data, error } = await supabase.auth.getUser(token);
+    return error || !data.user ? null : data.user.id;
+  } catch {
+    return null;
   }
 }
