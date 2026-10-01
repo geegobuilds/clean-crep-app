@@ -10,6 +10,7 @@ import { useAddOns } from '@/hooks/use-add-ons';
 import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { SignInForm } from '@/components/sign-in-form';
+import { CreppieButton } from '@/components/creppie-chat';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/states';
 import { PushOffer } from '@/components/push-offer';
 import { CreppieArt, MOODS } from '@/components/creppie';
@@ -347,7 +348,7 @@ export default function BookingScreen() {
         <Text style={{ fontSize: 20, fontFamily: 'DMSans_500Medium', color: colors.navy }}>Book a Clean</Text>
         <Text style={{ fontSize: 13, color: colors.caption, marginTop: 4, fontFamily: 'DMSans_400Regular' }}>Choose a service to get started.</Text>
       </View>
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 10 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 88, gap: 10 }}>
         <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 4 }}>AVAILABLE SERVICES</Text>
         {servicesLoading && services.length === 0 && <SkeletonList count={4} variant="service" />}
         {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
@@ -395,6 +396,7 @@ export default function BookingScreen() {
           </Pressable>
         ))}
       </ScrollView>
+      <CreppieButton />
     </SafeAreaView>
   );
 }

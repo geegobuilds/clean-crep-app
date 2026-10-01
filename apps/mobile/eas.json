@@ -16,14 +16,16 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://gymchhmohcggvesrsupc.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_90XcuZ2VMzSIJRX_jFUlGw_tmIkZM4L"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_90XcuZ2VMzSIJRX_jFUlGw_tmIkZM4L",
+        "EXPO_PUBLIC_CREPPIE_URL": "https://www.cleancrep.com/api/creppie"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://gymchhmohcggvesrsupc.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_90XcuZ2VMzSIJRX_jFUlGw_tmIkZM4L"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_90XcuZ2VMzSIJRX_jFUlGw_tmIkZM4L",
+        "EXPO_PUBLIC_CREPPIE_URL": "https://www.cleancrep.com/api/creppie"
       }
     }
   },

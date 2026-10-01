@@ -4,7 +4,7 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-09-30_
+_Last updated: 2026-10-01_
 
 ## Current Status
 
@@ -53,6 +53,15 @@ _Last updated: 2026-09-30_
   booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
   fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
   `Pick Scheduled Date`); blank or odd dates fall back to today.
+- **Ask Creppie in the app (2026-10-01, PR open)**: floating face button on Home and Book opens a
+  full-screen chat (`components/creppie-chat.tsx`, `lib/creppie.ts`) talking to the website relay
+  (`EXPO_PUBLIC_CREPPIE_URL`, default `https://www.cleancrep.com/api/creppie`) with
+  `channel: "app"`. Anyone can ask questions; **booking needs an account**: the relay verifies the
+  Supabase token and sends `subscriber_id: cust-<user id>`, and Creppie puts the order on that
+  account (Orders tab, push, points). A guest who tries to book gets "sign in first" plus a sign-in
+  card; after signing in the chat asks Creppie to go ahead. The website still takes guest bookings.
+  The n8n side is a **draft** (dry-run 2026-10-01: guest blocked, signed-in order routed,
+  web + IG unchanged); publish only on Geego's "publish". Live version to roll back to: `2faeee65`.
 - **Staff login has "Forgot password?"** (2026-09-30) — emails a reset link to the staff address.
   The only staff account is `walkergiovani+ccjsmoketest@gmail.com` (a leftover test alias);
   create a proper shop login before hiring.

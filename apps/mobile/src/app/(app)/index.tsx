@@ -9,6 +9,7 @@ import { useServices } from '@/hooks/use-services';
 import { useOrders } from '@/hooks/use-orders';
 import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
 import { ReviewAsk } from '@/components/review-ask';
+import { CreppieButton } from '@/components/creppie-chat';
 
 const logo = require('../../../assets/brand/logo.png');
 const WHATSAPP_URL = 'https://wa.me/18765072163';
@@ -31,7 +32,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 88 }}>
         {/* Header */}
         <View
           style={{
@@ -211,6 +212,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+      <CreppieButton />
     </SafeAreaView>
   );
 }
