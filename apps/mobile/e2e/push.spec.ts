@@ -154,3 +154,32 @@ test('the database, not the phone, prices an app order', async () => {
   expect(row.add_ons.map((a: { name: string }) => a.name)).toEqual(['Sole Refresh']);
   expect(sql(`select loyalty_points from customers where id = '${userId}'`)).toBe('0');
 });
+
+test('app pickups: the database requires a CrepRun zone and charges its rate on its day', async () => {
+  dbOnly();
+  const c = newCustomer();
+  const { userId, accessToken } = await apiSignUp(c);
+  await asUser(accessToken, 'customers', { method: 'POST', body: { id: userId, name: c.name, email: c.email } });
+  const [service] = (await asUser(accessToken, 'services?select=id,location_id,currency&name=eq.Sneaker%20Clean')).body;
+  const [zone4] = (await asUser(accessToken, 'zones?select=id&name=eq.Zone%204')).body;
+  const order = (extra: Record<string, unknown>) => ({
+    customer_id: userId,
+    service_id: service.id,
+    location_id: service.location_id,
+    item_name: 'Pickup test',
+    drop_method: 'pickup',
+    scheduled_date: '2000-01-01',
+    currency: service.currency,
+    ...extra,
+  });
+
+  const noZone = await asUser(accessToken, 'orders', { method: 'POST', body: order({}) });
+  expect(noZone.status).toBe(400);
+
+  const ok = await asUser(accessToken, 'orders', { method: 'POST', body: order({ zone_id: zone4.id, price_cents: 100 }) });
+  expect(ok.status).toBe(201);
+  const row = ok.body[0];
+  expect(row.price_cents).toBe(200000 + 400000); // Sneaker Clean + Zone 4 (Portmore) round trip
+  expect(new Date(`${row.scheduled_date}T12:00:00Z`).getUTCDay()).toBe(5); // Zone 4 collects Fridays
+  expect(row.add_ons.map((a: { name: string }) => a.name)).toEqual(['CrepRun Zone 4 (Friday)']);
+});
