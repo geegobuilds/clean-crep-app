@@ -141,6 +141,8 @@ _Last updated: 2026-09-30_
   Real test showed Creppie still skipped the day, so a code step `Polish Reply` (live version
   `2faeee65`) now appends it, and replaces the summary on a re-sent booking with "you're already
   booked" (duplicates were already blocked from the database; per chat only, not per phone).
+- **2026-09-30** — Test data cleared from the live dashboard (orders CC-0042/45/46/47, their
+  notifications, smoke-test loyalty points); accounts kept. The staff dashboard now starts clean.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -164,8 +166,8 @@ _Last updated: 2026-09-30_
 9. **Migration leftovers (Geego's order: 1–3 done 2026-09-30, then 4–6)**:
    4. Import historical Airtable Orders (and optionally Conversations) into Supabase — the
       `airtable_id` columns (0010) make the copy re-runnable.
-   5. Prices & Zones page in the staff dashboard (edit services / add_ons / zones), then
-      downgrade Airtable.
+   5. ~~Prices & Zones page~~ — built 2026-09-30 (`/staff/dashboard/prices`, migration 0012
+      for zone edits; apply 0012 to live at merge). Then downgrade Airtable.
    6. ~~Real Instagram test booking → dashboard~~ (passed 2026-09-30); website chat go-live below.
 10. Revisit prices in `services` + `add_ons` (Supabase table editor; the app reads them live).
     Sole Refresh is both a service and a J$1,500 add-on (live price J$1,500 on both; Creppie
