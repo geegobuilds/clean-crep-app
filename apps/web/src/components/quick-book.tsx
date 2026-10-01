@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { AddOn, Service, Zone } from '@clean-crep/shared';
 import { formatPrice } from '@clean-crep/shared';
 import { createClient } from '@/lib/supabase/client';
+import { accountConfirmUrl } from '@/lib/account';
 
 // Quick Book: the hero's booking card. Three short steps (what / when / who)
 // then one call to book_web_order(), which prices the order and picks the
@@ -156,7 +157,7 @@ export function QuickBook({ services, addOns, zones }: { services: Service[]; ad
         email: email.trim(),
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/account/confirm`,
+          emailRedirectTo: accountConfirmUrl(),
           data: { name: name.trim() },
         },
       });

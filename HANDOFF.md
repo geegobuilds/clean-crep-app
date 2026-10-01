@@ -61,7 +61,8 @@ _Last updated: 2026-10-01_
   it (drop-off Mon–Sat within 2 weeks; pickup = zone's next day), `source = 'web'`; a new account
   claims guest orders with its **verified** email (`claim_guest_orders()` on customers insert).
   After booking, the site emails a sign-in link (Supabase OTP) to `/account/confirm` → `/account`
-  (set a password for the app, see bookings). **Live setup still needed** (Cowork): custom SMTP in
+  (set a password for the app, see bookings and loyalty points; `claim_my_guest_orders()`, migration 0014,
+  picks up bookings made later with the same verified email). **Live setup still needed** (Cowork): custom SMTP in
   Supabase Auth (the built-in sender only reaches team addresses), redirect URL
   `https://www.cleancrep.com/account/confirm`, and branded Magic Link / Confirm signup templates.
   Open question: the app charges a flat J$1,000 pickup, while the website and Creppie use zone rates.

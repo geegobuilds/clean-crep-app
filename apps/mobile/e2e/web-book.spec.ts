@@ -92,3 +92,24 @@ test('Quick Book: signing up with the booking email claims the order, only once 
   await asUser(attacker.accessToken, 'customers', { method: 'POST', body: { id: attacker.userId, name: 'x', email: victim.email } });
   expect(sql(`select count(*) from orders where customer_id = '${attacker.userId}'`)).toBe('0');
 });
+
+test('/account: an existing account picks up later guest bookings with its email (claim_my_guest_orders)', async () => {
+  const c = newCustomer();
+  const { userId, accessToken } = await apiSignUp(c);
+  await asUser(accessToken, 'customers', { method: 'POST', body: { id: userId, name: c.name, email: c.email } });
+  // A guest booking made with the same email after the account existed, but with no customers link
+  // (e.g. Creppie on Instagram): only the RPC can pick it up.
+  sql(`insert into orders (service_id, item_name, scheduled_date, source, guest_name, guest_email)
+       values ((select id from services where name = 'Sneaker Clean'), 'Later IG booking', jm_today(), 'creppie', 'IG', '${c.email.toUpperCase()}')`);
+  const claimed = await asUser(accessToken, 'rpc/claim_my_guest_orders', { method: 'POST', body: {} });
+  expect(claimed.body).toBe(1);
+  expect(sql(`select count(*) from orders where customer_id = '${userId}' and item_name = 'Later IG booking'`)).toBe('1');
+
+  // Guests can't call it.
+  const res = await fetch(`${ANON_URL}/rest/v1/rpc/claim_my_guest_orders`, {
+    method: 'POST',
+    headers: { apikey: process.env.E2E_ANON_KEY ?? '', 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  expect(res.status).not.toBe(200);
+});

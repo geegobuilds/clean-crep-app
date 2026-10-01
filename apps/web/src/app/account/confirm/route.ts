@@ -18,5 +18,5 @@ export async function GET(request: Request) {
   if (tokenHash) ok = !(await supabase.auth.verifyOtp({ token_hash: tokenHash, type })).error;
   else if (code) ok = !(await supabase.auth.exchangeCodeForSession(code)).error;
 
-  return NextResponse.redirect(new URL(ok ? '/account' : '/account?link=expired', url.origin));
+  return NextResponse.redirect(new URL(ok ? '/account' : '/account?error=link_expired', url.origin));
 }

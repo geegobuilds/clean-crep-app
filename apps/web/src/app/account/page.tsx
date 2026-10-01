@@ -1,10 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
 import { colors, formatPrice } from '@clean-crep/shared';
 import { createClient } from '@/lib/supabase/client';
+import { accountConfirmUrl } from '@/lib/account';
+
+const WHATSAPP_URL = 'https://wa.me/18765072163';
 
 // Where the Quick Book email's link lands (via /account/confirm). Signing in
 // creates their customers row, which claims the bookings made with this email
@@ -40,11 +44,13 @@ export default function AccountPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [expired, setExpired] = useState(false);
+  const [points, setPoints] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await supabase.auth.getUser();
     const u = data.user;
-    setExpired(new URLSearchParams(window.location.search).get('link') === 'expired');
+    const q = new URLSearchParams(window.location.search);
+    setExpired(q.get('error') === 'link_expired' || q.get('link') === 'expired');
     setUser(u);
     if (u) {
       const metaName = typeof u.user_metadata?.name === 'string' ? u.user_metadata.name : '';
@@ -52,6 +58,10 @@ export default function AccountPage() {
       await supabase
         .from('customers')
         .upsert({ id: u.id, name: metaName || (u.email ?? '').split('@')[0], email: u.email ?? null }, { onConflict: 'id', ignoreDuplicates: true });
+      // Returning customers: pick up any bookings made with this (verified) email since last visit.
+      await supabase.rpc('claim_my_guest_orders');
+      const { data: me } = await supabase.from('customers').select('loyalty_points').eq('id', u.id).maybeSingle();
+      setPoints(typeof me?.loyalty_points === 'number' ? me.loyalty_points : null);
       const { data: rows } = await supabase
         .from('orders')
         .select('id, order_number, item_name, status, scheduled_date, price_cents')
@@ -81,24 +91,39 @@ export default function AccountPage() {
 
   async function resend(e: React.FormEvent) {
     e.preventDefault();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setError('Enter the email you booked with.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setError('Enter a valid email.');
     setBusy(true);
     setError(null);
     const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/account/confirm` },
+      options: { emailRedirectTo: accountConfirmUrl(), shouldCreateUser: true },
     });
     setBusy(false);
-    if (err) return setError('Couldn’t send that just now. Try again in a minute.');
+    if (err) return setError(err.message);
     setSent(true);
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: colors.navy, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 420 }}>
-        <Link href="/" style={{ display: 'block', fontSize: 14, fontWeight: 500, color: colors.white, textAlign: 'center', marginBottom: 24, textDecoration: 'none' }}>
-          Clean Crep Jamaica
+    <>
+    <nav>
+      <div className="nav-inner">
+        <Link href="/" className="nav-logo">
+          <Image src="/assets/logo-cropped.png" alt="Clean Crep JA" width={34} height={34} />
+          <span>Clean Crep Jamaica</span>
         </Link>
+        <div className="nav-links">
+          <Link href="/#services">Services</Link>
+          <Link href="/#how">How It Works</Link>
+          <Link href="/#location">Location</Link>
+          <Link href="/#faq">FAQ</Link>
+          <Link href="/#book" className="btn-primary nav-cta" style={{ padding: '8px 18px', fontSize: 13 }}>
+            Book Now
+          </Link>
+        </div>
+      </div>
+    </nav>
+    <div style={{ minHeight: '100vh', background: colors.navy, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '92px 16px 32px' }}>
+      <div style={{ width: '100%', maxWidth: 420 }}>
 
         <div style={card}>
           {loading ? (
@@ -122,6 +147,12 @@ export default function AccountPage() {
               ) : (
                 <div style={{ ...sub, marginTop: 16, color: colors.navy }}>Password saved. Sign in on the app with {user.email}.</div>
               )}
+
+              <div style={{ ...label, marginTop: 24 }}>Loyalty points</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: colors.navy, marginTop: 4 }}>
+                {points ?? 0}
+                <span style={{ fontSize: 12, fontWeight: 400, color: colors.caption, marginLeft: 6 }}>pts · 50 per completed clean</span>
+              </div>
 
               <div style={{ ...label, marginTop: 24 }}>Your bookings</div>
               {orders.length === 0 ? (
@@ -164,18 +195,25 @@ export default function AccountPage() {
             </>
           ) : (
             <>
-              <div style={title}>{expired ? 'That link has expired' : 'Your Clean Crep account'}</div>
+              <div style={title}>{sent ? 'Check your email' : expired ? 'Link expired, request a new one' : 'Your Clean Crep account'}</div>
               <div style={{ ...sub, marginTop: 6, lineHeight: 1.5 }}>
                 {sent
-                  ? `Check ${email.trim()} for a fresh link. Open it on this device.`
-                  : 'Enter the email you booked with and we’ll send you a link to get in.'}
+                  ? 'Check your email. Tap the link from Clean Crep Jamaica.'
+                  : 'Enter your email and we’ll send you a sign-in link. No password needed.'}
               </div>
               {!sent && (
                 <form onSubmit={resend} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
                   <input type="email" autoComplete="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} style={input} aria-label="Email" />
-                  {error && <div style={err}>{error}</div>}
+                  {error && (
+                    <div style={err}>
+                      {error}{' '}
+                      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ color: colors.blue, fontWeight: 500 }}>
+                        Link us on WhatsApp
+                      </a>
+                    </div>
+                  )}
                   <button type="submit" disabled={busy} style={btn}>
-                    {busy ? 'Sending…' : 'Email me a link'}
+                    {busy ? 'Sending…' : 'Send my link'}
                   </button>
                 </form>
               )}
@@ -184,6 +222,7 @@ export default function AccountPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
