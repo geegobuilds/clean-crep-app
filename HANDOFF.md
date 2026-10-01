@@ -53,7 +53,11 @@ _Last updated: 2026-10-01_
   booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
   fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
   `Pick Scheduled Date`); blank or odd dates fall back to today.
-- **App pickups priced by CrepRun zone (2026-10-01, PR open; Geego's call)**: Book › Pickup now asks
+- **Health check tune-up (2026-10-01)**: migration 0016 pins `search_path` on `jm_today()` /
+  `next_pickup_date()` (advisor warning; applied to live). The daily routine's known list now
+  includes `book_web_order` (public by design) and `claim_my_guest_orders`; its Creppie check only
+  warns when 5+ people chatted in 7 days with no booking logged (no Airtable comparison any more).
+- **App pickups priced by CrepRun zone (merged in PR #17, 2026-10-01; 0015 live; Geego's call)**: Book › Pickup now asks
   for the area (zone list with day + rate); the order stores `zone_id` and `price_app_order()`
   (migration `0015_app_pickup_zones.sql`) adds the zone's round-trip rate and sets the date to its
   next pickup day, same as the website and Creppie. The flat J$1,000 `pickup-delivery` add-on is
