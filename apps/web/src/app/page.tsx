@@ -82,7 +82,7 @@ export default async function LandingPage() {
               collect from your door.
             </p>
             <ul className="hero-points">
-              <li>Open today · 9:00 AM – 6:00 PM</li>
+              <li>Open Mon–Fri 10 AM – 6 PM · Sat 10 AM – 3 PM</li>
               <li>CrepRun pickup across Kingston, Portmore &amp; Spanish Town</li>
               <li>Not happy? We re-clean free</li>
             </ul>
@@ -223,14 +223,18 @@ export default async function LandingPage() {
                 <div className="hours-list">
                   <div className="hours-row">
                     <span className="day">Monday – Friday</span>
-                    <span className="time">9:00 AM – 6:00 PM</span>
+                    <span className="time">10:00 AM – 6:00 PM</span>
                   </div>
                   <div className="hours-row">
                     <span className="day">Saturday</span>
-                    <span className="time">9:00 AM – 5:00 PM</span>
+                    <span className="time">10:00 AM – 3:00 PM</span>
                   </div>
                   <div className="hours-row">
                     <span className="day">Sunday</span>
+                    <span className="time closed">Closed</span>
+                  </div>
+                  <div className="hours-row">
+                    <span className="day">Public holidays</span>
                     <span className="time closed">Closed</span>
                   </div>
                 </div>
