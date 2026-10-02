@@ -4,7 +4,7 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-01_
+_Last updated: 2026-10-02_
 
 ## Current Status
 
@@ -53,6 +53,19 @@ _Last updated: 2026-10-01_
   booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
   fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
   `Pick Scheduled Date`); blank or odd dates fall back to today.
+- **2026-10-02**:
+  - Shop hours are **Mon–Fri 10–6, Sat 10–3, closed Sundays + public holidays** (Creppie was right;
+    website fixed in #21).
+  - Creppie (n8n version `02e68de1`, exported in systems #5): Instagram photos/videos are detected
+    (HEAD request on the lookaside link) and thanked instead of "can't open links"; Creppie asks the
+    first name early and only a number/email at confirm (Geego's call: people stalled there).
+  - ManyChat Comment automation (CLEAN/PRICE): opener is now a question ("Wah yuh need cleaned…
+    how many pairs?"), seeded into Creppie's history. The double greeting Seejay "got" was a
+    ManyChat inbox display glitch only.
+  - Health check: ends with a weekly "chats → bookings" line; warns only at 20+ chats with 0 bookings.
+  - `npm run ios` uses `--localhost` (#20), so a Wi‑Fi change can't break the Simulator.
+  - Reminders set: Mon Oct 5 (add cleancrep.com booking link to Creppie, Geego's call), Fri Oct 9
+    (1-week before/after check on the name-early change).
 - **Customer emails live (2026-10-01)**: Supabase Auth sends through Gmail SMTP
   (cleancrepja@gmail.com, app password; 60/h), branded "Confirm signup" + "Magic link" templates
   with token_hash links to /account/confirm. Tested end to end: inbox (not spam), signed in,
