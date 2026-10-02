@@ -191,6 +191,12 @@ _Last updated: 2026-10-02_
   booked" (duplicates were already blocked from the database; per chat only, not per phone).
 - **2026-09-30** — Test data cleared from the live dashboard (orders CC-0042/45/46/47, their
   notifications, smoke-test loyalty points); accounts kept. The staff dashboard now starts clean.
+- **2026-10-02** — Creppie booking fixes after the first real Creppie booking (CC-0052, Crissy,
+  1x Clarks): kits are restocking, so Creppie never offers them (`KITS_RESTOCKING` in n8n
+  `Prompt Tweaks`; set it to `false` when stock lands). **Clarks take no add-ons** (no Sole
+  Refresh, no Deep Clean; a cap clean is the only extra). Area only asked for CrepRun pickup.
+  No drop-off day saves a week out with "Day to confirm" in the notes, not today. Live n8n version
+  `54b1cd1e`; export in clean-crep-systems PR #6. CC-0052 moved to Oct 9 + "Day to confirm".
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
