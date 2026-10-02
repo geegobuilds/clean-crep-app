@@ -42,7 +42,7 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
-    "ios": "expo start --ios",
+    "ios": "expo start --ios --localhost",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "e2e": "scripts/e2e.sh"
