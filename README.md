@@ -83,6 +83,12 @@ Expo Go runs everything except remote push notifications (needs a development bu
 physical phone). Save a file and the simulator hot-reloads; `Shift+i` in the terminal picks a
 different iPhone model.
 
+`npm run ios` serves the app on `localhost` (the Simulator shares the Mac's network), so it keeps
+working when the Mac's Wi‑Fi address changes. If the Simulator shows "Could not connect to the
+server", the dev server isn't running: start it again (double-click the launcher) and keep that
+Terminal window open while you use the app. To test on a real phone instead, use `npm start`
+(LAN address) and scan the QR code with Expo Go.
+
 **One-click launcher:** `scripts/mac/Clean Crep.command` pulls the latest code, runs
 `npm install` only when dependencies changed, then `npm run ios`. Copy it to the Desktop once
 (`cp ~/clean-crep-app/scripts/mac/"Clean Crep.command" ~/Desktop/`) and double-click it; it
