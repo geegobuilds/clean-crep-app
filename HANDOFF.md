@@ -4,7 +4,7 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-02_
+_Last updated: 2026-10-04_
 
 ## Current Status
 
@@ -197,6 +197,12 @@ _Last updated: 2026-10-02_
   Refresh, no Deep Clean; a cap clean is the only extra). Area only asked for CrepRun pickup.
   No drop-off day saves a week out with "Day to confirm" in the notes, not today. Live n8n version
   `54b1cd1e`; export in clean-crep-systems PR #6. CC-0052 moved to Oct 9 + "Day to confirm".
+- **2026-10-04** — Growth-transcript filter (batch 2: viral-content list, RevenueCat
+  subscriptions, "app #2" AI stack). Adopt: **product analytics (PostHog)** on app + website — we
+  have zero funnel data today. Skip: RevenueCat/StoreKit for Clean Crep Club — cleaning is a
+  physical service, so store rules let us take payment outside Apple/Google IAP (no 15–30% cut);
+  Club stays a manual pilot. Skip Peekly validation (business already validated) and the SwiftUI
+  switch (Expo covers both stores). Viral-content playbook goes to @GeegoBuilds, not the app.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
