@@ -62,11 +62,12 @@ _Last updated: 2026-10-04_
   (posthog-js, pageviews only, **autocapture off**, `/staff` never tracked, query strings/fragments
   stripped from URLs so auth tokens never leave). No key → no-op (e2e/CI). Same 10 event names on both
   (`booking_started`, `addon_toggled`, `pickup_zone_selected`, `signin_prompted {where}`,
-  `signin_completed`, `booking_confirmed {order_total_jmd, addons_count, method, source}`,
+  `signin_completed`, `booking_confirmed {order_total_jmd, addons_count, addons, method, source}` (`addons` = booked add-on names, sorted, comma-separated),
   `creppie_chat_opened`, `creppie_message_sent`, `review_ask_shown`, `review_ask_tapped`); every event
   carries `platform: app|web`. Never email/phone. Saved insight **"Booking funnel (app vs web)"**
   (`/project/644953/insights/eCG2vhc1`): booking_started → signin_prompted → booking_confirmed, by
-  platform. Data starts when the PR's web deploy is live / the next EAS build ships.
+  platform (sign-in step optional). Dashboard **"Clean Crep: Bookings"** (`/project/644953/dashboard/2168419`)
+  also holds "Add-on attach rate". Data starts when the PR's web deploy is live / the next EAS build ships.
 - **2026-10-02**:
   - Shop hours are **Mon–Fri 10–6, Sat 10–3, closed Sundays + public holidays** (Creppie was right;
     website fixed in #21).

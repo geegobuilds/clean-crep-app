@@ -154,6 +154,8 @@ export default function BookingScreen() {
     track('booking_confirmed', {
       order_total_jmd: total === null ? null : Math.round(total / 100),
       addons_count: extras.length,
+      // Booked add-on names (sorted, comma-separated) so attach rate counts bookings, not ticks.
+      addons: extras.map((a) => a.name).sort().join(', ') || null,
       method: dropoff ? 'dropoff' : 'pickup',
       source: 'app',
     });

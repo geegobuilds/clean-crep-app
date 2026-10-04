@@ -168,6 +168,8 @@ export function QuickBook({ services, addOns, zones }: { services: Service[]; ad
     track('booking_confirmed', {
       order_total_jmd: row.price_cents === null ? null : Math.round(row.price_cents / 100),
       addons_count: picked.length,
+      // Booked add-on names (sorted, comma-separated) so attach rate counts bookings, not ticks.
+      addons: extras.filter((a) => picked.includes(a.id)).map((a) => a.name).sort().join(', ') || null,
       method,
       source: 'web',
     });
