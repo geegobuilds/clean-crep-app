@@ -265,6 +265,11 @@ _Last updated: 2026-10-04_
 
 ## Open Questions
 
+- **Next product (proposed 2026-10-04, Geego to decide)**: consignment resale of cleaned, verified
+  pre-owned sneakers ("Fresh Pairs"). Manual pilot on IG/WhatsApp Nov–Dec (10 pairs, 15–20%
+  commission + paid restoration clean per pair); build an in-app shop only if 10 sell within 30
+  days. Alongside: a "premium pass" on the app, led by before/after photos on every order.
+
 - Creppie orders that arrived while the DB was paused exist only in Airtable. Backfill them into
   `orders` (one-off import) or accept the gap?
 
