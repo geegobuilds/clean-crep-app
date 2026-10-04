@@ -203,6 +203,13 @@ _Last updated: 2026-10-04_
   physical service, so store rules let us take payment outside Apple/Google IAP (no 15–30% cut);
   Club stays a manual pilot. Skip Peekly validation (business already validated) and the SwiftUI
   switch (Expo covers both stores). Viral-content playbook goes to @GeegoBuilds, not the app.
+- **2026-10-04** — Growth-transcript filter (batch 3: Expo-to-App-Store, "top 5 Claude Code
+  plugins", 2,000-brand design library). Adopt: a **reactivation loop** (customers get a "due for a
+  clean" nudge ~4–6 weeks after pickup: app push, email, and a one-tap WhatsApp list in the
+  dashboard for Creppie customers) and **AI-written store listing + screenshots** at Play Store
+  time. Skip third-party Claude Code plugins (HANDOFF.md already covers memory; /code-review is
+  built in; unknown plugins see the code and keys). Skip copying big-brand design files: write our
+  own `DESIGN.md` from `project/colors_and_type.css` instead, so every agent builds on-brand.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
