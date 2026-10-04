@@ -230,6 +230,10 @@ _Last updated: 2026-10-04_
   Quick Book contain names/phones). Funnel as Geego specified; note the website takes guest bookings
   without a sign-in, so web drops to ~0 at `signin_prompted` by design, and app users already signed
   in skip it too. If that hides conversions, make step 2 optional in the insight.
+- **2026-10-04** — Daily health check (`trig_01XVg7G6iEY2aUHZCsw1b68a`) now warns on orders booked 7+
+  days ago that still aren't Completed (`open_over_7d`, skips ones the stuck-pickup / stale-received
+  checks already list). Why: all 3 live orders were still "received"; nothing marked done means no
+  ready push, no review ask, no loyalty points and no reactivation nudges.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -267,6 +271,8 @@ _Last updated: 2026-10-04_
 
 ## Gotchas
 
+- Renaming or adding an add-on in Supabase → update its series in PostHog "Add-on attach rate"
+  (project 644953, dashboard 2168419), or it silently reads 0.
 - **Expo SDK 54 + Xcode 27:** relies on `patches/@expo+cli+54.0.27.patch`. When upgrading Expo
   (SDK 56+ supports Device Hub natively) delete the patch — patch-package fails the install on
   a version mismatch as a reminder. Dev builds on iOS 27 may also need the UIKit scene lifecycle
