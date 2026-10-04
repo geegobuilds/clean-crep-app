@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
+import { formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
 import { useServices } from '@/hooks/use-services';
@@ -15,6 +15,9 @@ import { CreppieButton } from '@/components/creppie-chat';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/states';
 import { PushOffer } from '@/components/push-offer';
 import { CreppieArt, MOODS } from '@/components/creppie';
+import { Button, Overline, ScreenHeader } from '@/components/ui';
+import { success, tapLight } from '@/lib/haptics';
+import { c, elevation, radius, space, type } from '@/theme';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 
@@ -89,6 +92,7 @@ export default function BookingScreen() {
   const hasKit = extras.some((a) => a.kind === 'kit');
 
   function togglePick(id: string) {
+    tapLight();
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   }
 
@@ -141,6 +145,7 @@ export default function BookingScreen() {
       setError(friendlyError(insertError, 'booking'));
       return;
     }
+    success();
     setStep(2);
   }
 
@@ -155,17 +160,17 @@ export default function BookingScreen() {
 
   if (step === 2) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
         <Header title="Confirm Booking" onBack={() => setStep(1)} />
-        <ScrollView contentContainerStyle={{ padding: 20, alignItems: 'center' }}>
-          <View style={{ marginBottom: 16 }}>
+        <ScrollView contentContainerStyle={{ padding: space.lg, alignItems: 'center', paddingBottom: space.xxl }}>
+          <View style={{ marginBottom: space.md }}>
             <CreppieArt mood="success" size={136} />
           </View>
-          <Text style={{ fontSize: 22, fontFamily: 'DMSans_500Medium', color: colors.navy, marginBottom: 4 }}>You&apos;re booked.</Text>
-          <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue, marginBottom: 8 }}>{MOODS.success.title}</Text>
-          <Text style={{ fontSize: 13, color: colors.caption, lineHeight: 20, marginBottom: 24, textAlign: 'center', fontFamily: 'DMSans_400Regular' }}>
+          <Text style={[type.title, { marginBottom: space.xxs }]}>You&apos;re booked.</Text>
+          <Text style={[type.bodyStrong, { color: c.accent, marginBottom: space.xs }]}>{MOODS.success.title}</Text>
+          <Text style={[type.body, { color: c.inkMuted, marginBottom: space.lg, textAlign: 'center' }]}>
             {dropoff ? 'Bring in' : 'CrepRun collects'} your {selected?.name === 'Clarks Clean' ? 'Clarks' : 'creps'} on{' '}
-            <Text style={{ color: colors.navy, fontFamily: 'DMSans_500Medium' }}>
+            <Text style={{ color: c.navy, fontFamily: type.bodyStrong.fontFamily }}>
               {date?.short} {date?.num}
             </Text>
             .{dropoff ? '\nShop 19, Pristine Plaza, Half Way Tree.' : ''}
@@ -173,10 +178,8 @@ export default function BookingScreen() {
 
           <PushOffer />
 
-          <View style={{ backgroundColor: colors.ice, borderRadius: 12, padding: 16, width: '100%', marginBottom: 20 }}>
-            <Text style={{ fontSize: 10, color: colors.caption, letterSpacing: 2, marginBottom: 12, fontFamily: 'DMSans_500Medium' }}>
-              BOOKING SUMMARY
-            </Text>
+          <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg, width: '100%', marginBottom: space.lg }, elevation.card]}>
+            <Overline style={{ marginBottom: space.sm }}>BOOKING SUMMARY</Overline>
             {[
               ['Service', selected?.name ?? '—'],
               ['Shoe Type', shoeType || '—'],
@@ -184,30 +187,27 @@ export default function BookingScreen() {
               ['Date', date ? `${date.short} ${date.num} ${date.month}` : '—'],
               [selected?.name ?? 'Service', selected ? formatPrice(selected.price_cents) : '—'],
               ...charged.map((a) => [a.name, a.price_cents === null ? 'On inspection' : `+${formatPrice(a.price_cents)}`]),
-              ['Total', formatPrice(total)],
             ].map(([k, v]) => (
-              <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ fontSize: 12, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>{k}</Text>
-                <Text style={{ fontSize: 12, fontFamily: 'DMSans_500Medium', color: colors.navy }}>{v}</Text>
+              <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space.sm, marginBottom: space.xs }}>
+                <Text style={[type.body, { color: c.inkMuted, flexShrink: 1 }]}>{k}</Text>
+                <Text style={[type.bodyStrong, { flexShrink: 1, textAlign: 'right' }]}>{v}</Text>
               </View>
             ))}
-            <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
-            <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>
+            <View style={{ height: 1, backgroundColor: c.line, marginVertical: space.sm }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <Text style={type.overline}>Total</Text>
+              <Text style={type.priceLg}>{formatPrice(total)}</Text>
+            </View>
+            <Text style={[type.caption, { marginTop: space.sm }]}>
               {dropoff ? 'Payment on drop-off.' : "We'll WhatsApp you on collection day."} Cash & transfer accepted.
               {hasKit ? ' Kits are paid for and collected at the shop.' : ''}
             </Text>
           </View>
 
-          <Pressable onPress={resetAndGoHome} style={{ width: '100%', backgroundColor: colors.navy, borderRadius: 8, paddingVertical: 13, alignItems: 'center', marginBottom: 10 }}>
-            <Text style={{ color: colors.white, fontSize: 13, fontFamily: 'DMSans_500Medium' }}>Back to Home</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => Linking.openURL(WHATSAPP_URL)}
-            style={{ width: '100%', backgroundColor: colors.whatsapp, borderRadius: 8, paddingVertical: 13, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 }}
-          >
-            <Icon name="wa" size={16} color={colors.white} />
-            <Text style={{ color: colors.white, fontSize: 13, fontFamily: 'DMSans_500Medium' }}>Link Us on WhatsApp</Text>
-          </Pressable>
+          <View style={{ width: '100%', gap: space.sm }}>
+            <Button variant="dark" label="Back to Home" onPress={resetAndGoHome} />
+            <Button variant="secondary" label="Link Us on WhatsApp" icon={<Icon name="wa" size={18} color={c.navy} />} onPress={() => Linking.openURL(WHATSAPP_URL)} />
+          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -215,15 +215,15 @@ export default function BookingScreen() {
 
   if (step === 1 && selected) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
         <Header title="Booking Details" onBack={() => setStep(0)} />
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-          <View style={{ backgroundColor: colors.ice, borderRadius: 12, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View>
-              <Text style={{ fontSize: 10, color: colors.caption, letterSpacing: 1.5, marginBottom: 2, fontFamily: 'DMSans_400Regular' }}>SELECTED SERVICE</Text>
-              <Text style={{ fontSize: 14, fontFamily: 'DMSans_500Medium', color: colors.navy }}>{selected.name}</Text>
+        <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.lg, paddingBottom: space.xxl }}>
+          <View style={{ backgroundColor: c.navy, borderRadius: radius.lg, padding: space.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm }}>
+            <View style={{ flex: 1 }}>
+              <Text style={[type.overline, { color: c.onNavyMuted }]}>SELECTED SERVICE</Text>
+              <Text style={[type.headline, { color: c.white, marginTop: 2 }]}>{selected.name}</Text>
             </View>
-            <Text style={{ fontSize: 18, fontFamily: 'DMSans_500Medium', color: colors.blue }}>{formatPrice(selected.price_cents)}</Text>
+            <Text style={[type.price, { color: c.white }]}>{formatPrice(selected.price_cents)}</Text>
           </View>
 
           <View>
@@ -232,31 +232,31 @@ export default function BookingScreen() {
               value={shoeType}
               onChangeText={setShoeType}
               placeholder="e.g. Nike Air Force 1, Clarks Desert Boot"
-              placeholderTextColor={colors.caption}
+              placeholderTextColor={c.inkMuted}
               style={inputStyle}
             />
           </View>
 
           <View>
             <Label>DROP-OFF METHOD</Label>
-            <View style={{ flexDirection: 'row', backgroundColor: colors.ice, borderRadius: 8, padding: 3 }}>
-              {[{ label: 'Drop Off', val: true }, { label: 'Pickup', val: false }].map((opt) => (
-                <Pressable
-                  key={String(opt.val)}
-                  onPress={() => setDropoff(opt.val)}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 9,
-                    borderRadius: 6,
-                    alignItems: 'center',
-                    backgroundColor: dropoff === opt.val ? colors.white : 'transparent',
-                  }}
-                >
-                  <Text style={{ fontSize: 13, fontFamily: dropoff === opt.val ? 'DMSans_500Medium' : 'DMSans_400Regular', color: dropoff === opt.val ? colors.navy : colors.caption }}>
-                    {opt.label}
-                  </Text>
-                </Pressable>
-              ))}
+            <View style={{ flexDirection: 'row', backgroundColor: c.ice, borderRadius: radius.md, padding: space.xxs }}>
+              {[{ label: 'Drop Off', val: true }, { label: 'Pickup', val: false }].map((opt) => {
+                const on = dropoff === opt.val;
+                return (
+                  <Pressable
+                    key={String(opt.val)}
+                    onPress={() => {
+                      if (!on) tapLight();
+                      setDropoff(opt.val);
+                    }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: on }}
+                    style={[{ flex: 1, minHeight: 44, borderRadius: radius.sm + 2, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.surface : 'transparent' }, on ? elevation.card : null]}
+                  >
+                    <Text style={[on ? type.bodyStrong : type.body, { color: on ? c.navy : c.inkMuted }]}>{opt.label}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
@@ -264,17 +264,21 @@ export default function BookingScreen() {
             <View>
               <Label>YOUR AREA · CREPRUN</Label>
               {zones.length === 0 ? (
-                <Text style={{ fontSize: 12, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>
-                  Couldn&apos;t load pickup areas. Message us on WhatsApp to arrange pickup.
-                </Text>
+                <Text style={[type.body, { color: c.inkMuted }]}>Couldn&apos;t load pickup areas. Message us on WhatsApp to arrange pickup.</Text>
               ) : (
-                <View style={{ gap: 8 }}>
+                <View style={{ gap: space.xs }}>
                   {zones.map((z) => (
-                    <ZoneRow key={z.id} zone={z} on={z.id === zoneId} onPress={() => setZoneId(z.id)} />
+                    <ZoneRow
+                      key={z.id}
+                      zone={z}
+                      on={z.id === zoneId}
+                      onPress={() => {
+                        tapLight();
+                        setZoneId(z.id);
+                      }}
+                    />
                   ))}
-                  <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>
-                    We collect and bring them back clean. Area not listed? Message us on WhatsApp.
-                  </Text>
+                  <Text style={type.caption}>We collect and bring them back clean. Area not listed? Message us on WhatsApp.</Text>
                 </View>
               )}
             </View>
@@ -282,53 +286,52 @@ export default function BookingScreen() {
 
           {!dropoff ? (
             pickupDay && (
-              <View style={{ backgroundColor: colors.ice, borderRadius: 10, padding: 12 }}>
-                <Text style={{ fontSize: 12, color: colors.navy, fontFamily: 'DMSans_400Regular' }}>
+              <View style={{ backgroundColor: c.ice, borderRadius: radius.md, padding: space.md }}>
+                <Text style={type.body}>
                   CrepRun collects on{' '}
-                  <Text style={{ fontFamily: 'DMSans_500Medium' }}>
+                  <Text style={{ fontFamily: type.bodyStrong.fontFamily }}>
                     {pickupDay.short} {pickupDay.num} {pickupDay.month}
                   </Text>
                 </Text>
               </View>
             )
           ) : (
-          <View>
-            <Label>SELECT DATE</Label>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-              {days.map((d, i) => (
-                <Pressable
-                  key={i}
-                  onPress={() => setSelDay(i)}
-                  style={{
-                    width: 50,
-                    alignItems: 'center',
-                    paddingVertical: 10,
-                    borderRadius: 10,
-                    backgroundColor: selDay === i ? colors.blue : colors.white,
-                    borderWidth: selDay === i ? 0 : 1,
-                    borderColor: colors.border,
-                  }}
-                >
-                  <Text style={{ fontSize: 9, fontFamily: 'DMSans_500Medium', opacity: 0.8, marginBottom: 2, color: selDay === i ? colors.white : colors.navy }}>{d.short}</Text>
-                  <Text style={{ fontSize: 18, fontFamily: 'DMSans_500Medium', color: selDay === i ? colors.white : colors.navy }}>{d.num}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
+            <View>
+              <Label>SELECT DATE</Label>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.lg }} contentContainerStyle={{ gap: space.xs, paddingHorizontal: space.lg, paddingVertical: space.xxs }}>
+                {days.map((d, i) => {
+                  const on = selDay === i;
+                  return (
+                    <Pressable
+                      key={i}
+                      onPress={() => {
+                        if (!on) tapLight();
+                        setSelDay(i);
+                      }}
+                      style={[
+                        { width: 60, alignItems: 'center', paddingVertical: space.sm, borderRadius: radius.md, backgroundColor: on ? c.accent : c.surface },
+                        on ? null : elevation.bordered,
+                      ]}
+                    >
+                      <Text style={[type.caption, { color: on ? c.white : c.inkMuted }]}>{d.short}</Text>
+                      <Text style={[type.headline, { fontSize: 22, lineHeight: 26, color: on ? c.white : c.navy }]}>{d.num}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
           )}
 
           {pickable.length > 0 && (
             <View>
               <Label>LEVEL IT UP</Label>
-              <View style={{ gap: 8 }}>
+              <View style={{ gap: space.xs }}>
                 {pickable.map((a) => (
                   <AddOnRow key={a.id} addOn={a} on={picked.includes(a.id)} onPress={() => togglePick(a.id)} />
                 ))}
               </View>
               {hasKit && (
-                <Text style={{ fontSize: 11, color: colors.caption, marginTop: 6, fontFamily: 'DMSans_400Regular' }}>
-                  Kits are paid for and collected at the shop. We&apos;ll confirm stock when you drop off.
-                </Text>
+                <Text style={[type.caption, { marginTop: space.xs }]}>Kits are paid for and collected at the shop. We&apos;ll confirm stock when you drop off.</Text>
               )}
             </View>
           )}
@@ -339,51 +342,41 @@ export default function BookingScreen() {
               value={notes}
               onChangeText={setNotes}
               placeholder="Any special instructions for your pair…"
-              placeholderTextColor={colors.caption}
+              placeholderTextColor={c.inkMuted}
               multiline
               numberOfLines={3}
-              style={[inputStyle, { minHeight: 72, textAlignVertical: 'top' }]}
+              style={[inputStyle, { minHeight: 88, textAlignVertical: 'top' }]}
             />
           </View>
 
           {error && (
-            <View style={{ gap: 6 }}>
-              <Text style={{ fontSize: 12, color: '#993C1D', fontFamily: 'DMSans_400Regular' }}>{error}</Text>
+            <View style={{ gap: space.xs }}>
+              <Text style={[type.body, { color: c.danger }]}>{error}</Text>
               <Pressable onPress={() => Linking.openURL(WHATSAPP_URL)}>
-                <Text style={{ fontSize: 12, color: colors.blue, fontFamily: 'DMSans_500Medium' }}>Message us on WhatsApp</Text>
+                <Text style={[type.bodyStrong, { color: c.accent }]}>Message us on WhatsApp</Text>
               </Pressable>
             </View>
           )}
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Text style={{ fontSize: 12, color: colors.caption, fontFamily: 'DMSans_500Medium', letterSpacing: 1.5 }}>TOTAL</Text>
-            <Text style={{ fontSize: 20, color: colors.navy, fontFamily: 'DMSans_500Medium' }}>{formatPrice(total)}</Text>
+            <Text style={type.overline}>TOTAL</Text>
+            <Text style={type.priceLg}>{formatPrice(total)}</Text>
           </View>
 
-          <Pressable
-            onPress={confirmBooking}
-            disabled={submitting}
-            style={{ backgroundColor: colors.blue, borderRadius: 8, paddingVertical: 14, alignItems: 'center', opacity: submitting ? 0.6 : 1 }}
-          >
-            <Text style={{ color: colors.white, fontSize: 14, fontFamily: 'DMSans_500Medium' }}>
-              {submitting ? 'Booking…' : 'Confirm Booking'}
-            </Text>
-          </Pressable>
+          <Button label={submitting ? 'Booking…' : 'Confirm Booking'} onPress={confirmBooking} disabled={submitting} />
           {!session && (
-            <Text style={{ fontSize: 11, color: colors.caption, textAlign: 'center', fontFamily: 'DMSans_400Regular' }}>
-              You&apos;ll sign in or create an account to confirm. Your details stay filled in.
-            </Text>
+            <Text style={[type.caption, { textAlign: 'center' }]}>You&apos;ll sign in or create an account to confirm. Your details stay filled in.</Text>
           )}
         </ScrollView>
 
         <Modal visible={signInOpen} animationType="slide" transparent onRequestClose={() => setSignInOpen(false)}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10,31,68,0.55)' }}>
-            <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.navy, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
-              <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.white }}>One last step</Text>
+            <SafeAreaView edges={['bottom']} style={{ backgroundColor: c.navy, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }}>
+              <ScrollView contentContainerStyle={{ padding: space.lg }} keyboardShouldPersistTaps="handled">
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.md }}>
+                  <Text style={[type.headline, { color: c.white }]}>One last step</Text>
                   <Pressable onPress={() => setSignInOpen(false)} hitSlop={12}>
-                    <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.softBlue }}>Cancel</Text>
+                    <Text style={[type.bodyStrong, { color: c.onNavyMuted }]}>Cancel</Text>
                   </Pressable>
                 </View>
                 <SignInForm
@@ -402,13 +395,10 @@ export default function BookingScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
-      <View style={{ backgroundColor: colors.white, padding: 20, paddingTop: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <Text style={{ fontSize: 20, fontFamily: 'DMSans_500Medium', color: colors.navy }}>Book a Clean</Text>
-        <Text style={{ fontSize: 13, color: colors.caption, marginTop: 4, fontFamily: 'DMSans_400Regular' }}>Choose a service to get started.</Text>
-      </View>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 88, gap: 10 }}>
-        <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 4 }}>AVAILABLE SERVICES</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
+      <ScreenHeader title="Book a Clean" subtitle="Choose a service to get started." />
+      <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: 104, gap: space.sm }}>
+        <Overline style={{ marginBottom: space.xxs }}>AVAILABLE SERVICES</Overline>
         {servicesLoading && services.length === 0 && <SkeletonList count={4} variant="service" />}
         {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
         {!servicesLoading && !servicesError && services.length === 0 && (
@@ -426,29 +416,26 @@ export default function BookingScreen() {
               setSelected(svc);
               setStep(1);
             }}
-            style={{
-              backgroundColor: colors.white,
-              borderRadius: 12,
-              borderWidth: svc.popular ? 1.5 : 1,
-              borderColor: svc.popular ? colors.blue : colors.border,
-              padding: 16,
-            }}
+            style={[
+              { backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg },
+              svc.popular ? { borderWidth: 1.5, borderColor: c.accent } : elevation.card,
+            ]}
           >
             {svc.popular && (
-              <View style={{ position: 'absolute', top: 12, right: 12, backgroundColor: colors.ice, borderRadius: 20, paddingVertical: 2, paddingHorizontal: 8 }}>
-                <Text style={{ fontSize: 9, fontFamily: 'DMSans_500Medium', color: colors.blue, letterSpacing: 1 }}>MOST POPULAR</Text>
+              <View style={{ position: 'absolute', top: space.md, right: space.md, backgroundColor: c.accent, borderRadius: radius.pill, paddingVertical: 2, paddingHorizontal: space.sm }}>
+                <Text style={[type.overline, { color: c.white, fontSize: 11, letterSpacing: 1.2 }]}>MOST POPULAR</Text>
               </View>
             )}
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: colors.ice, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name={svc.icon as IconName} size={18} color={colors.blue} />
+            <View style={{ flexDirection: 'row', gap: space.md }}>
+              <View style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: c.ice, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={svc.icon as IconName} size={20} color={c.accent} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.navy, marginBottom: 4 }}>{svc.name}</Text>
-                <Text style={{ fontSize: 11, color: colors.caption, lineHeight: 16, marginBottom: 10, fontFamily: 'DMSans_400Regular' }}>{svc.description}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                  <Text style={{ fontSize: 20, fontFamily: 'DMSans_500Medium', color: colors.blue }}>{formatPrice(svc.price_cents)}</Text>
-                  <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>{svc.note}</Text>
+                <Text style={[type.headline, { marginBottom: space.xxs, paddingRight: svc.popular ? 104 : 0 }]}>{svc.name}</Text>
+                <Text style={[type.body, { color: c.inkMuted, marginBottom: space.sm }]}>{svc.description}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
+                  <Text style={type.price}>{formatPrice(svc.price_cents)}</Text>
+                  <Text style={type.caption}>{svc.note}</Text>
                 </View>
               </View>
             </View>
@@ -462,11 +449,11 @@ export default function BookingScreen() {
 
 function Header({ title, onBack }: { title: string; onBack: () => void }) {
   return (
-    <View style={{ backgroundColor: colors.white, padding: 20, paddingTop: 16, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <Pressable onPress={onBack}>
-        <Icon name="chevronL" size={20} color={colors.navy} />
+    <View style={{ backgroundColor: c.surface, paddingHorizontal: space.md, paddingVertical: space.sm, flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
+      <Pressable onPress={onBack} accessibilityLabel="Back" style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="chevronL" size={22} color={c.navy} />
       </Pressable>
-      <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.navy }}>{title}</Text>
+      <Text style={type.headline}>{title}</Text>
     </View>
   );
 }
@@ -477,24 +464,18 @@ function ZoneRow({ zone, on, onPress }: { zone: Zone; on: boolean; onPress: () =
       onPress={onPress}
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
-      style={{
-        backgroundColor: on ? colors.ice : colors.white,
-        borderWidth: on ? 1.5 : 1,
-        borderColor: on ? colors.blue : colors.border,
-        borderRadius: 10,
-        padding: 12,
-        flexDirection: 'row',
-        gap: 12,
-        alignItems: 'center',
-      }}
+      style={[
+        { backgroundColor: on ? c.ice : c.surface, borderRadius: radius.md, padding: space.md, flexDirection: 'row', gap: space.sm, alignItems: 'center' },
+        on ? { borderWidth: 1.5, borderColor: c.accent } : elevation.bordered,
+      ]}
     >
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.navy }}>
+        <Text style={type.bodyStrong}>
           {zone.name} · {zone.pickup_day}s
         </Text>
-        <Text style={{ fontSize: 11, color: colors.caption, marginTop: 2, fontFamily: 'DMSans_400Regular' }}>{zone.areas}</Text>
+        <Text style={[type.caption, { marginTop: 2 }]}>{zone.areas}</Text>
       </View>
-      <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue }}>+{formatPrice(zone.rate_cents)}</Text>
+      <Text style={[type.bodyStrong, { color: c.accent }]}>+{formatPrice(zone.rate_cents)}</Text>
     </Pressable>
   );
 }
@@ -505,61 +486,50 @@ function AddOnRow({ addOn, on, onPress }: { addOn: AddOn; on: boolean; onPress: 
       onPress={onPress}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: on }}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        backgroundColor: on ? colors.ice : colors.white,
-        borderWidth: on ? 1.5 : 1,
-        borderColor: on ? colors.blue : colors.border,
-        borderRadius: 10,
-        padding: 12,
-      }}
+      style={[
+        { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: on ? c.ice : c.surface, borderRadius: radius.md, padding: space.md },
+        on ? { borderWidth: 1.5, borderColor: c.accent } : elevation.bordered,
+      ]}
     >
       <View
         style={{
-          width: 20,
-          height: 20,
-          borderRadius: 5,
+          width: 24,
+          height: 24,
+          borderRadius: radius.sm - 2,
           borderWidth: 1.5,
-          borderColor: on ? colors.blue : colors.border,
-          backgroundColor: on ? colors.blue : colors.white,
+          borderColor: on ? c.accent : c.line,
+          backgroundColor: on ? c.accent : c.surface,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        {on && <Icon name="check" size={12} color={colors.white} />}
+        {on && <Icon name="check" size={14} color={c.white} strokeWidth={3} />}
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.navy }}>
+        <Text style={type.bodyStrong}>
           {addOn.name}
           {addOn.kind === 'kit' ? '  ·  Kit' : ''}
         </Text>
-        {!!addOn.description && (
-          <Text style={{ fontSize: 11, color: colors.caption, marginTop: 2, fontFamily: 'DMSans_400Regular' }}>{addOn.description}</Text>
-        )}
+        {!!addOn.description && <Text style={[type.caption, { marginTop: 2 }]}>{addOn.description}</Text>}
       </View>
-      <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue }}>
-        {addOn.price_cents === null ? 'Quote' : `+${formatPrice(addOn.price_cents)}`}
-      </Text>
+      <Text style={[type.bodyStrong, { color: c.accent }]}>{addOn.price_cents === null ? 'Quote' : `+${formatPrice(addOn.price_cents)}`}</Text>
     </Pressable>
   );
 }
 
 function Label({ children }: { children: string }) {
-  return (
-    <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 8 }}>{children}</Text>
-  );
+  return <Overline style={{ marginBottom: space.xs }}>{children}</Overline>;
 }
 
-const inputStyle = {
+const inputStyle: TextStyle = {
   borderWidth: 1,
-  borderColor: colors.border,
-  borderRadius: 8,
-  paddingVertical: 11,
-  paddingHorizontal: 14,
-  fontSize: 13,
-  color: colors.charcoal,
-  backgroundColor: colors.white,
-  fontFamily: 'DMSans_400Regular',
-} as const;
+  borderColor: c.line,
+  borderRadius: radius.md,
+  minHeight: 52,
+  paddingVertical: space.sm,
+  paddingHorizontal: space.md,
+  fontFamily: type.body.fontFamily,
+  fontSize: type.body.fontSize,
+  color: c.navy,
+  backgroundColor: c.surface,
+};

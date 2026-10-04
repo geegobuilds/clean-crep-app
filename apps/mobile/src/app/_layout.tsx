@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useFonts, DMSans_400Regular, DMSans_500Medium } from '@expo-google-fonts/dm-sans';
+import { useFonts, DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
+import { Archivo_700Bold, Archivo_800ExtraBold } from '@expo-google-fonts/archivo';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -10,7 +11,7 @@ import { AuthProvider } from '@/lib/auth';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({ DMSans_400Regular, DMSans_500Medium });
+  const [fontsLoaded, fontError] = useFonts({ DMSans_400Regular, DMSans_500Medium, DMSans_700Bold, Archivo_700Bold, Archivo_800ExtraBold });
   // If the fonts fail to load, carry on with system fonts rather than leaving
   // the user stuck on the splash screen forever.
   const ready = fontsLoaded || fontError != null;
