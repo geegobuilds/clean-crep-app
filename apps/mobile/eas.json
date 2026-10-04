@@ -17,7 +17,9 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://gymchhmohcggvesrsupc.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_90XcuZ2VMzSIJRX_jFUlGw_tmIkZM4L",
-        "EXPO_PUBLIC_CREPPIE_URL": "https://www.cleancrep.com/api/creppie"
+        "EXPO_PUBLIC_CREPPIE_URL": "https://www.cleancrep.com/api/creppie",
+        "EXPO_PUBLIC_POSTHOG_KEY": "phc_ATC2ouWAcaXQUVMiNFBq3rUqaJWRxz5AEwPJUn6nbvzZ",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com"
       }
     },
     "production": {
@@ -25,7 +27,9 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://gymchhmohcggvesrsupc.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_90XcuZ2VMzSIJRX_jFUlGw_tmIkZM4L",
-        "EXPO_PUBLIC_CREPPIE_URL": "https://www.cleancrep.com/api/creppie"
+        "EXPO_PUBLIC_CREPPIE_URL": "https://www.cleancrep.com/api/creppie",
+        "EXPO_PUBLIC_POSTHOG_KEY": "phc_ATC2ouWAcaXQUVMiNFBq3rUqaJWRxz5AEwPJUn6nbvzZ",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com"
       }
     }
   },

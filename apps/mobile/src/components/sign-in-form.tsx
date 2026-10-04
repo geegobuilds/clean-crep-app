@@ -4,6 +4,7 @@ import { colors } from '@clean-crep/shared';
 import { supabase } from '@/lib/supabase';
 import { ensureCustomerProfile } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
+import { track } from '@/lib/analytics';
 
 /**
  * Email/password sign-in + sign-up card. Used by the /sign-in screen and by the
@@ -55,6 +56,7 @@ export function SignInForm({ subtitle, onSuccess }: { subtitle?: string; onSucce
         );
         if (profileError) throw profileError;
       }
+      track('signin_completed');
       onSuccess?.();
     } catch (e) {
       setError(friendlyError(e, mode));

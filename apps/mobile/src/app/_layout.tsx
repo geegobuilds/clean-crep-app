@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '@/lib/auth';
+import { AnalyticsProvider } from '@/lib/analytics';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,10 +28,12 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <StatusBar style="dark" />
-          <Slot />
-        </AuthProvider>
+        <AnalyticsProvider>
+          <AuthProvider>
+            <StatusBar style="dark" />
+            <Slot />
+          </AuthProvider>
+        </AnalyticsProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

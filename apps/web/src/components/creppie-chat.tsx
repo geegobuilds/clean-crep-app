@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
+import { track } from '@/lib/analytics';
 
 // Floating "Ask Creppie" chat on the landing page (bubble = his face, cropped from the waving pose). Talks to /api/creppie,
 // which relays to the same Creppie that answers WhatsApp/IG.
@@ -158,6 +159,7 @@ export function CreppieChat() {
   }, [open]);
 
   function openChat() {
+    track('creppie_chat_opened', { platform: 'web' });
     openRef.current = true;
     setNudge(null);
     setOpen(true);
@@ -195,6 +197,7 @@ export function CreppieChat() {
     setDraft('');
     setMsgs((m) => [...m, { role: 'user', text: message }]);
     setSending(true);
+    track('creppie_message_sent');
     let reply: string;
     try {
       const res = await fetch('/api/creppie', {

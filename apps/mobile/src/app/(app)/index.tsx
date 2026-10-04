@@ -154,6 +154,7 @@ export default function HomeScreen() {
                 <SignInPrompt
                   title="Track your cleans here"
                   body="Sign in to see live updates on your pairs."
+                  where="home"
                   onSignIn={() => router.push('/sign-in?next=/')}
                 />
               )}

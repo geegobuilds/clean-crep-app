@@ -3,6 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import type { Customer } from '@clean-crep/shared';
 import { supabase } from './supabase';
 import { syncPushTokenIfAllowed, unregisterPush } from './push';
+import { identify, resetAnalytics } from './analytics';
 
 interface AuthContextValue {
   session: Session | null;
@@ -49,13 +50,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session) loadCustomer(data.session.user);
+      if (data.session) {
+        loadCustomer(data.session.user);
+        identify(data.session.user.id);
+      }
       setInitializing(false);
     });
 
     const { data: subscription } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
-      if (newSession) loadCustomer(newSession.user);
+      if (newSession) {
+        loadCustomer(newSession.user);
+        identify(newSession.user.id);
+      }
+      if (event === 'SIGNED_OUT') resetAnalytics();
       // Push tokens can rotate; refresh ours whenever a session starts/restores.
       // Deferred: supabase-js advises against calling Supabase from inside this
       // callback synchronously (it can deadlock the auth lock).

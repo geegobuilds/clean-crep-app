@@ -4,7 +4,7 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-02_
+_Last updated: 2026-10-04_
 
 ## Current Status
 
@@ -53,6 +53,21 @@ _Last updated: 2026-10-02_
   booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
   fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
   `Pick Scheduled Date`); blank or odd dates fall back to today.
+- **PostHog product analytics (2026-10-04, PR `posthog-analytics`)**: PostHog Cloud **US**, project
+  **"Clean Crep"** (id 644953, free plan; Geego's PostHog login). Project key is public by design and
+  lives in `apps/mobile/eas.json` (preview + production: `EXPO_PUBLIC_POSTHOG_KEY` / `_HOST`) and
+  **Vercel → clean-crep-app-web → Production** (`NEXT_PUBLIC_POSTHOG_KEY` / `_HOST`, type Config).
+  Code: `apps/mobile/src/lib/analytics.tsx` (PostHogProvider, screen tracking by expo-router path,
+  `identify(supabase user id)` on sign-in, `reset()` on sign-out) and `apps/web/src/lib/analytics.ts`
+  (posthog-js, pageviews only, **autocapture off**, `/staff` never tracked, query strings/fragments
+  stripped from URLs so auth tokens never leave). No key → no-op (e2e/CI). Same 10 event names on both
+  (`booking_started`, `addon_toggled`, `pickup_zone_selected`, `signin_prompted {where}`,
+  `signin_completed`, `booking_confirmed {order_total_jmd, addons_count, addons, method, source}` (`addons` = booked add-on names, sorted, comma-separated),
+  `creppie_chat_opened`, `creppie_message_sent`, `review_ask_shown`, `review_ask_tapped`); every event
+  carries `platform: app|web`. Never email/phone. Saved insight **"Booking funnel (app vs web)"**
+  (`/project/644953/insights/eCG2vhc1`): booking_started → signin_prompted → booking_confirmed, by
+  platform (sign-in step optional). Dashboard **"Clean Crep: Bookings"** (`/project/644953/dashboard/2168419`)
+  also holds "Add-on attach rate". Data starts when the PR's web deploy is live / the next EAS build ships.
 - **2026-10-02**:
   - Shop hours are **Mon–Fri 10–6, Sat 10–3, closed Sundays + public holidays** (Creppie was right;
     website fixed in #21).
@@ -197,6 +212,24 @@ _Last updated: 2026-10-02_
   Refresh, no Deep Clean; a cap clean is the only extra). Area only asked for CrepRun pickup.
   No drop-off day saves a week out with "Day to confirm" in the notes, not today. Live n8n version
   `54b1cd1e`; export in clean-crep-systems PR #6. CC-0052 moved to Oct 9 + "Day to confirm".
+- **2026-10-04** — Growth-transcript filter (batch 2: viral-content list, RevenueCat
+  subscriptions, "app #2" AI stack). Adopt: **product analytics (PostHog)** on app + website — we
+  have zero funnel data today. Skip: RevenueCat/StoreKit for Clean Crep Club — cleaning is a
+  physical service, so store rules let us take payment outside Apple/Google IAP (no 15–30% cut);
+  Club stays a manual pilot. Skip Peekly validation (business already validated) and the SwiftUI
+  switch (Expo covers both stores). Viral-content playbook goes to @GeegoBuilds, not the app.
+- **2026-10-04** — Growth-transcript filter (batch 3: Expo-to-App-Store, "top 5 Claude Code
+  plugins", 2,000-brand design library). Adopt: a **reactivation loop** (customers get a "due for a
+  clean" nudge ~4–6 weeks after pickup: app push, email, and a one-tap WhatsApp list in the
+  dashboard for Creppie customers) and **AI-written store listing + screenshots** at Play Store
+  time. Skip third-party Claude Code plugins (HANDOFF.md already covers memory; /code-review is
+  built in; unknown plugins see the code and keys). Skip copying big-brand design files: write our
+  own `DESIGN.md` from `project/colors_and_type.css` instead, so every agent builds on-brand.
+- **2026-10-04** — Analytics = **PostHog** (free, US). Person profiles only for signed-in users,
+  identified by Supabase user id; no PII as properties. Web autocapture off (the staff dashboard and
+  Quick Book contain names/phones). Funnel as Geego specified; note the website takes guest bookings
+  without a sign-in, so web drops to ~0 at `signin_prompted` by design, and app users already signed
+  in skip it too. If that hides conversions, make step 2 optional in the insight.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -247,10 +280,17 @@ _Last updated: 2026-10-02_
   `supabase db push` against live, `supabase migration repair` those timestamps to reverted and
   0001–0011 to applied.
   (Or keep applying new migrations through the Supabase connector, one file at a time.)
+- `npm run e2e` can't start local Supabase in some cloud sandboxes (Docker registries return 403);
+  GitHub Actions `Checks` still runs it on every PR.
 - The cloud sandbox's network proxy blocks direct HTTPS to `*.supabase.co`; use the Supabase
   connector (MCP) for anything against the live project.
 
 ## Open Questions
+
+- **Next product (proposed 2026-10-04, Geego to decide)**: consignment resale of cleaned, verified
+  pre-owned sneakers ("Fresh Pairs"). Manual pilot on IG/WhatsApp Nov–Dec (10 pairs, 15–20%
+  commission + paid restoration clean per pair); build an in-app shop only if 10 sell within 30
+  days. Alongside: a "premium pass" on the app, led by before/after photos on every order.
 
 - Creppie orders that arrived while the DB was paused exist only in Airtable. Backfill them into
   `orders` (one-off import) or accept the gap?

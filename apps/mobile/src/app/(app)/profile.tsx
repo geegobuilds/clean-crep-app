@@ -62,6 +62,7 @@ export default function ProfileScreen() {
           <SignInPrompt
             title="Sign in to see your profile"
             body={`Every clean earns loyalty points. Hit ${LOYALTY_GOAL} and your next clean is free.`}
+            where="profile"
             onSignIn={() => router.push('/sign-in?next=/profile')}
           />
         </ScrollView>
