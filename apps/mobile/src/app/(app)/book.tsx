@@ -15,6 +15,7 @@ import { CreppieButton } from '@/components/creppie-chat';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/states';
 import { PushOffer } from '@/components/push-offer';
 import { CreppieArt, MOODS } from '@/components/creppie';
+import { track } from '@/lib/analytics';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 
@@ -89,7 +90,15 @@ export default function BookingScreen() {
   const hasKit = extras.some((a) => a.kind === 'kit');
 
   function togglePick(id: string) {
-    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+    const on = !picked.includes(id);
+    setPicked((p) => (on ? [...p, id] : p.filter((x) => x !== id)));
+    const addOn = pickable.find((a) => a.id === id);
+    if (addOn) track('addon_toggled', { addon: addOn.name, on });
+  }
+
+  function selectZone(z: Zone) {
+    setZoneId(z.id);
+    track('pickup_zone_selected', { zone: z.name });
   }
 
   function confirmBooking() {
@@ -101,6 +110,7 @@ export default function BookingScreen() {
     setError(null);
     if (!session) {
       setSignInOpen(true);
+      track('signin_prompted', { where: 'book' });
       return;
     }
     placeBooking();
@@ -141,6 +151,12 @@ export default function BookingScreen() {
       setError(friendlyError(insertError, 'booking'));
       return;
     }
+    track('booking_confirmed', {
+      order_total_jmd: total === null ? null : Math.round(total / 100),
+      addons_count: extras.length,
+      method: dropoff ? 'dropoff' : 'pickup',
+      source: 'app',
+    });
     setStep(2);
   }
 
@@ -270,7 +286,7 @@ export default function BookingScreen() {
               ) : (
                 <View style={{ gap: 8 }}>
                   {zones.map((z) => (
-                    <ZoneRow key={z.id} zone={z} on={z.id === zoneId} onPress={() => setZoneId(z.id)} />
+                    <ZoneRow key={z.id} zone={z} on={z.id === zoneId} onPress={() => selectZone(z)} />
                   ))}
                   <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>
                     We collect and bring them back clean. Area not listed? Message us on WhatsApp.
@@ -425,6 +441,7 @@ export default function BookingScreen() {
             onPress={() => {
               setSelected(svc);
               setStep(1);
+              track('booking_started', { service: svc.name, platform: 'app' });
             }}
             style={{
               backgroundColor: colors.white,

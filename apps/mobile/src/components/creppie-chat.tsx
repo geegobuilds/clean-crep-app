@@ -5,6 +5,7 @@ import { colors } from '@clean-crep/shared';
 import { useAuth } from '@/lib/auth';
 import { askCreppie, loadChat, saveChat, WHATSAPP_URL, type CreppieMsg } from '@/lib/creppie';
 import { SignInForm } from '@/components/sign-in-form';
+import { track } from '@/lib/analytics';
 
 // "Ask Creppie" in the app: a floating face button that opens a full-screen
 // chat. Anyone can ask questions; booking needs an account, so when Creppie
@@ -44,7 +45,10 @@ export function CreppieButton() {
   return (
     <>
       <Pressable
-        onPress={() => setOpen(true)}
+        onPress={() => {
+          setOpen(true);
+          track('creppie_chat_opened', { platform: 'app' });
+        }}
         accessibilityRole="button"
         accessibilityLabel="Ask Creppie"
         style={{
@@ -105,6 +109,7 @@ function CreppieChat({ onClose }: { onClose: () => void }) {
     setDraft('');
     setMsgs((m) => [...m, { role: 'user', text: message }]);
     setSending(true);
+    track('creppie_message_sent');
     const { reply, needsSignIn } = await askCreppie(sessionId, message);
     setMsgs((m) => [...m, { role: 'creppie', text: reply, needsSignIn }]);
     setSending(false);
@@ -112,6 +117,10 @@ function CreppieChat({ onClose }: { onClose: () => void }) {
 
   const last = msgs[msgs.length - 1];
   const showSignInCard = !session && !sending && last?.role === 'creppie' && last.needsSignIn;
+
+  useEffect(() => {
+    if (showSignInCard) track('signin_prompted', { where: 'creppie_chat' });
+  }, [showSignInCard]);
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>

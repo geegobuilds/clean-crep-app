@@ -5,6 +5,7 @@ import type { AddOn, Service, Zone } from '@clean-crep/shared';
 import { formatPrice } from '@clean-crep/shared';
 import { createClient } from '@/lib/supabase/client';
 import { accountConfirmUrl } from '@/lib/account';
+import { track } from '@/lib/analytics';
 
 // Quick Book: the hero's booking card. Three short steps (what / when / who)
 // then one call to book_web_order(), which prices the order and picks the
@@ -117,6 +118,7 @@ export function QuickBook({ services, addOns, zones }: { services: Service[]; ad
     if (step === 0 && !service) return setError('Pick a service.');
     if (step === 1 && method === 'pickup' && !zone) return setError('Pick your area so we know the pickup day.');
     if (step === 1 && !date) return setError('Pick a day.');
+    if (step === 0 && service) track('booking_started', { service: service.name, platform: 'web' });
     setStep((s) => (s + 1) as Step);
   }
 
@@ -163,6 +165,12 @@ export function QuickBook({ services, addOns, zones }: { services: Service[]; ad
       });
       emailSent = !otpError;
     }
+    track('booking_confirmed', {
+      order_total_jmd: row.price_cents === null ? null : Math.round(row.price_cents / 100),
+      addons_count: picked.length,
+      method,
+      source: 'web',
+    });
     setBooked({ ...row, emailSent });
     setSubmitting(false);
   }
@@ -268,7 +276,14 @@ export function QuickBook({ services, addOns, zones }: { services: Service[]; ad
                   const on = picked.includes(a.id);
                   return (
                     <label key={a.id} className={`qb-extra${on ? ' on' : ''}`}>
-                      <input type="checkbox" checked={on} onChange={() => setPicked((p) => (on ? p.filter((x) => x !== a.id) : [...p, a.id]))} />
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={() => {
+                          setPicked((p) => (on ? p.filter((x) => x !== a.id) : [...p, a.id]));
+                          track('addon_toggled', { addon: a.name, on: !on });
+                        }}
+                      />
                       <span className="qb-extra-name">
                         {a.name}
                         {a.kind === 'addon' && pairs > 1 ? ' (per pair)' : ''}
@@ -312,7 +327,12 @@ export function QuickBook({ services, addOns, zones }: { services: Service[]; ad
               <label className="qb-label" htmlFor="qb-zone">
                 Your area
               </label>
-              <select id="qb-zone" className="qb-input" value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
+              <select id="qb-zone" className="qb-input" value={zoneId} onChange={(e) => {
+                  setZoneId(e.target.value);
+                  const z = zones.find((x) => x.id === e.target.value);
+                  if (z) track('pickup_zone_selected', { zone: z.name });
+                }}
+              >
                 <option value="">Choose your area…</option>
                 {zones.map((z) => (
                   <option key={z.id} value={z.id}>

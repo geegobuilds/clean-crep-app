@@ -37,6 +37,7 @@ export default function OrdersScreen() {
           <SignInPrompt
             title="Sign in to see your orders"
             body="Track every pair from drop-off to pickup, live."
+            where="orders"
             onSignIn={() => router.push('/sign-in?next=/orders')}
           />
         )}

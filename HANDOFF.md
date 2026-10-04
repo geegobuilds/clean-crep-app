@@ -53,6 +53,20 @@ _Last updated: 2026-10-04_
   booking landed in `orders` with Sole Refresh in `add_ons` (test order deleted). Drop-off date
   fixed the same day: Creppie now records the customer's stated day (`Add Date Context` /
   `Pick Scheduled Date`); blank or odd dates fall back to today.
+- **PostHog product analytics (2026-10-04, PR `posthog-analytics`)**: PostHog Cloud **US**, project
+  **"Clean Crep"** (id 644953, free plan; Geego's PostHog login). Project key is public by design and
+  lives in `apps/mobile/eas.json` (preview + production: `EXPO_PUBLIC_POSTHOG_KEY` / `_HOST`) and
+  **Vercel → clean-crep-app-web → Production** (`NEXT_PUBLIC_POSTHOG_KEY` / `_HOST`, type Config).
+  Code: `apps/mobile/src/lib/analytics.tsx` (PostHogProvider, screen tracking by expo-router path,
+  `identify(supabase user id)` on sign-in, `reset()` on sign-out) and `apps/web/src/lib/analytics.ts`
+  (posthog-js, pageviews only, **autocapture off**, `/staff` never tracked, query strings/fragments
+  stripped from URLs so auth tokens never leave). No key → no-op (e2e/CI). Same 10 event names on both
+  (`booking_started`, `addon_toggled`, `pickup_zone_selected`, `signin_prompted {where}`,
+  `signin_completed`, `booking_confirmed {order_total_jmd, addons_count, method, source}`,
+  `creppie_chat_opened`, `creppie_message_sent`, `review_ask_shown`, `review_ask_tapped`); every event
+  carries `platform: app|web`. Never email/phone. Saved insight **"Booking funnel (app vs web)"**
+  (`/project/644953/insights/eCG2vhc1`): booking_started → signin_prompted → booking_confirmed, by
+  platform. Data starts when the PR's web deploy is live / the next EAS build ships.
 - **2026-10-02**:
   - Shop hours are **Mon–Fri 10–6, Sat 10–3, closed Sundays + public holidays** (Creppie was right;
     website fixed in #21).
@@ -210,6 +224,11 @@ _Last updated: 2026-10-04_
   time. Skip third-party Claude Code plugins (HANDOFF.md already covers memory; /code-review is
   built in; unknown plugins see the code and keys). Skip copying big-brand design files: write our
   own `DESIGN.md` from `project/colors_and_type.css` instead, so every agent builds on-brand.
+- **2026-10-04** — Analytics = **PostHog** (free, US). Person profiles only for signed-in users,
+  identified by Supabase user id; no PII as properties. Web autocapture off (the staff dashboard and
+  Quick Book contain names/phones). Funnel as Geego specified; note the website takes guest bookings
+  without a sign-in, so web drops to ~0 at `signin_prompted` by design, and app users already signed
+  in skip it too. If that hides conversions, make step 2 optional in the insight.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -260,6 +279,8 @@ _Last updated: 2026-10-04_
   `supabase db push` against live, `supabase migration repair` those timestamps to reverted and
   0001–0011 to applied.
   (Or keep applying new migrations through the Supabase connector, one file at a time.)
+- `npm run e2e` can't start local Supabase in some cloud sandboxes (Docker registries return 403);
+  GitHub Actions `Checks` still runs it on every PR.
 - The cloud sandbox's network proxy blocks direct HTTPS to `*.supabase.co`; use the Supabase
   connector (MCP) for anything against the live project.
 

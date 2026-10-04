@@ -3,6 +3,7 @@ import { Linking, Pressable, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, radius } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
+import { track } from '@/lib/analytics';
 
 // TODO(Geego): replace with the shop's direct "Write a review" link from Google
 // Business Profile (Home → "Ask for reviews" → copy link, e.g. https://g.page/r/XXXX/review).
@@ -23,7 +24,11 @@ export function ReviewAsk({ itemName }: { itemName: string | null }) {
   useEffect(() => {
     if (!itemName) return;
     let active = true;
-    AsyncStorage.getItem(ASKED_KEY).then((v) => active && v !== '1' && setShow(true));
+    AsyncStorage.getItem(ASKED_KEY).then((v) => {
+      if (!active || v === '1') return;
+      setShow(true);
+      track('review_ask_shown');
+    });
     return () => {
       active = false;
     };
@@ -34,7 +39,10 @@ export function ReviewAsk({ itemName }: { itemName: string | null }) {
   async function done(openReview: boolean) {
     await AsyncStorage.setItem(ASKED_KEY, '1');
     setShow(false);
-    if (openReview) Linking.openURL(GOOGLE_REVIEW_URL);
+    if (openReview) {
+      track('review_ask_tapped');
+      Linking.openURL(GOOGLE_REVIEW_URL);
+    }
   }
 
   return (

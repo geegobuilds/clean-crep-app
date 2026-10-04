@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
 import { RecoveryRedirect } from '@/components/recovery-redirect';
+import { AnalyticsProvider } from '@/components/analytics-provider';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -19,8 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={dmSans.variable}>
       <body>
-        <RecoveryRedirect />
-        {children}
+        <AnalyticsProvider>
+          <RecoveryRedirect />
+          {children}
+        </AnalyticsProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@ import { Animated, Pressable, Text, View, type DimensionValue, type ViewStyle } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius } from '@clean-crep/shared';
 import { CreppieArt, CreppieState, MOODS } from '@/components/creppie';
+import { track } from '@/lib/analytics';
 
 // Shared loading / empty / error / signed-out states so every data screen
 // tells those cases apart instead of rendering a blank or misleading list.
@@ -114,7 +115,10 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
   );
 }
 
-export function SignInPrompt({ title, body, onSignIn }: { title: string; body: string; onSignIn: () => void }) {
+export function SignInPrompt({ title, body, onSignIn, where }: { title: string; body: string; onSignIn: () => void; where: string }) {
+  useEffect(() => {
+    track('signin_prompted', { where });
+  }, [where]);
   return (
     <CreppieState mood="signin" title={title} body={body}>
       <PrimaryButton label="Sign In" onPress={onSignIn} />

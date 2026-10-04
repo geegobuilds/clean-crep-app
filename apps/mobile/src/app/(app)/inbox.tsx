@@ -59,6 +59,7 @@ export default function InboxScreen() {
           <SignInPrompt
             title="Sign in to see your updates"
             body="We'll let you know the moment your pair is cleaned and ready."
+            where="inbox"
             onSignIn={() => router.push('/sign-in?next=/inbox')}
           />
         )}
