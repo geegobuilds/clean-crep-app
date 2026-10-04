@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { palette } from '@clean-crep/shared';
+import { fontFamily, palette } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { Button } from '@/components/ui';
 import { c } from '@/theme';
@@ -38,7 +38,7 @@ function cover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, 
 }
 
 function pill(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
-  ctx.font = "700 32px 'DM Sans', sans-serif";
+  ctx.font = `32px ${fontFamily.bold}, sans-serif`;
   const w = ctx.measureText(text).width + 48;
   ctx.fillStyle = 'rgba(10,31,68,0.72)';
   ctx.beginPath();
@@ -62,10 +62,11 @@ export async function composeShareImage({ before, after, itemName, orderNumber }
   pill(ctx, 'BEFORE', 30, 30);
   pill(ctx, 'AFTER', half + 36, 30);
   ctx.fillStyle = palette.white;
-  ctx.font = "800 66px 'Archivo', 'DM Sans', sans-serif";
+  // Expo registers the loaded fonts under these family names.
+  ctx.font = `66px ${fontFamily.display}, sans-serif`;
   ctx.fillText('Cleaned by Clean Crep', 48, H - BAND + 130);
   ctx.fillStyle = palette.onNavyMuted;
-  ctx.font = "400 36px 'DM Sans', sans-serif";
+  ctx.font = `36px ${fontFamily.regular}, sans-serif`;
   ctx.fillText(`${itemName} · ${orderNumber} · cleancrep.com`, 48, H - BAND + 190, W - 96);
   return new Promise((resolve, reject) => canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('canvas'))), 'image/jpeg', 0.92));
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Sans } from 'next/font/google';
+import { Archivo, DM_Sans } from 'next/font/google';
 import { RecoveryRedirect } from '@/components/recovery-redirect';
 import './globals.css';
 
@@ -7,6 +7,13 @@ const dmSans = DM_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '700'],
   variable: '--font-dm-sans',
+});
+
+// Display face for headlines and prices (DESIGN.md §2).
+const archivo = Archivo({
+  subsets: ['latin'],
+  weight: ['700', '800'],
+  variable: '--font-archivo',
 });
 
 export const metadata: Metadata = {
@@ -17,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={dmSans.variable}>
+    <html lang="en" className={`${dmSans.variable} ${archivo.variable}`}>
       <body>
         <RecoveryRedirect />
         {children}

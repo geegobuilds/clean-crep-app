@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { adminSelect, mascot, newCustomer, placeholder, RAW_ERROR_PATTERNS, shot, tab, text } from './helpers';
+import { adminSelect, byTestId, mascot, newCustomer, placeholder, RAW_ERROR_PATTERNS, shot, tab, text } from './helpers';
 
 // Core customer journeys, run in an emulated Pixel 7 against local Supabase.
 // Each test starts signed out (fresh browser context = fresh install).
@@ -60,8 +60,15 @@ test('guest books, signs up in the sheet, and the order is placed with details k
   const orders = await adminSelect<{ item_name: string; notes: string }>('orders', `customer_id=eq.${customer.id}&select=item_name,notes`);
   expect(orders).toEqual([{ item_name: 'Jordan 4 Bred', notes: 'e2e run' }]);
 
+  // Orders: the booking shows as a boarding-pass ticket on step 1 of the timeline.
   await tab(page, 'Orders');
-  await expect(text(page, 'Jordan 4 Bred', false)).toBeVisible();
+  const ticket = byTestId(page, 'order-ticket');
+  await expect(ticket.getByText('Jordan 4 Bred')).toBeVisible();
+  await expect(ticket.getByText(/drop-off/i).first()).toBeVisible();
+  await expect(ticket.getByText(/ready by/i).first()).toBeVisible();
+  await expect(ticket.getByText('Sneaker Clean')).toBeVisible();
+  await expect(byTestId(page, 'status-timeline')).toHaveAttribute('aria-label', 'Status: step 1 of 4');
+  await shot(page, '06a-orders-ticket');
   await tab(page, 'Inbox');
   await expect(text(page, 'Order Received', false)).toBeVisible();
   await shot(page, '06-inbox');
@@ -168,6 +175,7 @@ test('booking with extras + CrepRun pickup: zone rate and day, and the database 
   await expect(text(page, 'LEVEL IT UP', false)).toBeVisible();
 
   await text(page, 'Deep Clean Upgrade', false).click();
+  await expect(page.getByRole('checkbox', { name: /Deep Clean Upgrade/ }).first()).toHaveAttribute('aria-checked', 'true');
   await text(page, 'Suede Revive Kit', false).click();
   await text(page, /^Pickup/).click();
   // No area picked yet: Confirm asks for one instead of booking.
@@ -191,6 +199,12 @@ test('booking with extras + CrepRun pickup: zone rate and day, and the database 
   await expect(text(page, 'CrepRun Zone 2 (Wednesday)', false)).toBeVisible();
   await expect(text(page, '$9,000')).toBeVisible();
   await shot(page, '14-booked-with-extras');
+
+  // The ticket lists the extras and says CrepRun collects, not drop-off.
+  await tab(page, 'Orders');
+  const ticket = byTestId(page, 'order-ticket');
+  await expect(ticket.getByText(/CrepRun pickup/i).first()).toBeVisible();
+  await expect(ticket.getByText(/Deep Clean Upgrade · Suede Revive Kit/)).toBeVisible();
 
   const [customer] = await adminSelect<{ id: string }>('customers', `email=eq.${encodeURIComponent(c.email)}&select=id`);
   const [order] = await adminSelect<{ price_cents: number; drop_method: string; scheduled_date: string; zone_id: string; add_ons: { name: string; kind: string }[] }>(
