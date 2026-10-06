@@ -39,8 +39,8 @@ is the launch switch. Nothing appears on the website until launched.
 | Phase | What | Flag |
 |---|---|---|
 | 0 ✅ | Flags, pairs + passport codes, pair events, membership tables + credit ledger (no UI) | — |
-| 1 🔨 | Vault + Passport screens, pairs auto-created from orders, `/p/<code>` page, Crep Tags | `vault`, `passport` |
-| 2 | AI condition grade on staff photo upload | `condition_grade` |
+| 1 ✅ | Vault + Passport screens, pairs auto-created from orders, `/p/<code>` page, Crep Tags | `vault`, `passport` |
+| 2 🔨 | AI condition grade on staff photo upload | `condition_grade` |
 | 3 | Membership: sign-up, credit redemption at booking, monthly grant job, gifting | `membership` |
 | 4 | Smart nudges + Creppie in the Vault | `smart_nudges` |
 | 5 | Fresh Pairs | `fresh_pairs` |

@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-import { colors, pairTitle, type Passport } from '@clean-crep/shared';
+import { colors, pairTitle, type ConditionGrade, type Passport } from '@clean-crep/shared';
 
 // Crep Passport: the public page behind the QR on a Crep Tag
 // (docs/VISION.md). passport() returns null until the `passport` flag is on,
@@ -11,12 +11,15 @@ import { colors, pairTitle, type Passport } from '@clean-crep/shared';
 
 export const revalidate = 60;
 
-async function load(code: string): Promise<Passport | null> {
-  if (!/^[2-9A-Za-z]{8}$/.test(code)) return null;
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+function anon() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data, error } = await supabase.rpc('passport', { p_code: code });
+}
+
+async function load(code: string): Promise<Passport | null> {
+  if (!/^[2-9A-Za-z]{8}$/.test(code)) return null;
+  const { data, error } = await anon().rpc('passport', { p_code: code });
   if (error || !data) return null;
   return data as Passport;
 }
@@ -45,6 +48,11 @@ export default async function PassportPage({ params }: { params: Promise<{ code:
   if (!p) notFound();
   const done = p.cleans.filter((c) => c.completed);
   const photos = done.reduce((n, c) => n + c.photos, 0);
+  // Condition (Phase 2) shows only once condition_grade is launched.
+  const { data: gradeOn } = await anon().rpc('feature_enabled', { p_key: 'condition_grade' });
+  const lastAfter = gradeOn
+    ? ([...p.events].reverse().find((e) => e.kind === 'grade' && (e.data as unknown as ConditionGrade).stage === 'after')?.data as unknown as ConditionGrade | undefined)
+    : undefined;
   const display = 'var(--font-archivo), system-ui, sans-serif';
 
   return (
@@ -80,7 +88,7 @@ export default async function PassportPage({ params }: { params: Promise<{ code:
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
           {[
             [String(done.length), done.length === 1 ? 'Clean' : 'Cleans'],
-            [String(photos), 'Photos on file'],
+            lastAfter ? [`${lastAfter.score}/10`, 'Condition'] : [String(photos), 'Photos on file'],
             [new Date(`${p.since}T12:00:00`).getFullYear().toString(), 'In our care since'],
           ].map(([v, l]) => (
             <div key={l} style={{ background: colors.white, borderRadius: 16, padding: '16px 14px', boxShadow: '0 1px 2px rgba(10,31,68,0.06), 0 8px 24px rgba(10,31,68,0.06)' }}>

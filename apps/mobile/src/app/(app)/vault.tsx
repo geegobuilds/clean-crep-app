@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Image, Pressable, ScrollView, Share, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter } from 'expo-router';
-import { pairTitle, passportUrl, type PairCategory } from '@clean-crep/shared';
+import { gradesFor, pairTitle, passportUrl, type PairCategory } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { StatusTag } from '@/components/status-tag';
 import { Button, Card, Overline, ScreenHeader } from '@/components/ui';
@@ -41,7 +41,7 @@ export default function VaultScreen() {
   if (loaded && !features.has('vault')) return <Redirect href="/" />;
 
   if (open) {
-    return <PairDetail pair={open} showPassport={features.has('passport')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onBook={() => router.push('/book')} />;
+    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onBook={() => router.push('/book')} />;
   }
 
   const cleans = pairs.reduce((n, p) => n + p.cleans.filter((o) => o.status === 'completed').length, 0);
@@ -143,15 +143,57 @@ function Cover({ pair, size, wide }: { pair: VaultPair; size: number; wide?: boo
   );
 }
 
+/** The most recently graded clean: its before → after scores. */
+function latestGrades(pair: VaultPair) {
+  const last = [...pair.events].filter((e) => e.kind === 'grade').sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  return last ? gradesFor(pair.events, last.order_id ?? undefined) : null;
+}
+
+function ConditionCard({ pair }: { pair: VaultPair }) {
+  const g = latestGrades(pair);
+  if (!g || !(g.before || g.after)) return null;
+  return (
+    <Card testID="condition-card" style={{ gap: space.sm }}>
+      <Overline>Condition · AI graded</Overline>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+        {g.before && (
+          <View>
+            <Text style={type.caption}>Before</Text>
+            <Text style={[type.priceLg, { color: c.inkMuted }]}>{g.before.score}</Text>
+          </View>
+        )}
+        {g.before && g.after && <Icon name="arrowR" size={20} color={c.inkMuted} />}
+        {g.after && (
+          <View>
+            <Text style={type.caption}>After</Text>
+            <Text style={type.priceLg}>
+              {g.after.score}
+              <Text style={[type.body, { color: c.inkMuted }]}>/10</Text>
+            </Text>
+          </View>
+        )}
+        {g.restored !== null && g.restored > 0 && (
+          <View style={{ marginLeft: 'auto', backgroundColor: c.ice, borderRadius: radius.pill, paddingVertical: 6, paddingHorizontal: 12 }}>
+            <Text style={[type.bodyStrong, { color: c.accent }]}>+{g.restored} restored</Text>
+          </View>
+        )}
+      </View>
+      {!!(g.after ?? g.before)?.summary && <Text style={type.caption}>{(g.after ?? g.before)!.summary}</Text>}
+    </Card>
+  );
+}
+
 function PairDetail({
   pair,
   showPassport,
+  showGrade,
   onBack,
   onSave,
   onBook,
 }: {
   pair: VaultPair;
   showPassport: boolean;
+  showGrade: boolean;
   onBack: () => void;
   onSave: (f: PairFields) => Promise<string | null>;
   onBook: () => void;
@@ -171,6 +213,7 @@ function PairDetail({
       />
       <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.lg, paddingBottom: space.xxl }}>
         {!!pair.cover && <Cover pair={pair} size={220} wide />}
+        {showGrade && <ConditionCard pair={pair} />}
 
         {showPassport && (
           <View testID="passport-card" style={{ backgroundColor: c.navy, borderRadius: radius.lg, padding: space.lg, gap: space.sm }}>

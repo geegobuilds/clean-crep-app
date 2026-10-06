@@ -7,12 +7,14 @@ import { Camera, ChevronLeft, Loader2 } from 'lucide-react';
 import {
   DASHBOARD_STATUS_FLOW,
   formatPrice,
+  gradesFor,
   ORDER_STATUS_LABEL,
   pairTitle,
   type Pair,
   palette,
   radius,
   shadow,
+  type ConditionGrade,
   type Order,
   type OrderStatus,
   type Service,
@@ -42,16 +44,44 @@ export default function StaffOrderPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<PhotoKind | null>(null);
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  const [events, setEvents] = useState<{ kind: string; order_id: string | null; data: unknown; created_at: string }[]>([]);
+  const [grading, setGrading] = useState<PhotoKind | null>(null);
+  const [gradeNote, setGradeNote] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    const [{ data }, list] = await Promise.all([
+    const [{ data }, list, ev] = await Promise.all([
       supabase.from('orders').select('*, service:services(*), customer:customers(name, phone), pair:pairs(id, brand, model, nickname, category, passport_code)').eq('id', id).maybeSingle(),
       listOrderPhotos(supabase, id),
+      supabase.from('pair_events').select('kind, order_id, data, created_at').eq('order_id', id),
     ]);
     setOrder((data as OrderRow | null) ?? null);
     setPhotos(list);
+    setEvents(ev.data ?? []);
     setLoading(false);
+    return list;
   }, [supabase, id]);
+
+  // AI condition grade (Phase 2): runs after each upload, or on "Grade again".
+  async function grade(kind: PhotoKind, photoId: string) {
+    setGrading(kind);
+    setGradeNote(null);
+    try {
+      const res = await fetch('/api/grade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ photoId }) });
+      const out = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setGradeNote(
+          out.error === 'not_configured'
+            ? 'AI grading isn\'t switched on yet (needs the API key on Vercel).'
+            : out.error === 'not_footwear'
+              ? 'That photo didn\'t look like a shoe. Retake it with the pair filling the frame.'
+              : "Couldn't grade that photo. Try again."
+        );
+      }
+      await reload();
+    } finally {
+      setGrading(null);
+    }
+  }
 
   useEffect(() => {
     // One-shot fetch on load (same pattern as the dashboard list).
@@ -64,9 +94,11 @@ export default function StaffOrderPage() {
     setBusy(kind);
     setMessage(null);
     try {
-      await uploadOrderPhoto(supabase, id, kind, file);
+      const path = await uploadOrderPhoto(supabase, id, kind, file);
       setMessage({ tone: 'ok', text: `${kind === 'before' ? 'Before' : 'After'} photo saved.` });
-      await reload();
+      const list = await reload();
+      const added = list.find((p) => p.storage_path === path);
+      if (added) void grade(kind, added.id);
     } catch (e) {
       console.error('[order photo]', e);
       setMessage({ tone: 'error', text: "Couldn't save that photo. Check the connection and try again." });
@@ -160,6 +192,19 @@ export default function StaffOrderPage() {
               </p>
             </section>
 
+            {order.pair && (
+              <GradeCard
+                grades={gradesFor(events, order.id)}
+                grading={grading}
+                note={gradeNote}
+                canGrade={(k) => !!latest(k) && grading === null}
+                onGrade={(k) => {
+                  const p = latest(k);
+                  if (p) void grade(k, p.id);
+                }}
+              />
+            )}
+
             <section style={{ background: palette.white, borderRadius: radius.lg, padding: 16, boxShadow: shadow.card }}>
               <div style={{ ...overline, marginBottom: 12 }}>Status</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -191,6 +236,66 @@ export default function StaffOrderPage() {
         )}
       </main>
     </div>
+  );
+}
+
+function GradeCard({
+  grades,
+  grading,
+  note,
+  canGrade,
+  onGrade,
+}: {
+  grades: { before: ConditionGrade | null; after: ConditionGrade | null; restored: number | null };
+  grading: PhotoKind | null;
+  note: string | null;
+  canGrade: (k: PhotoKind) => boolean;
+  onGrade: (k: PhotoKind) => void;
+}) {
+  return (
+    <section data-testid="grade-card" style={{ background: palette.white, borderRadius: radius.lg, padding: 16, boxShadow: shadow.card }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+        <div style={overline}>Condition grade · AI</div>
+        {grades.restored !== null && (
+          <div style={{ fontSize: 15, fontWeight: 700, color: grades.restored > 0 ? palette.blue : palette.navy }}>
+            {grades.restored > 0 ? `Restored +${grades.restored}` : 'No change'}
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        {(['before', 'after'] as const).map((k) => {
+          const g = grades[k];
+          return (
+            <div key={k} style={{ border: `1px solid ${palette.line}`, borderRadius: radius.md, padding: 12, display: 'grid', gap: 6, alignContent: 'start' }}>
+              <div style={{ ...overline, fontSize: 11 }}>{k}</div>
+              <div style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 800, fontSize: 30, lineHeight: '32px' }}>
+                {grading === k ? <Loader2 size={22} className="spin" aria-label="Grading" /> : g ? `${g.score}/10` : '—'}
+              </div>
+              {g && <div style={{ fontSize: 13, color: palette.inkMuted, lineHeight: 1.4 }}>{g.summary}</div>}
+              {g && g.issues.length > 0 && <div style={{ fontSize: 12, color: palette.inkMuted }}>{g.issues.join(' · ')}</div>}
+              <button
+                onClick={() => onGrade(k)}
+                disabled={!canGrade(k)}
+                style={{
+                  minHeight: 36,
+                  borderRadius: radius.sm,
+                  border: `1px solid ${palette.line}`,
+                  background: palette.white,
+                  color: palette.navy,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: canGrade(k) ? 'pointer' : 'default',
+                  opacity: canGrade(k) ? 1 : 0.5,
+                }}
+              >
+                {g ? 'Grade again' : 'Grade photo'}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      {note && <p style={{ fontSize: 13, color: palette.danger, margin: '12px 0 0' }}>{note}</p>}
+    </section>
   );
 }
 
