@@ -4,7 +4,7 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-04_
+_Last updated: 2026-10-06_
 
 ## Current Status
 
@@ -264,6 +264,21 @@ _Last updated: 2026-10-04_
   days ago that still aren't Completed (`open_over_7d`, skips ones the stuck-pickup / stale-received
   checks already list). Why: all 3 live orders were still "received"; nothing marked done means no
   ready push, no review ask, no loyalty points and no reactivation nudges.
+- **2026-10-06** — **"Due for a clean" rebuilt in Claude Code** (the Cowork branch was never pushed and
+  its bundle was lost). Migrations `0017_due_for_a_clean.sql` (due list, nudge log, 9 AM Jamaica pg_cron
+  push to app customers with a token) and `0018_reactivation_discount_and_stats.sql` (WELCOMEBACK10
+  trigger on `orders`, **`reactivation_settings.discount_enabled` default OFF**, nudge → rebook stats,
+  auto 10-week nudge after 20+ nudges at >15% rebook). Staff page `/staff/dashboard/due` (WhatsApp /
+  email buttons log the nudge). A guest's identity is account → phone → email → IG handle, so a guest
+  who gives a phone is keyed by phone. Turn the discount on later with
+  `update reactivation_settings set discount_enabled = true;`.
+  **Live (2026-10-06, Geego's go, after PR #26 checks passed):** 0019 (photos) applied; 0017 applied;
+  0018 applied as `0018a_reactivation_settings_and_discount` + the rest by SQL (see Gotchas). Verified
+  on live: discount OFF, booking step present and a test insert charges full price (rolled back),
+  9 AM job scheduled, 0 due (no Completed orders yet). The 0017 due-list function was renamed
+  `customers_due_for_clean_v0017` (no access) instead of dropped. New advisor rows for
+  `customers_due_for_clean` / `reactivation_stats` (callable when signed in) are expected: both refuse
+  non-staff.
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
@@ -305,6 +320,9 @@ _Last updated: 2026-10-04_
 
 ## Gotchas
 
+- **`DROP FUNCTION` hangs on live through the Supabase connector** (60s timeout, rolls back). The
+  `sql_drop` event triggers (`pgrst_drop_watch`, `issue_graphql_placeholder`) are the likely cause.
+  To change a function's return type, rename the old one and create the new one instead of dropping.
 - Renaming or adding an add-on in Supabase → update its series in PostHog "Add-on attach rate"
   (project 644953, dashboard 2168419), or it silently reads 0.
 - **Expo SDK 54 + Xcode 27:** relies on `patches/@expo+cli+54.0.27.patch`. When upgrading Expo
