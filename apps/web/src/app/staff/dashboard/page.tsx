@@ -110,6 +110,9 @@ export default function DashboardPage() {
           <Link href="/staff/dashboard/prices" style={{ fontSize: 12, color: colors.white, textDecoration: 'none', fontWeight: 500 }}>
             Prices &amp; Zones
           </Link>
+          <Link href="/staff/dashboard/features" style={{ fontSize: 12, color: colors.white, textDecoration: 'none', fontWeight: 500 }}>
+            Features
+          </Link>
           <span style={{ fontSize: 11, color: colors.softBlue }}>Shop 19 · Pristine Plaza, HWT</span>
           <a
             href="https://wa.me/18765072163"

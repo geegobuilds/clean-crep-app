@@ -8,6 +8,16 @@ _Last updated: 2026-10-06_
 
 ## Current Status
 
+- **Phase 0 of the Vision (2026-10-06, PR open, nothing customer-visible)**: `docs/VISION.md` is
+  the roadmap (Vault, Crep Passport, AI condition grade, care membership, nudges, Fresh Pairs).
+  Migration `0020_phase0_foundations.sql` adds feature flags (`feature_flags`,
+  `feature_flag_users`, `feature_enabled()`, `my_features()` — staff see all, testers see their
+  flag, everyone once "On for everyone"), `pairs` with 8-char passport codes, `orders.pair_id`,
+  `pair_events`, public `passport(code)` (null until the `passport` flag is on), and membership
+  plans / memberships / household / credit ledger / payments (3 draft plans, all inactive).
+  Staff › Features page manages flags + testers; mobile `useFeatures()` / `useFeature()` hook
+  ready for Phase 1. **0020 is NOT applied to live** — waiting on Geego's "apply 0020" (apply via
+  migration tool; never `DROP FUNCTION` through the connector, it hangs).
 - **Website premium pass (branch `website-premium`, 2026-10-06; bundle → PR, not merged)**: homepage
   (`apps/web/src/app/page.tsx` + the HOMEPAGE block in `globals.css`, scoped to `.landing`) rebuilt
   on DESIGN.md: Archivo 800 headlines/prices, DM Sans body 18/1.6, navy text, one blue, bands
