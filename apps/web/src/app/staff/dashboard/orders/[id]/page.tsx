@@ -8,6 +8,8 @@ import {
   DASHBOARD_STATUS_FLOW,
   formatPrice,
   ORDER_STATUS_LABEL,
+  pairTitle,
+  type Pair,
   palette,
   radius,
   shadow,
@@ -26,6 +28,7 @@ import { listOrderPhotos, uploadOrderPhoto, type OrderPhoto, type PhotoKind } fr
 interface OrderRow extends Order {
   service: Service | null;
   customer: { name: string; phone: string | null } | null;
+  pair: Pick<Pair, 'id' | 'brand' | 'model' | 'nickname' | 'category' | 'passport_code'> | null;
 }
 
 const display: React.CSSProperties = { fontFamily: 'var(--font-archivo), var(--font-dm-sans), sans-serif', fontWeight: 800 };
@@ -42,7 +45,7 @@ export default function StaffOrderPage() {
 
   const reload = useCallback(async () => {
     const [{ data }, list] = await Promise.all([
-      supabase.from('orders').select('*, service:services(*), customer:customers(name, phone)').eq('id', id).maybeSingle(),
+      supabase.from('orders').select('*, service:services(*), customer:customers(name, phone), pair:pairs(id, brand, model, nickname, category, passport_code)').eq('id', id).maybeSingle(),
       listOrderPhotos(supabase, id),
     ]);
     setOrder((data as OrderRow | null) ?? null);
@@ -121,6 +124,23 @@ export default function StaffOrderPage() {
                 </div>
               </div>
             </section>
+
+            {order.pair && (
+              <section data-testid="order-pair" style={{ background: palette.white, borderRadius: radius.lg, padding: 16, boxShadow: shadow.card, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={overline}>Vault pair · Crep Passport</div>
+                  <div style={{ fontSize: 15, fontWeight: 500, marginTop: 4 }}>{pairTitle(order.pair)}</div>
+                </div>
+                <a
+                  href={`/p/${order.pair.passport_code}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ ...display, fontSize: 15, letterSpacing: 3, color: palette.navy, textDecoration: 'none', border: `1px solid ${palette.line}`, borderRadius: 999, padding: '8px 12px' }}
+                >
+                  {order.pair.passport_code}
+                </a>
+              </section>
+            )}
 
             <section style={{ background: palette.white, borderRadius: radius.lg, padding: 16, boxShadow: shadow.card }}>
               <div style={{ ...overline, marginBottom: 12 }}>Photos</div>

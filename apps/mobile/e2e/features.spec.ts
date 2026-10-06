@@ -89,3 +89,29 @@ test('feature flags, Vault pairs and the public Passport stay hidden until switc
   const selfGrant = await asUser(cust.accessToken, 'memberships', { method: 'POST', body: { customer_id: cust.userId, plan_id: clubId, status: 'active' } });
   expect(selfGrant.status).toBeGreaterThanOrEqual(400);
 });
+
+test('vault: orders create pairs automatically; repeat cleans of the same item build one pair', async () => {
+  const c = newCustomer();
+  const cust = await apiSignUp(c);
+  await asUser(cust.accessToken, 'customers', { method: 'POST', body: { id: cust.userId, name: 'Paul Pairs', email: c.email } });
+  const sneakerId = sql(`select id from services where name = 'Sneaker Clean'`);
+  const day = sql(`select d::date from generate_series(jm_today() + 1, jm_today() + 7, interval '1 day') d where extract(isodow from d) <> 7 limit 1`);
+  const book = (item: string) =>
+    asUser(cust.accessToken, 'orders', {
+      method: 'POST',
+      body: { customer_id: cust.userId, service_id: sneakerId, item_name: item, drop_method: 'dropoff', scheduled_date: day, add_ons: [] },
+    });
+
+  const first = await book('2x Jordan 1s');
+  const again = await book('jordan 1s');
+  expect(first.status).toBe(201);
+  expect(first.body[0].pair_id).toBeTruthy();
+  expect(again.body[0].pair_id).toBe(first.body[0].pair_id);
+
+  // Hidden until the vault flag is on for this customer.
+  expect((await asUser(cust.accessToken, 'pairs')).body).toEqual([]);
+  sql(`insert into feature_flag_users (flag_key, user_id) values ('vault', '${cust.userId}')`);
+  const vault = (await asUser(cust.accessToken, 'pairs?select=nickname,cleans:orders(id)')).body as { nickname: string; cleans: unknown[] }[];
+  expect(vault).toEqual([{ nickname: 'Jordan 1s', cleans: expect.any(Array) }]);
+  expect(vault[0].cleans).toHaveLength(2);
+});

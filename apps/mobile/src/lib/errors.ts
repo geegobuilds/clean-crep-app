@@ -4,13 +4,14 @@
 // that shows something to the user goes through friendlyError(); the raw
 // error is logged with console.warn for debugging.
 
-export type ErrorContext = 'booking' | 'signIn' | 'signUp' | 'load';
+export type ErrorContext = 'booking' | 'signIn' | 'signUp' | 'load' | 'save';
 
 const FALLBACK: Record<ErrorContext, string> = {
   booking: "Couldn't place your booking. Check your connection and try again, or message us on WhatsApp.",
   signIn: "Couldn't sign you in. Check your connection and try again.",
   signUp: "Couldn't create your account. Check your connection and try again.",
   load: "Couldn't load this right now. Check your connection and try again.",
+  save: "Couldn't save that. Check your connection and try again.",
 };
 
 function rawMessage(error: unknown): string {

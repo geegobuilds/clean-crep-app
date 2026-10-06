@@ -8,16 +8,19 @@ _Last updated: 2026-10-06_
 
 ## Current Status
 
-- **Phase 0 of the Vision (2026-10-06, PR open, nothing customer-visible)**: `docs/VISION.md` is
-  the roadmap (Vault, Crep Passport, AI condition grade, care membership, nudges, Fresh Pairs).
-  Migration `0020_phase0_foundations.sql` adds feature flags (`feature_flags`,
-  `feature_flag_users`, `feature_enabled()`, `my_features()` — staff see all, testers see their
-  flag, everyone once "On for everyone"), `pairs` with 8-char passport codes, `orders.pair_id`,
-  `pair_events`, public `passport(code)` (null until the `passport` flag is on), and membership
-  plans / memberships / household / credit ledger / payments (3 draft plans, all inactive).
-  Staff › Features page manages flags + testers; mobile `useFeatures()` / `useFeature()` hook
-  ready for Phase 1. **0020 is NOT applied to live** — waiting on Geego's "apply 0020" (apply via
-  migration tool; never `DROP FUNCTION` through the connector, it hangs).
+- **Vision Phases 0–1 (2026-10-06)**: roadmap in `docs/VISION.md`. Everything is behind feature
+  flags (Staff › Features; staff always see all; add testers by email; "On for everyone" = launch).
+  - **Phase 0 (PR #29, merged; 0020 applied to live 2026-10-06)**: flags, `pairs` with 8-char
+    passport codes, `pair_events`, public `passport(code)`, membership plans/ledger (3 draft plans,
+    inactive). All 6 flags OFF on live.
+  - **Phase 1 (PR open)**: migration `0021_vault_auto_pairs.sql` — every order gets a Vault pair
+    automatically (same customer + same item name = same pair; guests own pairs by guest key and
+    their pairs move to their account when the orders are claimed); existing orders backfilled.
+    App **Vault tab** (`app/(app)/vault.tsx`, only when `vault` is on): pairs with clean count,
+    cover photo (latest after-photo), add/edit details, care history, Crep Passport card + share.
+    Website **`/p/<code>`** public passport page (404 until `passport` is on). Staff order page
+    shows the pair + passport code.
+  - Next: Phase 2 (AI condition grade) — and Crep Tags (QR stickers) need sourcing.
 - **Website premium pass (branch `website-premium`, 2026-10-06; bundle → PR, not merged)**: homepage
   (`apps/web/src/app/page.tsx` + the HOMEPAGE block in `globals.css`, scoped to `.landing`) rebuilt
   on DESIGN.md: Archivo 800 headlines/prices, DM Sans body 18/1.6, navy text, one blue, bands

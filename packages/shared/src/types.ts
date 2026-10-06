@@ -123,6 +123,7 @@ export interface Order {
   guest_email: string | null;
   guest_instagram_handle: string | null; // for Creppie orders: IG/ManyChat id, or web-<uuid> from the website chat
   airtable_id: string | null; // set on orders copied over from the old Airtable base
+  pair_id?: string | null; // the Vault pair this order cleaned (migration 0021)
   created_at: string;
   updated_at: string;
 }

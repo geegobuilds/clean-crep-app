@@ -14,3 +14,10 @@
   that chat's topic (e.g. "Cowork: Reactivation"), so Geego knows which prompt goes where.
 
 - Git author: always commit as `geegobuilds <318375370+geegobuilds@users.noreply.github.com>`. Set `git config user.name` and `user.email` to that before the first commit. Never commit as Claude, so the work counts on the GitHub contribution graph.
+
+- Standing authority (Geego, 2026-10-06): apply migrations to the live database, start the next
+  Vision phase (docs/VISION.md), and merge PRs once all checks pass, without asking first. Still
+  verify locally before applying, keep Geego in the loop after each step, and never switch a
+  feature flag "On for everyone" (that's a customer-facing launch) without asking.
+- Show visuals as you build: screenshot every new or changed screen (phone width, and desktop for
+  web pages) and send it to Geego as it's built, not just at the end.
