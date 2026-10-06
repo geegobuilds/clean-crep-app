@@ -55,7 +55,7 @@ export default function AccountPage() {
     setUser(u);
     if (!u) track('signin_prompted', { where: 'account' });
     // A new identify here means they just came in from an email link.
-    else if (identify(u.id)) track('signin_completed');
+    else identify(u.id, () => track('signin_completed'));
     if (u) {
       const metaName = typeof u.user_metadata?.name === 'string' ? u.user_metadata.name : '';
       // First visit: creating the profile moves their guest bookings onto it.
