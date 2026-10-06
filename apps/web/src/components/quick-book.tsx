@@ -229,7 +229,7 @@ export function QuickBook({ services, addOns, zones }: { services: Service[]; ad
     <form className="qb" id="book" onSubmit={submit} noValidate>
       <div className="qb-head">
         <div className="qb-title">Book a clean</div>
-        <div className="qb-steps" aria-label={`Step ${step + 1} of 3`}>
+        <div className="qb-steps" role="img" aria-label={`Step ${step + 1} of 3`}>
           {[0, 1, 2].map((i) => (
             <span key={i} className={i <= step ? 'on' : ''} />
           ))}
