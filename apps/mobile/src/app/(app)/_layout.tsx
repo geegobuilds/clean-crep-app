@@ -49,6 +49,7 @@ export default function AppGroupLayout() {
         name="vault"
         options={{ title: 'Vault', href: features.has('vault') ? undefined : null, tabBarIcon: ({ color }) => <TabBarIcon iconName="vault" color={color} /> }}
       />
+      <Tabs.Screen name="club" options={{ href: null }} />
       <Tabs.Screen name="inbox" options={{ title: 'Inbox', tabBarIcon: ({ color }) => <TabBarIcon iconName="bell" color={color} /> }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => <TabBarIcon iconName="profile" color={color} /> }} />
     </Tabs>

@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
+import { useMembership } from '@/hooks/use-membership';
 import { useServices } from '@/hooks/use-services';
 import { useAddOns } from '@/hooks/use-add-ons';
 import { useZones } from '@/hooks/use-zones';
@@ -63,6 +64,8 @@ export default function BookingScreen() {
   const [notes, setNotes] = useState('');
   const [shoeType, setShoeType] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [useCredit, setUseCredit] = useState(true);
+  const { membership, reload: reloadMembership } = useMembership();
   const [error, setError] = useState<string | null>(null);
   // Guests fill in the whole booking, then sign in here at the last step.
   // This is a sheet over the Book screen (not a route change), so every
@@ -89,7 +92,13 @@ export default function BookingScreen() {
   const date: Day | null = dropoff ? days[selDay] : pickupDay;
   const creprun = !dropoff && zone ? { name: `CrepRun ${zone.name} (${zone.pickup_day})`, price_cents: zone.rate_cents } : null;
   const charged: Pick<AddOn, 'name' | 'price_cents'>[] = [...extras, ...(creprun ? [creprun] : [])];
-  const total = selected ? orderTotal(selected.price_cents, charged) : null;
+  // Clean Crep Club (Phase 3): a care credit covers the service's base price;
+  // add-ons and CrepRun are still charged. The database applies the same rule.
+  const creditCost = selected?.credit_cost ?? 1;
+  const canUseCredit = membership?.status === 'active' && membership.balance >= creditCost && selected?.price_cents != null;
+  const creditApplied = canUseCredit && useCredit;
+  const fullTotal = selected ? orderTotal(selected.price_cents, charged) : null;
+  const total = fullTotal !== null && creditApplied && selected?.price_cents != null ? Math.max(fullTotal - selected.price_cents, 0) : fullTotal;
   const hasKit = extras.some((a) => a.kind === 'kit');
 
   function togglePick(id: string) {
@@ -150,6 +159,7 @@ export default function BookingScreen() {
       add_ons: extras.map((a) => ({ id: a.id })),
       price_cents: total,
       currency: selected.currency,
+      redeem_credit: creditApplied,
     });
     setSubmitting(false);
     if (insertError) {
@@ -157,6 +167,7 @@ export default function BookingScreen() {
       return;
     }
     success();
+    if (creditApplied) reloadMembership();
     track('booking_confirmed', {
       order_total_jmd: total === null ? null : Math.round(total / 100),
       addons_count: extras.length,
@@ -206,6 +217,7 @@ export default function BookingScreen() {
               ['Date', date ? `${date.short} ${date.num} ${date.month}` : '—'],
               [selected?.name ?? 'Service', selected ? formatPrice(selected.price_cents) : '—'],
               ...charged.map((a) => [a.name, a.price_cents === null ? 'On inspection' : `+${formatPrice(a.price_cents)}`]),
+              ...(creditApplied && selected ? [[`Care credit${creditCost > 1 ? `s (${creditCost})` : ''}`, `−${formatPrice(selected.price_cents)}`]] : []),
             ].map(([k, v]) => (
               <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space.sm, marginBottom: space.xs }}>
                 <Text style={[type.body, { color: c.inkMuted, flexShrink: 1 }]}>{k}</Text>
@@ -367,6 +379,28 @@ export default function BookingScreen() {
                 <Text style={[type.bodyStrong, { color: c.accent }]}>Message us on WhatsApp</Text>
               </Pressable>
             </View>
+          )}
+
+          {canUseCredit && membership && (
+            <Pressable
+              testID="use-credit"
+              onPress={() => setUseCredit((v) => !v)}
+              accessibilityRole="checkbox"
+              aria-checked={useCredit}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md, borderWidth: 1.5, borderColor: useCredit ? c.accent : c.line, backgroundColor: useCredit ? c.ice : c.surface }}
+            >
+              <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: useCredit ? c.accent : c.line, backgroundColor: useCredit ? c.accent : c.surface, alignItems: 'center', justifyContent: 'center' }}>
+                {useCredit && <Icon name="check" size={14} color={c.white} strokeWidth={2.5} />}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={type.bodyStrong}>
+                  Use {creditCost} care credit{creditCost > 1 ? 's' : ''}
+                </Text>
+                <Text style={type.caption}>
+                  Covers the {formatPrice(selected?.price_cents ?? null)} clean · {membership.balance} left on {membership.plan.name}
+                </Text>
+              </View>
+            </Pressable>
           )}
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>

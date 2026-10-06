@@ -4,3 +4,4 @@ export * from './status';
 export * from './supabaseClient';
 export * from './features';
 export * from './vault';
+export * from './membership';

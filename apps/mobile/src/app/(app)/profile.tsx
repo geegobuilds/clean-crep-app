@@ -1,11 +1,12 @@
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { colors, formatPrice } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { StatusTag } from '@/components/status-tag';
 import { useAuth } from '@/lib/auth';
 import { useOrders } from '@/hooks/use-orders';
+import { useFeatures } from '@/hooks/use-features';
 import { enablePush, pushStatus } from '@/lib/push';
 import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
 
@@ -45,6 +46,7 @@ async function openNotificationSettings() {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const features = useFeatures();
   const { session, customer, signOut } = useAuth();
   const { orders, loading, error, reload } = useOrders();
   const pastOrders = orders.filter((o) => o.status === 'completed');
@@ -172,6 +174,7 @@ export default function ProfileScreen() {
             <View style={{ backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
               {(
                 [
+                  ...(features.has('membership') ? [{ icon: 'star', label: 'Clean Crep Club', onPress: () => router.push('/club' as Href) }] : []),
                   { icon: 'bell', label: 'Notifications', onPress: openNotificationSettings },
                   { icon: 'help', label: 'Help & Support' },
                   { icon: 'settings', label: 'Account Settings' },

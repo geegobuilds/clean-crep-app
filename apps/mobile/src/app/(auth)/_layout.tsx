@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { ScreenSkeleton } from '@/components/states';
 
 // Only in-app tab routes are valid post-sign-in destinations (?next=/orders etc).
-const NEXT_ROUTES = ['/', '/book', '/orders', '/vault', '/inbox', '/profile'] as const;
+const NEXT_ROUTES = ['/', '/book', '/orders', '/vault', '/club', '/inbox', '/profile'] as const;
 
 export default function AuthGroupLayout() {
   const { session, initializing } = useAuth();

@@ -110,6 +110,9 @@ export default function DashboardPage() {
           <Link href="/staff/dashboard/prices" style={{ fontSize: 12, color: colors.white, textDecoration: 'none', fontWeight: 500 }}>
             Prices &amp; Zones
           </Link>
+          <Link href="/staff/dashboard/members" style={{ fontSize: 12, color: colors.white, textDecoration: 'none', fontWeight: 500 }}>
+            Club
+          </Link>
           <Link href="/staff/dashboard/features" style={{ fontSize: 12, color: colors.white, textDecoration: 'none', fontWeight: 500 }}>
             Features
           </Link>
