@@ -7,7 +7,7 @@ interface CookieToSet {
   options?: CookieOptions;
 }
 
-// Refreshes the Supabase auth session cookie on every request so server
+// Refreshes the Supabase auth session cookie on signed-in pages so server
 // components/route handlers see an up-to-date session. Required by
 // @supabase/ssr's Next.js App Router integration.
 export async function proxy(request: NextRequest) {
@@ -36,5 +36,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|assets/).*)'],
+  // Only the pages that read the session: the public homepage, legal pages and
+  // /api/creppie (Bearer token) skip this, so they don't wait on Supabase Auth.
+  matcher: ['/account/:path*', '/staff/:path*', '/auth/:path*'],
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import posthog, { type CaptureResult } from 'posthog-js';
+import type { CaptureResult } from 'posthog-js';
 
 // Product analytics (PostHog). Event names and properties are shared with the
 // app (apps/mobile/src/lib/analytics.tsx) so one funnel covers both.
@@ -14,7 +14,6 @@ import posthog, { type CaptureResult } from 'posthog-js';
 const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? '';
 const HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
 
-let ready = false;
 
 export type AnalyticsEvent =
   | 'booking_started'
@@ -55,30 +54,59 @@ function scrub(event: CaptureResult | null): CaptureResult | null {
   return event;
 }
 
-export function initAnalytics() {
-  if (ready || !KEY || typeof window === 'undefined') return;
-  posthog.init(KEY, {
-    api_host: HOST,
-    defaults: '2025-05-24', // pageviews on client-side route changes (App Router)
-    person_profiles: 'identified_only',
-    autocapture: false, // only our named events: no clicked text, no form contents
-    disable_session_recording: true,
-    disable_surveys: true,
-    before_send: scrub,
+// PostHog's script is ~60 KB and was the biggest cost on first load (mobile
+// Lighthouse). It's now imported only after the page has loaded and the
+// browser is idle; events fired before that wait in a queue, so nothing is lost.
+type PostHog = typeof import('posthog-js').default;
+let client: PostHog | null = null;
+let loading = false;
+const queue: ((ph: PostHog) => void)[] = [];
+
+function load() {
+  if (loading || !KEY || typeof window === 'undefined') return;
+  loading = true;
+  import('posthog-js').then(({ default: posthog }) => {
+    posthog.init(KEY, {
+      api_host: HOST,
+      defaults: '2025-05-24', // pageviews on client-side route changes (App Router)
+      person_profiles: 'identified_only',
+      autocapture: false, // only our named events: no clicked text, no form contents
+      disable_session_recording: true,
+      disable_surveys: true,
+      before_send: scrub,
+    });
+    posthog.register({ platform: 'web' });
+    client = posthog;
+    queue.splice(0).forEach((fn) => fn(posthog));
   });
-  posthog.register({ platform: 'web' });
-  ready = true;
+}
+
+/** Schedules PostHog after the page has loaded (no-op without NEXT_PUBLIC_POSTHOG_KEY). */
+export function initAnalytics() {
+  if (loading || !KEY || typeof window === 'undefined') return;
+  const idle = () => ('requestIdleCallback' in window ? window.requestIdleCallback(() => load(), { timeout: 3000 }) : setTimeout(load, 1500));
+  if (document.readyState === 'complete') idle();
+  else window.addEventListener('load', idle, { once: true });
+}
+
+function withClient(fn: (ph: PostHog) => void) {
+  if (!KEY || typeof window === 'undefined') return;
+  if (client) fn(client);
+  else {
+    queue.push(fn);
+    initAnalytics();
+  }
 }
 
 export function track(event: AnalyticsEvent, props?: Props) {
-  initAnalytics(); // child effects run before the provider's, so start lazily too
-  if (ready) posthog.capture(event, props);
+  withClient((ph) => ph.capture(event, props));
 }
 
-/** Link this browser's events to the customer. User id only, no traits. Returns true on a new sign-in. */
-export function identify(userId: string): boolean {
-  initAnalytics();
-  if (!ready || posthog.get_distinct_id() === userId) return false;
-  posthog.identify(userId);
-  return true;
+/** Link this browser's events to the customer. User id only, no traits. Calls onNewSignIn when this browser wasn't already this user. */
+export function identify(userId: string, onNewSignIn?: () => void) {
+  withClient((ph) => {
+    if (ph.get_distinct_id() === userId) return;
+    ph.identify(userId);
+    onNewSignIn?.();
+  });
 }
