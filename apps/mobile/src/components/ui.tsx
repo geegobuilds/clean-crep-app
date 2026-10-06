@@ -88,9 +88,9 @@ export function Button({
 }
 
 /** White card: shadow by default, or a hairline border with `bordered`. */
-export function Card({ children, style, bordered }: { children: ReactNode; style?: StyleProp<ViewStyle>; bordered?: boolean }) {
+export function Card({ children, style, bordered, testID }: { children: ReactNode; style?: StyleProp<ViewStyle>; bordered?: boolean; testID?: string }) {
   return (
-    <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md }, bordered ? elevation.bordered : elevation.card, style]}>
+    <View testID={testID} style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md }, bordered ? elevation.bordered : elevation.card, style]}>
       {children}
     </View>
   );

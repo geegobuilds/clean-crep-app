@@ -12,8 +12,16 @@ export interface VaultClean {
   service: { name: string } | null;
 }
 
+export interface VaultEvent {
+  kind: string;
+  order_id: string | null;
+  data: unknown;
+  created_at: string;
+}
+
 export interface VaultPair extends Pair {
   cleans: VaultClean[];
+  events: VaultEvent[];
   /** Latest "after" photo across the pair's cleans (signed URL), if any. */
   cover: string | null;
 }
@@ -41,7 +49,7 @@ export function useVault() {
     }
     const { data, error: qe } = await supabase
       .from('pairs')
-      .select('*, cleans:orders(id, order_number, created_at, status, service:services(name))')
+      .select('*, cleans:orders(id, order_number, created_at, status, service:services(name)), events:pair_events(kind, order_id, data, created_at)')
       .order('created_at', { ascending: false });
     if (call !== latest.current) return;
     if (qe) {
@@ -52,6 +60,7 @@ export function useVault() {
     const rows = ((data ?? []) as unknown as Omit<VaultPair, 'cover'>[]).map((p) => ({
       ...p,
       cleans: [...(p.cleans ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at)),
+      events: p.events ?? [],
     }));
 
     // One query for every pair's latest "after" photo, one call to sign them.

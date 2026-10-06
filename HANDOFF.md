@@ -13,14 +13,20 @@ _Last updated: 2026-10-06_
   - **Phase 0 (PR #29, merged; 0020 applied to live 2026-10-06)**: flags, `pairs` with 8-char
     passport codes, `pair_events`, public `passport(code)`, membership plans/ledger (3 draft plans,
     inactive). All 6 flags OFF on live.
-  - **Phase 1 (PR open)**: migration `0021_vault_auto_pairs.sql` — every order gets a Vault pair
+  - **Phase 1 (PR #30, merged; 0021 applied to live 2026-10-06)**: migration `0021_vault_auto_pairs.sql` — every order gets a Vault pair
     automatically (same customer + same item name = same pair; guests own pairs by guest key and
     their pairs move to their account when the orders are claimed); existing orders backfilled.
     App **Vault tab** (`app/(app)/vault.tsx`, only when `vault` is on): pairs with clean count,
     cover photo (latest after-photo), add/edit details, care history, Crep Passport card + share.
     Website **`/p/<code>`** public passport page (404 until `passport` is on). Staff order page
     shows the pair + passport code.
-  - Next: Phase 2 (AI condition grade) — and Crep Tags (QR stickers) need sourcing.
+  - **Phase 2 (PR open, no migration)**: AI condition grade. Staff order page auto-grades each
+    before/after photo 1–10 (`/api/grade`, staff-only, vision model via the Anthropic API) and
+    saves it as a `pair_events` 'grade' row; shows "Restored +N". Vault pair detail shows a
+    Condition card and the passport page a Condition tile, both only when `condition_grade` is on.
+    **Needs two Vercel env vars to work: `ANTHROPIC_API_KEY` and `GRADE_MODEL`** (until then
+    the staff page says grading isn't switched on).
+  - Next: Phase 3 (membership). Crep Tags (QR stickers) still need sourcing.
 - **Website premium pass (branch `website-premium`, 2026-10-06; bundle → PR, not merged)**: homepage
   (`apps/web/src/app/page.tsx` + the HOMEPAGE block in `globals.css`, scoped to `.landing`) rebuilt
   on DESIGN.md: Archivo 800 headlines/prices, DM Sans body 18/1.6, navy text, one blue, bands

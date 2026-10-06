@@ -42,3 +42,23 @@ export function pairTitle(p: Pick<Pair, 'brand' | 'model' | 'nickname' | 'catego
   const bm = [p.brand, p.model].filter(Boolean).join(' ').trim();
   return bm || p.nickname || (p.category === 'clarks' ? 'Clarks' : p.category === 'cap' ? 'Cap' : 'Sneakers');
 }
+
+/** AI condition grade (Phase 2), stored as pair_events kind 'grade'. */
+export interface ConditionGrade {
+  stage: 'before' | 'after';
+  score: number; // 1–10
+  summary: string;
+  issues: string[];
+  photo_id?: string;
+}
+
+/** Latest before/after grade for one order (or a pair's latest clean). */
+export function gradesFor(events: { kind: string; order_id?: string | null; data: unknown; created_at?: string }[], orderId?: string) {
+  const grades = events
+    .filter((e) => e.kind === 'grade' && (!orderId || e.order_id === orderId))
+    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+    .map((e) => e.data as ConditionGrade);
+  const before = grades.find((g) => g.stage === 'before') ?? null;
+  const after = grades.find((g) => g.stage === 'after') ?? null;
+  return { before, after, restored: before && after ? after.score - before.score : null };
+}
