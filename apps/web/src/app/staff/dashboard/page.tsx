@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight, DollarSign, Package, Clock as ClockIcon, Search, Truck } from 'lucide-react';
+import { Camera, ChevronRight, DollarSign, Package, Clock as ClockIcon, Search, Truck } from 'lucide-react';
 import {
   colors,
   formatPrice,
@@ -341,7 +341,25 @@ function OrderRowView({
                   ))}
                 </div>
               </div>
-              <div style={{ marginLeft: 'auto' }}>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Link
+                  href={`/staff/dashboard/orders/${order.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: colors.navy,
+                    color: '#fff',
+                    borderRadius: 7,
+                    padding: '7px 14px',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <Camera size={13} /> Photos &amp; order page
+                </Link>
                 <a
                   href={waPhone ? `https://wa.me/${waPhone}?text=${notifyText}` : undefined}
                   target="_blank"

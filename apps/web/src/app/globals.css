@@ -468,3 +468,7 @@ footer { background: var(--navy); padding: clamp(40px, 5vw, 60px) clamp(20px, 5v
   .hero-points, .hero-actions { display: none; }
   .flip, .flip-inner { min-height: 260px; }
 }
+
+/* Staff order page: upload spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.9s linear infinite; }

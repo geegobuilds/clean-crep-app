@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Pressable, Text, View, type DimensionValue, type ViewStyle } from 'react-native';
+import { Animated, Text, View, type DimensionValue, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius } from '@clean-crep/shared';
+import { Button } from './ui';
 import { CreppieArt, CreppieState, MOODS } from '@/components/creppie';
 import { track } from '@/lib/analytics';
 
@@ -90,11 +91,7 @@ export function ScreenSkeleton() {
 }
 
 export function PrimaryButton({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={{ backgroundColor: colors.blue, borderRadius: radius.button, paddingVertical: 12, alignItems: 'center' }}>
-      <Text style={{ color: colors.white, fontSize: 13, fontFamily: 'DMSans_500Medium' }}>{label}</Text>
-    </Pressable>
-  );
+  return <Button label={label} onPress={onPress} />;
 }
 
 export function EmptyState({ title, body, actionLabel, onAction }: { title?: string; body?: string; actionLabel?: string; onAction?: () => void }) {
