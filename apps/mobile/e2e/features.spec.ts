@@ -115,3 +115,51 @@ test('vault: orders create pairs automatically; repeat cleans of the same item b
   expect(vault).toEqual([{ nickname: 'Jordan 1s', cleans: expect.any(Array) }]);
   expect(vault[0].cleans).toHaveLength(2);
 });
+
+test('club: join (pending) -> staff records payment -> a care credit covers the clean', async () => {
+  const s = newCustomer();
+  const staff = await apiSignUp(s);
+  sql(`insert into staff (id, name) values ('${staff.userId}', 'E2E Staff')`);
+  const c = newCustomer();
+  const cust = await apiSignUp(c);
+  await asUser(cust.accessToken, 'customers', { method: 'POST', body: { id: cust.userId, name: 'Cara Club', email: c.email } });
+
+  // Hidden: can't join until the flag is on for this customer.
+  const hidden = await asUser(cust.accessToken, 'rpc/join_membership', { method: 'POST', body: { p_plan_slug: 'club' } });
+  expect(hidden.status).toBeGreaterThanOrEqual(400);
+  sql(`insert into feature_flag_users (flag_key, user_id) values ('membership', '${cust.userId}')`);
+  sql(`update membership_plans set active = true where slug = 'club'`);
+  try {
+    const joined = await asUser(cust.accessToken, 'rpc/join_membership', { method: 'POST', body: { p_plan_slug: 'club' } });
+    expect(joined.body.status).toBe('pending');
+    expect(joined.body.payment_ref).toMatch(/^CC[0-9A-F]{5}$/);
+
+    // Customers can't activate themselves; staff can.
+    const self = await asUser(cust.accessToken, 'rpc/record_membership_payment', {
+      method: 'POST',
+      body: { p_membership_id: joined.body.id, p_amount_cents: 500000, p_method: 'lynk', p_reference: 'x' },
+    });
+    expect(self.status).toBeGreaterThanOrEqual(400);
+    const paid = await asUser(staff.accessToken, 'rpc/record_membership_payment', {
+      method: 'POST',
+      body: { p_membership_id: joined.body.id, p_amount_cents: 500000, p_method: 'lynk', p_reference: joined.body.payment_ref },
+    });
+    expect(paid.status).toBe(200);
+    expect(paid.body.balance).toBe(3);
+
+    const sneakerId = sql(`select id from services where name = 'Sneaker Clean'`);
+    const day = sql(`select d::date from generate_series(jm_today() + 1, jm_today() + 7, interval '1 day') d where extract(isodow from d) <> 7 limit 1`);
+    const order = await asUser(cust.accessToken, 'orders', {
+      method: 'POST',
+      body: { customer_id: cust.userId, service_id: sneakerId, item_name: 'Club pair', drop_method: 'dropoff', scheduled_date: day, add_ons: [], redeem_credit: true },
+    });
+    expect(order.status).toBe(201);
+    expect(order.body[0].price_cents).toBe(0);
+    expect(order.body[0].credits_used).toBe(1);
+    const mine = await asUser(cust.accessToken, 'rpc/my_membership', { method: 'POST', body: {} });
+    expect(mine.body.balance).toBe(2);
+    expect(mine.body.status).toBe('active');
+  } finally {
+    sql(`update membership_plans set active = false where slug = 'club'`);
+  }
+});

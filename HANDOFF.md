@@ -20,13 +20,24 @@ _Last updated: 2026-10-06_
     cover photo (latest after-photo), add/edit details, care history, Crep Passport card + share.
     Website **`/p/<code>`** public passport page (404 until `passport` is on). Staff order page
     shows the pair + passport code.
-  - **Phase 2 (PR open, no migration)**: AI condition grade. Staff order page auto-grades each
+  - **Phase 2 (PR #31, merged; no migration)**: AI condition grade. Staff order page auto-grades each
     before/after photo 1–10 (`/api/grade`, staff-only, vision model via the Anthropic API) and
     saves it as a `pair_events` 'grade' row; shows "Restored +N". Vault pair detail shows a
     Condition card and the passport page a Condition tile, both only when `condition_grade` is on.
     **Needs two Vercel env vars to work: `ANTHROPIC_API_KEY` and `GRADE_MODEL`** (until then
     the staff page says grading isn't switched on).
-  - Next: Phase 3 (membership). Crep Tags (QR stickers) still need sourcing.
+  - **Phase 3 (PR open)**: Clean Crep Club. Migration `0022_membership.sql`: customer joins in
+    the app (`join_membership`, pending + payment ref like `CC7F3A2`), pays by transfer/Lynk/cash
+    and WhatsApps the ref; staff hit "Record payment" on **Staff › Club** (`record_membership_payment`)
+    which activates the month and grants credits (unused roll over up to the plan cap, the rest
+    expire). At booking "Use a care credit" takes the service's base price off (Clarks = 2 credits,
+    `services.credit_cost`); add-ons/CrepRun still charged; household members share credits.
+    Daily 8:30 AM job: 3-day renewal reminder + pause lapsed memberships. App: `/club` screen
+    (Profile › Clean Crep Club), credit toggle on Book. Plans stay "Not offered" until switched
+    on in Staff › Club; the whole Club stays hidden until the `membership` flag is on.
+    **Pricing to revisit before launch:** Sneakerhead (J$9,800 / 4 credits) is worse value than
+    4 × J$2,000 pay-as-you-go unless its credits cover Deep Cleans.
+  - Next: Phase 4 (smart nudges + Creppie in the Vault). Crep Tags (QR stickers) still need sourcing.
 - **Website premium pass (branch `website-premium`, 2026-10-06; bundle → PR, not merged)**: homepage
   (`apps/web/src/app/page.tsx` + the HOMEPAGE block in `globals.css`, scoped to `.landing`) rebuilt
   on DESIGN.md: Archivo 800 headlines/prices, DM Sans body 18/1.6, navy text, one blue, bands

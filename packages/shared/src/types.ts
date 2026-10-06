@@ -50,6 +50,7 @@ export interface Service {
   turnaround_days: number | null;
   upsell: string | null;
   creppie_notes: string | null;
+  credit_cost?: number; // care credits one booking takes (migration 0022)
 }
 
 /** A CrepRun pickup zone (Creppie quotes these; rates are round trip). */
