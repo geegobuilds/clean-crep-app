@@ -269,7 +269,7 @@ export default function BookingScreen() {
                       setDropoff(opt.val);
                     }}
                     accessibilityRole="radio"
-                    accessibilityState={{ checked: on }}
+                    aria-checked={on}
                     style={[{ flex: 1, minHeight: 44, borderRadius: radius.sm + 2, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.surface : 'transparent' }, on ? elevation.card : null]}
                   >
                     <Text style={[on ? type.bodyStrong : type.body, { color: on ? c.navy : c.inkMuted }]}>{opt.label}</Text>
@@ -475,7 +475,7 @@ function ZoneRow({ zone, on, onPress }: { zone: Zone; on: boolean; onPress: () =
     <Pressable
       onPress={onPress}
       accessibilityRole="radio"
-      accessibilityState={{ checked: on }}
+      aria-checked={on}
       style={[
         { backgroundColor: on ? c.ice : c.surface, borderRadius: radius.md, padding: space.md, flexDirection: 'row', gap: space.sm, alignItems: 'center' },
         on ? { borderWidth: 1.5, borderColor: c.accent } : elevation.bordered,
@@ -497,7 +497,7 @@ function AddOnRow({ addOn, on, onPress }: { addOn: AddOn; on: boolean; onPress: 
     <Pressable
       onPress={onPress}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: on }}
+      aria-checked={on}
       style={[
         { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: on ? c.ice : c.surface, borderRadius: radius.md, padding: space.md },
         on ? { borderWidth: 1.5, borderColor: c.accent } : elevation.bordered,

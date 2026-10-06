@@ -81,7 +81,7 @@ export default function OrdersScreen() {
                     tapLight();
                     setActiveId(o.id);
                   }}
-                  accessibilityState={{ selected: isActive }}
+                  aria-selected={isActive}
                   style={[
                     {
                       backgroundColor: c.surface,
