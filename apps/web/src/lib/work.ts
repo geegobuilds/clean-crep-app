@@ -9,11 +9,11 @@
 // the best one.
 
 /**
- * Flip to true once the real before/after photos replace the placeholders.
- * While false, the hero image, "The Difference" section and the social-share
+ * Placeholders show for now (Geego's call, 2026-10-06). Set to false to hide
+ * the photo areas; while false, the hero image, "The Difference" section and the social-share
  * image are hidden, so the live site never shows grey placeholder boxes.
  */
-export const PHOTOS_READY = false;
+export const PHOTOS_READY = true;
 
 export interface WorkPair {
   n: number;

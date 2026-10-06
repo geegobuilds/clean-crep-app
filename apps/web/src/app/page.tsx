@@ -162,7 +162,7 @@ export default async function LandingPage() {
               <dl className="stats">
                 {[
                   ['500+', 'Pairs cleaned'],
-                  ['4.2h', 'Avg turnaround'],
+                  ['2–3 days', 'Turnaround'],
                   ['HWT', 'Kingston'],
                 ].map(([val, label]) => (
                   <div key={label}>
@@ -276,7 +276,7 @@ export default async function LandingPage() {
                 ],
                 [
                   'How long does a clean take?',
-                  'Most Sneaker and Clarks cleans are ready the same day, usually within a few hours. Sole Refresh depends on what we find on inspection.',
+                  'Most cleans are ready in 2–3 working days. Sole Refresh takes about 3 days because it needs sunlight, so allow up to 5 days in rainy weather. We’ll WhatsApp you the moment your pair is ready.',
                 ],
                 [
                   'How do I pay?',
