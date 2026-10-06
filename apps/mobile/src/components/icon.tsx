@@ -13,6 +13,8 @@ import {
   Bell,
   HelpCircle,
   LogOut,
+  Share2,
+  ArrowRight,
   type LucideIcon,
 } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -33,7 +35,9 @@ export type IconName =
   | 'settings'
   | 'bell'
   | 'help'
-  | 'logout';
+  | 'logout'
+  | 'share'
+  | 'arrowR';
 
 const LUCIDE: Partial<Record<IconName, LucideIcon>> = {
   home: Home,
@@ -51,6 +55,8 @@ const LUCIDE: Partial<Record<IconName, LucideIcon>> = {
   bell: Bell,
   help: HelpCircle,
   logout: LogOut,
+  share: Share2,
+  arrowR: ArrowRight,
 };
 
 interface IconProps {

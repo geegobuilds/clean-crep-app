@@ -68,6 +68,33 @@ _Last updated: 2026-10-04_
   (`/project/644953/insights/eCG2vhc1`): booking_started → signin_prompted → booking_confirmed, by
   platform (sign-in step optional). Dashboard **"Clean Crep: Bookings"** (`/project/644953/dashboard/2168419`)
   also holds "Add-on attach rate". Data starts when the PR's web deploy is live / the next EAS build ships.
+- **Premium pass (branch `premium-pass`, 2026-10-04; PR to open from the bundle, not merged)**:
+  - `DESIGN.md` at the root: palette cut to navy / white / off-white + one accent (#1A6FD4);
+    **Archivo** (800/700) for headlines and prices, DM Sans for body (min 15); spacing, radius,
+    shadow, motion rules, do/don't. Tokens: `packages/shared/src/tokens.ts` (`palette`, `shadow`,
+    new radius/spacing) + `apps/mobile/src/theme.ts`; shared UI in `components/ui.tsx`.
+    Home, Book and Orders moved onto the tokens. Web loads Archivo via `next/font`.
+  - **Order ticket**: navy boarding-pass card (`components/order-ticket.tsx`): drop-off → ready-by
+    days (scheduled date + service turnaround, skipping Sundays), order no. / service / add-ons
+    stub, spring-animated status timeline with timestamps from `order_status_events`.
+  - **Before/after photos**: migration **`0019_order_photos.sql`** (numbered 0019 because another
+    branch has 0017/0018): `order_photos` table + **private** `order-photos` bucket. RLS: staff
+    write, customers read only their own orders (rows and files). Tested locally against
+    stubbed Postgres. **NOT applied to live.** Geego reviews the SQL, and it goes live only
+    after the PR is green, merged, and he says go. Staff page
+    `/staff/dashboard/orders/[id]` ("Photos & order page" from the dashboard row): **Add before** /
+    **Add after** open the phone camera, shrink to 1600px JPEG, upload. App Orders: completed
+    orders show a drag slider + **Share** (watermarked 1080×1350 "Cleaned by Clean Crep" card;
+    native = view-shot + share sheet, web = canvas + Web Share/download).
+  - **Feel**: `expo-haptics` (`lib/haptics.ts`): light on add-on/zone/day/method toggles, success on
+    booking confirmed and when an order turns Ready for Pickup (live, owned by Home's `useOrders`).
+    Springs via react-native-reanimated (already installed). New deps: expo-haptics, expo-sharing,
+    react-native-view-shot, @expo-google-fonts/archivo.
+  - e2e: new `photos.spec.ts` (RLS through the real API + slider/share), `screens.spec.ts`
+    (signed-in Home/Book/Orders shots); Orders/Book journeys assert the ticket + timeline. CI
+    now uploads step screenshots (`phone-screenshots` artifact). Typecheck + lint pass. **`npm run
+    e2e` could not run in the Cowork sandbox** (Docker Hub blocked), so the phone checks run in CI
+    on the PR.
 - **2026-10-02**:
   - Shop hours are **Mon–Fri 10–6, Sat 10–3, closed Sundays + public holidays** (Creppie was right;
     website fixed in #21).
@@ -206,6 +233,9 @@ _Last updated: 2026-10-04_
   booked" (duplicates were already blocked from the database; per chat only, not per phone).
 - **2026-09-30** — Test data cleared from the live dashboard (orders CC-0042/45/46/47, their
   notifications, smoke-test loyalty points); accounts kept. The staff dashboard now starts clean.
+- **2026-10-04** — Display font = **Archivo** (vs Space Grotesk: too "tech startup"). Palette is
+  navy/white/one blue; WhatsApp buttons are secondary buttons (no green fill). Before/after
+  photos live in a private bucket behind signed URLs; customers see them only on completed orders.
 - **2026-10-02** — Creppie booking fixes after the first real Creppie booking (CC-0052, Crissy,
   1x Clarks): kits are restocking, so Creppie never offers them (`KITS_RESTOCKING` in n8n
   `Prompt Tweaks`; set it to `false` when stock lands). **Clarks take no add-ons** (no Sole
@@ -241,6 +271,10 @@ _Last updated: 2026-10-04_
 
 ## Next Steps
 
+0. **Premium pass**: open the PR from the bundle, merge latest main (PostHog #24) and resolve
+   HANDOFF.md, get CI green, review the `phone-screenshots` artifact, then (on Geego's go) apply
+   `0019_order_photos.sql` to live via the Supabase connector. Native share + haptics need a
+   device build to feel-test.
 1. Run `npm run e2e` after any change; add a check for each new journey.
 2. **Push setup (Geego, ~30 min)**: `npx eas init`, create a Firebase project, add
    `google-services.json`, upload the FCM V1 key in EAS, then a `preview` build on your phone to

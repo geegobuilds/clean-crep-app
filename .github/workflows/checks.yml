@@ -44,6 +44,15 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run phone checks
         run: npm run e2e
+        env:
+          E2E_SHOTS: '1'
+      - name: Keep step screenshots (design review)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phone-screenshots
+          path: apps/mobile/e2e/.shots
+          retention-days: 14
       - name: Keep failure screenshots + traces
         if: failure()
         uses: actions/upload-artifact@v4

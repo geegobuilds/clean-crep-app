@@ -66,6 +66,11 @@ export function mascot(page: Page, mood: 'loading' | 'empty' | 'error' | 'offlin
   return page.getByTestId(`creppie-${mood}`).and(onActiveScreen(page)).first();
 }
 
+/** An element by testID, on the active screen. */
+export function byTestId(page: Page, id: string): Locator {
+  return page.getByTestId(id).and(onActiveScreen(page)).first();
+}
+
 export function placeholder(page: Page, value: string): Locator {
   return page.getByPlaceholder(value).and(onActiveScreen(page)).first();
 }
