@@ -296,6 +296,15 @@ _Last updated: 2026-10-06_
   `customers_due_for_clean_v0017` (no access) instead of dropped. New advisor rows for
   `customers_due_for_clean` / `reactivation_stats` (callable when signed in) are expected: both refuse
   non-staff.
+- **2026-10-06** — **Website speed (PR #28, merged):** PageSpeed mobile was 53 (TTFB 1.9s). The homepage
+  now uses a cookie-free anon client and is cached (`revalidate = 300`, so price edits show within 5
+  min); the auth middleware (`proxy.ts`) only runs on `/account`, `/staff`, `/auth`; posthog-js loads
+  after page load + idle with a queue (`identify(id, onNewSignIn)`). Re-check PageSpeed after deploy.
+- **2026-10-06** — **Website premium redesign = draft PR #27**, green, **blocked on Geego's real
+  before/after photos** (placeholders in `apps/web/public/assets/work/`). Cowork "Website Premium" will
+  send `photos.bundle` with photos + copy fixes ("2–3 days" turnaround stat and FAQ line). Keep navy
+  sections. `CREPPIE_WEBHOOK_URL` is set for Vercel Production only, so previews show the WhatsApp
+  bubble instead of Ask Creppie (by design).
 - **Earlier (see git log)** — Instagram post templates and the Client Proposal Deck are out of
   scope for this repo. Creppie guest orders are _not_ auto-merged with app accounts (kept
   simple on purpose). Auth is email/password for v1; phone OTP deferred until a Twilio account
