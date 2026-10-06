@@ -5,6 +5,7 @@ import { colors } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { ScreenSkeleton } from '@/components/states';
 import { useAuth } from '@/lib/auth';
+import { useFeatures } from '@/hooks/use-features';
 import { onPushTap } from '@/lib/push';
 
 function TabBarIcon({ iconName, color }: { iconName: IconName; color: ColorValue }) {
@@ -17,6 +18,8 @@ function TabBarIcon({ iconName, color }: { iconName: IconName; color: ColorValue
 export default function AppGroupLayout() {
   const router = useRouter();
   const { initializing } = useAuth();
+  // Hidden tabs (docs/VISION.md) appear only when their feature flag is on.
+  const features = useFeatures();
 
   // Tapping an order-update push opens the screen it points at (Orders).
   useEffect(() => onPushTap((url) => router.push(url as Href)), [router]);
@@ -42,6 +45,10 @@ export default function AppGroupLayout() {
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <TabBarIcon iconName="home" color={color} /> }} />
       <Tabs.Screen name="book" options={{ title: 'Book', tabBarIcon: ({ color }) => <TabBarIcon iconName="book" color={color} /> }} />
       <Tabs.Screen name="orders" options={{ title: 'Orders', tabBarIcon: ({ color }) => <TabBarIcon iconName="orders" color={color} /> }} />
+      <Tabs.Screen
+        name="vault"
+        options={{ title: 'Vault', href: features.has('vault') ? undefined : null, tabBarIcon: ({ color }) => <TabBarIcon iconName="vault" color={color} /> }}
+      />
       <Tabs.Screen name="inbox" options={{ title: 'Inbox', tabBarIcon: ({ color }) => <TabBarIcon iconName="bell" color={color} /> }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => <TabBarIcon iconName="profile" color={color} /> }} />
     </Tabs>
