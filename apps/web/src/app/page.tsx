@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { AddOn, Service, Zone } from '@clean-crep/shared';
 import { formatPrice } from '@clean-crep/shared';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { CreppieChat } from '@/components/creppie-chat';
 import { QuickBook } from '@/components/quick-book';
 import { ServiceTiles } from '@/components/service-tiles';
@@ -42,8 +42,16 @@ const SERVICE_CATEGORY: Record<string, string> = {
   'Sole Refresh': 'Restoration',
 };
 
+// Built once and served from Vercel's cache, refreshed at most every 5 minutes:
+// prices, add-ons and zones are public and change rarely, so there's no need
+// to hit the database (or read cookies) on every visit. A price saved on the
+// staff Prices page shows here within 5 minutes.
+export const revalidate = 300;
+
 export default async function LandingPage() {
-  const supabase = await createClient();
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
   const [{ data }, { data: addOnRows }, { data: zoneRows }] = await Promise.all([
     supabase.from('services').select('*').eq('active', true).order('sort_order'),
     supabase.from('add_ons').select('*').eq('active', true).order('sort_order'),
