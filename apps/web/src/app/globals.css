@@ -381,6 +381,8 @@ nav:not(.site-nav) {
 .landing section { padding: var(--pad-y) var(--pad-x); scroll-margin-top: 40px; }
 .band-white { background: var(--white); }
 .band-navy, .landing .hero { background: var(--navy); }
+/* Hero runs straight into Services while "The Difference" is hidden (lib/work.ts PHOTOS_READY). */
+.band-seam { border-top: 1px solid var(--on-navy-line); }
 @media (min-width: 900px) {
   .band { min-height: 100svh; display: flex; align-items: center; }
   .band > .band-inner { width: 100%; }

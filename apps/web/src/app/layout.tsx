@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Archivo, DM_Sans } from 'next/font/google';
 import { RecoveryRedirect } from '@/components/recovery-redirect';
 import { AnalyticsProvider } from '@/components/analytics-provider';
-import { OG_IMAGE } from '@/lib/work';
+import { OG_IMAGE, PHOTOS_READY } from '@/lib/work';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -33,13 +33,13 @@ export const metadata: Metadata = {
     locale: 'en_JM',
     title: TITLE,
     description: DESCRIPTION,
-    images: [OG_IMAGE],
+    ...(PHOTOS_READY ? { images: [OG_IMAGE] } : {}),
   },
   twitter: {
-    card: 'summary_large_image',
+    card: PHOTOS_READY ? 'summary_large_image' : 'summary',
     title: TITLE,
     description: DESCRIPTION,
-    images: [OG_IMAGE.url],
+    ...(PHOTOS_READY ? { images: [OG_IMAGE.url] } : {}),
   },
 };
 

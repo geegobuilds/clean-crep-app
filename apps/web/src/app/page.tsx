@@ -10,7 +10,7 @@ import { ServiceTiles } from '@/components/service-tiles';
 import { SiteNav } from '@/components/site-nav';
 import { RevealOnScroll } from '@/components/reveal-on-scroll';
 import { BeforeAfter } from '@/components/before-after';
-import { WORK_PAIRS, afterSrc, beforeSrc } from '@/lib/work';
+import { PHOTOS_READY, WORK_PAIRS, afterSrc, beforeSrc } from '@/lib/work';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 // Every "Book" button goes to the Quick Book card in the hero.
@@ -80,14 +80,16 @@ export default async function LandingPage() {
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-link">
                 Rather talk? Link us on WhatsApp <span aria-hidden="true">→</span>
               </a>
-              <div className="hero-shot" aria-hidden="true">
-                <Image src={afterSrc(1)} alt="" fill sizes="(max-width: 899px) 100vw, 560px" className="hero-shot-img" />
-                <div className="hero-shot-before">
-                  <Image src={beforeSrc(1)} alt="" fill sizes="(max-width: 899px) 100vw, 560px" className="hero-shot-img" />
+              {PHOTOS_READY && (
+                <div className="hero-shot" aria-hidden="true">
+                  <Image src={afterSrc(1)} alt="" fill sizes="(max-width: 899px) 100vw, 560px" className="hero-shot-img" />
+                  <div className="hero-shot-before">
+                    <Image src={beforeSrc(1)} alt="" fill sizes="(max-width: 899px) 100vw, 560px" className="hero-shot-img" />
+                  </div>
+                  <span className="ba-tag ba-tag-before">Before</span>
+                  <span className="ba-tag ba-tag-after">After</span>
                 </div>
-                <span className="ba-tag ba-tag-before">Before</span>
-                <span className="ba-tag ba-tag-after">After</span>
-              </div>
+              )}
             </div>
 
             <div className="hero-book">
@@ -96,20 +98,22 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <section className="band band-white" id="difference">
-          <div className="band-inner">
-            <header className="band-head center" data-reveal>
-              <p className="eyebrow">The Difference</p>
-              <h2 className="band-title">Same pair. Second life.</h2>
-              <p className="band-body">Drag the line to see what one clean does.</p>
-            </header>
-            <div data-reveal>
-              <BeforeAfter pairs={WORK_PAIRS} />
+        {PHOTOS_READY && (
+          <section className="band band-white" id="difference">
+            <div className="band-inner">
+              <header className="band-head center" data-reveal>
+                <p className="eyebrow">The Difference</p>
+                <h2 className="band-title">Same pair. Second life.</h2>
+                <p className="band-body">Drag the line to see what one clean does.</p>
+              </header>
+              <div data-reveal>
+                <BeforeAfter pairs={WORK_PAIRS} />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        <section className="band band-navy" id="services">
+        <section className={PHOTOS_READY ? 'band band-navy' : 'band band-navy band-seam'} id="services">
           <div className="band-inner">
             <header className="band-head" data-reveal>
               <p className="eyebrow">Services &amp; Pricing</p>

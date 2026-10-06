@@ -8,6 +8,13 @@
 // add { n: 4 } below. Pair 1 is the hero and social-share image, so make it
 // the best one.
 
+/**
+ * Flip to true once the real before/after photos replace the placeholders.
+ * While false, the hero image, "The Difference" section and the social-share
+ * image are hidden, so the live site never shows grey placeholder boxes.
+ */
+export const PHOTOS_READY = false;
+
 export interface WorkPair {
   n: number;
   /** Optional caption under the slider, e.g. "White AF1s · Sneaker Clean + Sole Refresh". */
