@@ -4,10 +4,25 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-04_
+_Last updated: 2026-10-06_
 
 ## Current Status
 
+- **Website premium pass (branch `website-premium`, 2026-10-06; bundle → PR, not merged)**: homepage
+  (`apps/web/src/app/page.tsx` + the HOMEPAGE block in `globals.css`, scoped to `.landing`) rebuilt
+  on DESIGN.md: Archivo 800 headlines/prices, DM Sans body 18/1.6, navy text, one blue, bands
+  **alternating navy / white starting with the navy hero** (Geego's call). Sticky dark frosted nav
+  that shrinks on scroll (`components/site-nav.tsx`); fade-and-rise on scroll
+  (`components/reveal-on-scroll.tsx`, IntersectionObserver + CSS, off for reduced motion); new
+  **"The Difference"** before/after drag slider (`components/before-after.tsx`, keyboard + touch)
+  over `public/assets/work/before-N.jpg` / `after-N.jpg` (**grey placeholders**; list in
+  `lib/work.ts`; pair 1 is also the hero image and the **Open Graph image**). Quick Book unchanged
+  (only CSS + `role="img"` on its step dots); flip tiles flattened. WhatsApp buttons are secondary
+  (no green). `/staff`, `/account` and Creppie chat logic untouched.
+  Local Lighthouse mobile (`next start`, 5 runs each, live catalog mocked): accessibility 92 → **100**;
+  performance median ~83 vs **~79 on main**, best runs 89–93. The floor is JS boot, not the design:
+  with PostHog stubbed out the same page scores 93–99 (TBT ~150 ms). Local runs are noisy (first
+  paint randomly stalls ~1 s in the sandbox), so confirm on the Vercel preview with PageSpeed Insights.
 - **Code**: Expo customer app (`apps/mobile`), Next.js landing page + staff dashboard
   (`apps/web`), and Supabase schema (`supabase/migrations/0001`–`0004`) are built on `main`.
   Latest shipped work: staff password-reset page, password-recovery race fix, Creppie orders
@@ -164,6 +179,8 @@ _Last updated: 2026-10-04_
 
 ## Decisions Made
 
+- **2026-10-06** — Website bands alternate **navy / white, starting with the navy hero** (Geego).
+  "Blue" read as brand navy, since DESIGN.md keeps #1A6FD4 as the only accent, not a surface.
 - **2026-09-25** — Google Play support request for D-U-N-S alternative approved and cleared to
   send. Details on the request: legal name **Clean Crep Jamaica**, registered address **York
   Town P.A., Clarendon, Jamaica**, contact **cleancrepja@gmail.com**.
@@ -271,6 +288,12 @@ _Last updated: 2026-10-04_
 
 ## Next Steps
 
+- **Website premium pass**: open the PR from the bundle, CI green, check the Vercel preview with
+  PageSpeed Insights (mobile). Then drop Geego's real photos into `apps/web/public/assets/work/`
+  with the same names (best pair = 1). If mobile performance stays under 90: load PostHog lazily
+  (after first interaction / idle) with a queue so event names and props stay identical; needs
+  `identify()` to work before PostHog has loaded (account page), so it's its own PR.
+- Website copy check: About says "4.2h avg turnaround" while services show 2–3 days. Pick one.
 0. **Premium pass**: open the PR from the bundle, merge latest main (PostHog #24) and resolve
    HANDOFF.md, get CI green, review the `phone-screenshots` artifact, then (on Geego's go) apply
    `0019_order_photos.sql` to live via the Supabase connector. Native share + haptics need a
