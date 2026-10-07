@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Clean Crep Jamaica",
-    "slug": "clean-crep-jamaica",
+    "slug": "clean-crep-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -44,6 +44,18 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "owner": "geegobuildss-team",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2c9326d2-d401-49ae-9b60-cb642c6a1119"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2c9326d2-d401-49ae-9b60-cb642c6a1119"
+      }
     }
   }
 }

@@ -89,6 +89,13 @@ server", the dev server isn't running: start it again (double-click the launcher
 Terminal window open while you use the app. To test on a real phone instead, use `npm start`
 (LAN address) and scan the QR code with Expo Go.
 
+**Publishing to Expo Go (no laptop needed to open it):** the app is linked to the EAS project
+`@geegobuildss-team/clean-crep-app`. With `apps/mobile/.env` set as above (plus
+`EXPO_PUBLIC_CREPPIE_URL` and the PostHog keys from `eas.json`), run
+`cd apps/mobile && npx eas-cli login && npm run publish:preview`. Open the update's page on
+expo.dev, hit **Preview**, and scan the QR with Expo Go. Builds made with `eas build` pull
+updates from the channel named after their profile.
+
 **One-click launcher:** `scripts/mac/Clean Crep.command` pulls the latest code, runs
 `npm install` only when dependencies changed, then `npm run ios`. Copy it to the Desktop once
 (`cp ~/clean-crep-app/scripts/mac/"Clean Crep.command" ~/Desktop/`) and double-click it; it
