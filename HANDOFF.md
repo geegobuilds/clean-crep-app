@@ -42,8 +42,9 @@ _Last updated: 2026-10-07_
   - **Crep Tags (decided 2026-10-07):** shoes are washed, so nothing gets stuck on the shoe. The
     customer keeps a printed **Crep Card** (QR to their passport) handed back in the pickup bag,
     and the passport is always in the app. In-shop, a reusable waterproof numbered tag on the
-    laces tracks the pair during cleaning. Next build: "Print Crep Card" on the staff order page
-    (label printer, print on demand — no pre-printed stock).
+    laces tracks the pair during cleaning. **Print Crep Card** (PR open): staff order page › "Print
+    card" opens `/staff/dashboard/print/<code>` — an 85×55 mm card with the passport QR, printed
+    on demand; printing logs a `tag_attached` event on the pair.
   - Next: Phase 4 (smart nudges + Creppie in the Vault). Crep Tags (QR stickers) still need sourcing.
 - **Website premium pass (branch `website-premium`, 2026-10-06; bundle → PR, not merged)**: homepage
   (`apps/web/src/app/page.tsx` + the HOMEPAGE block in `globals.css`, scoped to `.landing`) rebuilt
