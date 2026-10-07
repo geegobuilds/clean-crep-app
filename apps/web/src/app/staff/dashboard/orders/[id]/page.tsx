@@ -163,6 +163,12 @@ export default function StaffOrderPage() {
                   <div style={overline}>Vault pair · Crep Passport</div>
                   <div style={{ fontSize: 15, fontWeight: 500, marginTop: 4 }}>{pairTitle(order.pair)}</div>
                 </div>
+                <Link
+                  href={`/staff/dashboard/print/${order.pair.passport_code}`}
+                  style={{ fontSize: 13, fontWeight: 600, color: palette.blue, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                >
+                  Print card
+                </Link>
                 <a
                   href={`/p/${order.pair.passport_code}`}
                   target="_blank"
