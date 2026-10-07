@@ -85,7 +85,7 @@ test('feature flags, Vault pairs and the public Passport stay hidden until switc
   // Membership: plans are hidden from customers until both the flag and the plan are on; staff see them.
   expect((await asUser(cust.accessToken, 'membership_plans')).body).toEqual([]);
   expect(((await asUser(staff.accessToken, 'membership_plans')).body as unknown[]).length).toBeGreaterThanOrEqual(3);
-  const clubId = sql(`select id from membership_plans where slug = 'club'`);
+  const clubId = sql(`select id from membership_plans where slug = 'fresh'`);
   const selfGrant = await asUser(cust.accessToken, 'memberships', { method: 'POST', body: { customer_id: cust.userId, plan_id: clubId, status: 'active' } });
   expect(selfGrant.status).toBeGreaterThanOrEqual(400);
 });
@@ -125,12 +125,12 @@ test('club: join (pending) -> staff records payment -> a care credit covers the 
   await asUser(cust.accessToken, 'customers', { method: 'POST', body: { id: cust.userId, name: 'Cara Club', email: c.email } });
 
   // Hidden: can't join until the flag is on for this customer.
-  const hidden = await asUser(cust.accessToken, 'rpc/join_membership', { method: 'POST', body: { p_plan_slug: 'club' } });
+  const hidden = await asUser(cust.accessToken, 'rpc/join_membership', { method: 'POST', body: { p_plan_slug: 'fresh' } });
   expect(hidden.status).toBeGreaterThanOrEqual(400);
   sql(`insert into feature_flag_users (flag_key, user_id) values ('membership', '${cust.userId}')`);
-  sql(`update membership_plans set active = true where slug = 'club'`);
+  sql(`update membership_plans set active = true where slug = 'fresh'`);
   try {
-    const joined = await asUser(cust.accessToken, 'rpc/join_membership', { method: 'POST', body: { p_plan_slug: 'club' } });
+    const joined = await asUser(cust.accessToken, 'rpc/join_membership', { method: 'POST', body: { p_plan_slug: 'fresh' } });
     expect(joined.body.status).toBe('pending');
     expect(joined.body.payment_ref).toMatch(/^CC[0-9A-F]{5}$/);
 
@@ -160,6 +160,6 @@ test('club: join (pending) -> staff records payment -> a care credit covers the 
     expect(mine.body.balance).toBe(2);
     expect(mine.body.status).toBe('active');
   } finally {
-    sql(`update membership_plans set active = false where slug = 'club'`);
+    sql(`update membership_plans set active = false where slug = 'fresh'`);
   }
 });

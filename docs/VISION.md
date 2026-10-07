@@ -19,8 +19,8 @@ without a code release.
 3. **AI condition grade.** Before/after photos (migration 0019) scored 1–10 per pair, every clean.
    Shows the pair getting better (or when it needs a deep clean / sole refresh — an upsell with
    evidence).
-4. **Care membership.** Monthly care credits, not "unlimited". Draft plans: Club J$5,000 / 3
-   credits, Sneakerhead J$9,800 / 4, Household J$14,000 / 6 shared by up to 4 people. Credits roll
+4. **Care membership.** Monthly care credits, not "unlimited". Tiers: Fresh J$5,000 / 3
+   credits, Sneakerhead J$8,000 / 5, Household J$12,500 / 8 shared by up to 4 people. Credits roll
    over (capped), memberships can be gifted. Paid by bank transfer / Lynk / cash first; card later.
    Every credit movement is a ledger row, so balances are auditable.
 5. **Smart nudges.** Builds on "Due for a clean" (0017/0018): per-pair rhythm, weather (rainy
