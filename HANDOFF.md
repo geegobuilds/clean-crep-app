@@ -4,7 +4,7 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-06_
+_Last updated: 2026-10-07_
 
 ## Current Status
 
@@ -26,7 +26,7 @@ _Last updated: 2026-10-06_
     Condition card and the passport page a Condition tile, both only when `condition_grade` is on.
     **Needs two Vercel env vars to work: `ANTHROPIC_API_KEY` and `GRADE_MODEL`** (until then
     the staff page says grading isn't switched on).
-  - **Phase 3 (PR open)**: Clean Crep Club. Migration `0022_membership.sql`: customer joins in
+  - **Phase 3 (PR #32, merged; 0022 applied to live 2026-10-07)**: Clean Crep Club. Migration `0022_membership.sql`: customer joins in
     the app (`join_membership`, pending + payment ref like `CC7F3A2`), pays by transfer/Lynk/cash
     and WhatsApps the ref; staff hit "Record payment" on **Staff › Club** (`record_membership_payment`)
     which activates the month and grants credits (unused roll over up to the plan cap, the rest
@@ -35,8 +35,15 @@ _Last updated: 2026-10-06_
     Daily 8:30 AM job: 3-day renewal reminder + pause lapsed memberships. App: `/club` screen
     (Profile › Clean Crep Club), credit toggle on Book. Plans stay "Not offered" until switched
     on in Staff › Club; the whole Club stays hidden until the `membership` flag is on.
-    **Pricing to revisit before launch:** Sneakerhead (J$9,800 / 4 credits) is worse value than
-    4 × J$2,000 pay-as-you-go unless its credits cover Deep Cleans.
+    **Tiers (decided 2026-10-07, migration 0023):** "Clean Crep Club" is the umbrella. Fresh
+    J$5,000 / 3 credits (save 17%), Sneakerhead J$8,000 / 5 (save 20%), Household J$12,500 / 8
+    shared by 4 (save 22%). 1 credit = Sneaker Clean, Clarks = 2. Perks like "10% off kits" and
+    "Deep Clean half price" are honoured by staff at the counter (not enforced in code yet).
+  - **Crep Tags (decided 2026-10-07):** shoes are washed, so nothing gets stuck on the shoe. The
+    customer keeps a printed **Crep Card** (QR to their passport) handed back in the pickup bag,
+    and the passport is always in the app. In-shop, a reusable waterproof numbered tag on the
+    laces tracks the pair during cleaning. Next build: "Print Crep Card" on the staff order page
+    (label printer, print on demand — no pre-printed stock).
   - Next: Phase 4 (smart nudges + Creppie in the Vault). Crep Tags (QR stickers) still need sourcing.
 - **Website premium pass (branch `website-premium`, 2026-10-06; bundle → PR, not merged)**: homepage
   (`apps/web/src/app/page.tsx` + the HOMEPAGE block in `globals.css`, scoped to `.landing`) rebuilt

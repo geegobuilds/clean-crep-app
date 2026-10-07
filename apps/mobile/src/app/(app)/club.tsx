@@ -149,7 +149,7 @@ function MemberCard({ m, onBook }: { m: MyMembership; onBook: () => void }) {
   return (
     <View style={{ gap: space.lg }}>
       <View testID="club-member" style={{ backgroundColor: c.navy, borderRadius: radius.lg, padding: space.lg, gap: space.xs }}>
-        <Text style={[type.overline, { color: c.onNavyMuted }]}>{m.plan.name}</Text>
+        <Text style={[type.overline, { color: c.onNavyMuted }]}>Clean Crep Club · {m.plan.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
           <Text style={{ fontFamily: type.display.fontFamily, fontSize: 64, lineHeight: 68, color: c.white }}>{m.balance}</Text>
           <Text style={[type.headline, { color: c.white }]}>care credit{m.balance === 1 ? '' : 's'}</Text>
