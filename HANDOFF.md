@@ -42,10 +42,15 @@ _Last updated: 2026-10-07_
   - **Crep Tags (decided 2026-10-07):** shoes are washed, so nothing gets stuck on the shoe. The
     customer keeps a printed **Crep Card** (QR to their passport) handed back in the pickup bag,
     and the passport is always in the app. In-shop, a reusable waterproof numbered tag on the
-    laces tracks the pair during cleaning. **Print Crep Card** (PR open): staff order page › "Print
+    laces tracks the pair during cleaning. **Print Crep Card** (PR #34, merged): staff order page › "Print
     card" opens `/staff/dashboard/print/<code>` — an 85×55 mm card with the passport QR, printed
     on demand; printing logs a `tag_attached` event on the pair.
-  - Next: Phase 4 (smart nudges + Creppie in the Vault). Crep Tags (QR stickers) still need sourcing.
+  - **Phase 4 (PR open)**: migration `0024_smart_nudges.sql` — for customers with `smart_nudges`:
+    the 9 AM due push names their pair ("Your Nike Air Force 1 are due a clean"); daily 9:15 AM job
+    `smart_nudges_daily()` pushes once when Club credits would expire in 5 days and once when a pair
+    sits Ready 3+ days (deduped in `smart_nudges_log`). Vault pair detail: "Ask Creppie about this
+    pair" opens the chat pre-filled with the pair's details and care history.
+  - Next: Phase 5 (Fresh Pairs). Weather-based nudges need a weather API key (not built).
 - **Website premium pass (branch `website-premium`, 2026-10-06; bundle → PR, not merged)**: homepage
   (`apps/web/src/app/page.tsx` + the HOMEPAGE block in `globals.css`, scoped to `.landing`) rebuilt
   on DESIGN.md: Archivo 800 headlines/prices, DM Sans body 18/1.6, navy text, one blue, bands
