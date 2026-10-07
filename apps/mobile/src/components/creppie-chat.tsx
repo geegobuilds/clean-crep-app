@@ -78,11 +78,12 @@ export function CreppieButton() {
   );
 }
 
-function CreppieChat({ onClose }: { onClose: () => void }) {
+/** The chat sheet. `draft` pre-fills the message box (e.g. a Vault pair's details). */
+export function CreppieChat({ onClose, draft: initialDraft = '' }: { onClose: () => void; draft?: string }) {
   const { session } = useAuth();
   const [sessionId, setSessionId] = useState('');
   const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState(initialDraft);
   const [sending, setSending] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const listRef = useRef<ScrollView>(null);

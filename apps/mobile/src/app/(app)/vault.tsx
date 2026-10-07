@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter } from 'expo-router';
 import { gradesFor, pairTitle, passportUrl, type PairCategory } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
+import { CreppieChat } from '@/components/creppie-chat';
 import { StatusTag } from '@/components/status-tag';
 import { Button, Card, Overline, ScreenHeader } from '@/components/ui';
 import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
@@ -41,7 +42,7 @@ export default function VaultScreen() {
   if (loaded && !features.has('vault')) return <Redirect href="/" />;
 
   if (open) {
-    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onBook={() => router.push('/book')} />;
+    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onBook={() => router.push('/book')} />;
   }
 
   const cleans = pairs.reduce((n, p) => n + p.cleans.filter((o) => o.status === 'completed').length, 0);
@@ -143,6 +144,20 @@ function Cover({ pair, size, wide }: { pair: VaultPair; size: number; wide?: boo
   );
 }
 
+/** Context for Creppie: what the pair is and how we've cared for it. */
+function creppieDraft(pair: VaultPair): string {
+  const facts = [pair.colorway, pair.size && `size ${pair.size}`, pair.category === 'clarks' ? 'Clarks' : null].filter(Boolean).join(', ');
+  const done = pair.cleans.filter((o) => o.status === 'completed');
+  const g = latestGrades(pair);
+  const history = [
+    done.length ? `cleaned ${done.length}× by you, last ${day(done[0].created_at)}` : 'not cleaned by you yet',
+    g?.after ? `condition ${g.after.score}/10` : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return `About my ${pairTitle(pair)}${facts ? ` (${facts})` : ''}, ${history}: `;
+}
+
 /** The most recently graded clean: its before → after scores. */
 function latestGrades(pair: VaultPair) {
   const last = [...pair.events].filter((e) => e.kind === 'grade').sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
@@ -187,6 +202,7 @@ function PairDetail({
   pair,
   showPassport,
   showGrade,
+  showCreppie,
   onBack,
   onSave,
   onBook,
@@ -194,11 +210,13 @@ function PairDetail({
   pair: VaultPair;
   showPassport: boolean;
   showGrade: boolean;
+  showCreppie: boolean;
   onBack: () => void;
   onSave: (f: PairFields) => Promise<string | null>;
   onBook: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [asking, setAsking] = useState(false);
   const details = [pair.colorway, pair.size && `Size ${pair.size}`].filter(Boolean).join(' · ');
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
@@ -267,7 +285,11 @@ function PairDetail({
         ) : (
           <Button variant="secondary" label="Edit details" onPress={() => setEditing(true)} />
         )}
+        {showCreppie && (
+          <Button variant="secondary" label="Ask Creppie about this pair" icon={<Icon name="help" size={18} color={c.navy} />} onPress={() => setAsking(true)} />
+        )}
         <Button label="Book a clean" onPress={onBook} />
+        {asking && <CreppieChat draft={creppieDraft(pair)} onClose={() => setAsking(false)} />}
       </ScrollView>
     </SafeAreaView>
   );
