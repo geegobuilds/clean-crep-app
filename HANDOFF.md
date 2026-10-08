@@ -382,6 +382,16 @@ _Last updated: 2026-10-08_
 
 ## Next Steps
 
+- **Lawyer check: data protection (bookmarked 2026-10-08, Geego's to-do).** Does Clean Crep need to
+  register with Jamaica's Office of the Information Commissioner as a data controller under the Data
+  Protection Act 2020? Also: what is the breach-notification rule? Research first with Cowork using
+  the prompt below, then confirm with a lawyer. Background: `docs/audits/2026-10-08-legal-security-audit.md`.
+  > Research only. Under Jamaica's Data Protection Act 2020, does a small Kingston business that
+  > collects customer names, phone numbers, emails, order history and photos (sneaker cleaning, about
+  > 100 customers, using a mobile app, website and Instagram) need to register with the Office of the
+  > Information Commissioner? If yes, give the fee, the deadline, the online registration link and what
+  > the form asks for. Also give the data-breach notification rule (who to tell, and how fast). Cite
+  > official OIC or Jamaican government pages only, and give the date of each source.
 - **Website premium pass**: open the PR from the bundle, CI green, check the Vercel preview with
   PageSpeed Insights (mobile). Then drop Geego's real photos into `apps/web/public/assets/work/`
   with the same names (best pair = 1). If mobile performance stays under 90: load PostHog lazily
