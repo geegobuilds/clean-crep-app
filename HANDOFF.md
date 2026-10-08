@@ -4,10 +4,17 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-07_
+_Last updated: 2026-10-08_
 
 ## Current Status
 
+- **Audits (bookmarked 2026-10-08)** in `docs/audits/`:
+  - `2026-10-02-dm-creppie-audit.md` (+ PDF action plan): 59 IG/ManyChat threads, J$82.5k open
+    pipeline, dashboard gap, Creppie fixes vs still open (address held back until name, re-greet
+    after manual replies, discount policy).
+  - `2026-10-08-legal-security-audit.md`: RLS/secrets pass. Fails: privacy policy out of date and
+    not linked in the app; Creppie greeting doesn't say "AI". Also `membership_credit_balance`
+    lacks a viewer check.
 - **Vision Phases 0–1 (2026-10-06)**: roadmap in `docs/VISION.md`. Everything is behind feature
   flags (Staff › Features; staff always see all; add testers by email; "On for everyone" = launch).
   - **Phase 0 (PR #29, merged; 0020 applied to live 2026-10-06)**: flags, `pairs` with 8-char
