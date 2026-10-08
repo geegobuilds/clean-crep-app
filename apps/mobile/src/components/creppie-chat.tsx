@@ -81,9 +81,11 @@ export function CreppieButton() {
 
 /** The chat sheet. `draft` pre-fills the message box (e.g. a Vault pair's details). */
 export function CreppieChat({ onClose, draft: initialDraft = '' }: { onClose: () => void; draft?: string }) {
-  // Insets from the app's root provider. Measuring inside the Modal (its own native window) is
-  // racy: on some opens it reads 0 and the header, with its close button, slides under the status bar.
+  // On iOS the chat is a native page sheet: it always starts below the status bar and closes with
+  // a swipe down as well as the x. (As a full-screen Modal the header, close button included,
+  // sometimes ended up under the status bar where taps don't land.) Android stays full screen.
   const insets = useSafeAreaInsets();
+  const sheet = Platform.OS === 'ios';
   const { session } = useAuth();
   const [sessionId, setSessionId] = useState('');
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -128,10 +130,11 @@ export function CreppieChat({ onClose, draft: initialDraft = '' }: { onClose: ()
   }, [showSignInCard]);
 
   return (
-    <Modal visible animationType="slide" onRequestClose={onClose}>
-      <StatusBar style="light" />
+    <Modal visible animationType="slide" presentationStyle={sheet ? 'pageSheet' : 'fullScreen'} onRequestClose={onClose}>
+      {!sheet && <StatusBar style="light" />}
       <View style={{ flex: 1, backgroundColor: colors.offWhite }}>
-        <View style={{ paddingTop: insets.top, backgroundColor: colors.navy }}>
+        <View style={{ paddingTop: sheet ? 0 : insets.top, backgroundColor: colors.navy }}>
+          {sheet && <View style={{ alignSelf: 'center', width: 36, height: 5, borderRadius: 3, marginTop: 6, backgroundColor: 'rgba(255,255,255,0.35)' }} />}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, backgroundColor: colors.navy }}>
           <Image source={face} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ice }} />
           <View style={{ flex: 1 }}>
