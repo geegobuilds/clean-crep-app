@@ -5,6 +5,7 @@
   },
   "build": {
     "development": {
+      "channel": "development",
       "developmentClient": true,
       "distribution": "internal",
       "env": {
@@ -13,6 +14,7 @@
       }
     },
     "preview": {
+      "channel": "preview",
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://gymchhmohcggvesrsupc.supabase.co",
@@ -23,6 +25,7 @@
       }
     },
     "production": {
+      "channel": "production",
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://gymchhmohcggvesrsupc.supabase.co",

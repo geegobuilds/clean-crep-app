@@ -1,5 +1,5 @@
-// Applies patches/ with patch-package (currently: Expo CLI support for Xcode 27's
-// Device Hub — see README "Running on the iOS Simulator").
+// Applies patches/ with patch-package (currently none; the Xcode 27 Device Hub patch was dropped
+// with Expo SDK 57, which supports Device Hub natively).
 //
 // Skips when it can't or needn't apply: production installs without devDependencies
 // (e.g. Vercel building apps/web, where patch-package isn't installed) or installs

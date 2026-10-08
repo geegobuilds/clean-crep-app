@@ -92,6 +92,7 @@ export function CreppieChat() {
   const hasChatted = msgs.some((m) => m.role === 'user');
   const openRef = useRef(false); // read by the nudge timers
   const listRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Restore the visitor's chat (and its id, so Creppie remembers them).
@@ -187,8 +188,40 @@ export function CreppieChat() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, sending, open]);
 
+  // Phones: no autofocus (the keyboard would pop up at once and push the header, close button
+  // included, off screen), and the panel follows the visible area (iOS Safari scrolls the page
+  // under a fixed element when the keyboard opens) while the page behind stays put.
   useEffect(() => {
-    if (open) inputRef.current?.focus();
+    if (!open) return;
+    const phone = window.matchMedia('(max-width: 480px)').matches;
+    if (!phone) {
+      inputRef.current?.focus();
+      return;
+    }
+    const panel = panelRef.current;
+    const vv = window.visualViewport;
+    const fit = () => {
+      if (!panel || !vv) return;
+      panel.style.setProperty('--creppie-top', `${vv.offsetTop}px`);
+      panel.style.setProperty('--creppie-h', `${vv.height}px`);
+    };
+    fit();
+    vv?.addEventListener('resize', fit);
+    vv?.addEventListener('scroll', fit);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      vv?.removeEventListener('resize', fit);
+      vv?.removeEventListener('scroll', fit);
+      document.body.style.overflow = overflow;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
   async function send(text: string) {
@@ -217,7 +250,7 @@ export function CreppieChat() {
   return (
     <>
       {open && (
-        <div className="creppie-panel" role="dialog" aria-label="Chat with Creppie">
+        <div className="creppie-panel" ref={panelRef} role="dialog" aria-label="Chat with Creppie">
           <div className="creppie-head">
             <Image src="/assets/creppie-face.png" alt="" width={40} height={40} />
             <div style={{ flex: 1, minWidth: 0 }}>

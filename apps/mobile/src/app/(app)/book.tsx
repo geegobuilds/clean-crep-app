@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, type TextStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
@@ -50,6 +50,7 @@ function nextPickup(zone: Zone): Day | null {
 }
 
 export default function BookingScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { session } = useAuth();
   const { services, loading: servicesLoading, error: servicesError, reload: reloadServices } = useServices();
@@ -416,7 +417,7 @@ export default function BookingScreen() {
 
         <Modal visible={signInOpen} animationType="slide" transparent onRequestClose={() => setSignInOpen(false)}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10,31,68,0.55)' }}>
-            <SafeAreaView edges={['bottom']} style={{ backgroundColor: c.navy, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }}>
+            <View style={{ paddingBottom: insets.bottom, backgroundColor: c.navy, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }}>
               <ScrollView contentContainerStyle={{ padding: space.lg }} keyboardShouldPersistTaps="handled">
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.md }}>
                   <Text style={[type.headline, { color: c.white }]}>One last step</Text>
@@ -432,7 +433,7 @@ export default function BookingScreen() {
                   }}
                 />
               </ScrollView>
-            </SafeAreaView>
+            </View>
           </KeyboardAvoidingView>
         </Modal>
       </SafeAreaView>

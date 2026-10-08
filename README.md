@@ -89,6 +89,14 @@ server", the dev server isn't running: start it again (double-click the launcher
 Terminal window open while you use the app. To test on a real phone instead, use `npm start`
 (LAN address) and scan the QR code with Expo Go.
 
+**Publishing to Expo Go (no laptop needed to open it):** the app is linked to the EAS project
+`@geegobuildss-team/clean-crep-app`. With `apps/mobile/.env` set as above (plus
+`EXPO_PUBLIC_CREPPIE_URL` and the PostHog keys from `eas.json`), run
+`cd apps/mobile && npx eas-cli login && npm run publish:preview`. Open the update's page on
+expo.dev, hit **Preview**, and scan the QR with Expo Go. Builds made with `eas build` pull
+updates from the channel named after their profile. The script exports `.env` itself: with
+`--environment`, EAS skips `.env` and an update would ship without the Supabase keys.
+
 **One-click launcher:** `scripts/mac/Clean Crep.command` pulls the latest code, runs
 `npm install` only when dependencies changed, then `npm run ios`. Copy it to the Desktop once
 (`cp ~/clean-crep-app/scripts/mac/"Clean Crep.command" ~/Desktop/`) and double-click it; it
@@ -96,14 +104,10 @@ gives itself the Creppie icon on first run. If `package-lock.json` is the only l
 (newer npm on the Mac reformats it), it resets that file before pulling so updates are never
 blocked; any other local change is left alone and it runs the code you already have.
 
-**Xcode 27 note:** Xcode 27 replaced Simulator.app with **Device Hub** (`com.apple.dt.Devices`),
-which Expo SDK 54's CLI doesn't know about ("Can't determine id of Simulator app"). The repo
-carries `patches/@expo+cli+54.0.27.patch`, applied automatically by `patch-package` on every
-`npm install`: it uses the classic Simulator when present (Xcode ≤ 26) and falls back to Device
-Hub. With Device Hub, Expo can't pick the device — it opens whichever one you last booted
-(boot one first from Xcode → Open Developer Tool if needed). **Delete the patch when upgrading
-to Expo SDK 56+**, which supports Device Hub natively (patch-package will error on the version
-mismatch as a reminder).
+**Xcode 27 note:** Xcode 27 replaced Simulator.app with **Device Hub** (`com.apple.dt.Devices`).
+Expo SDK 57's CLI supports it natively (the SDK 54 patch in `patches/` is gone). With Device Hub,
+Expo can't pick the device: it opens whichever one you last booted (boot one first from Xcode →
+Open Developer Tool if needed).
 
 ## Automated phone checks (`npm run e2e`)
 

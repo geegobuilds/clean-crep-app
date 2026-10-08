@@ -8,6 +8,15 @@ _Last updated: 2026-10-08_
 
 ## Current Status
 
+- **Expo Go + SDK 57 (PR #36, 2026-10-08)**: app upgraded Expo SDK 54 → 57 (Expo Go on iOS only
+  runs the latest SDK) and linked to EAS project `@geegobuildss-team/clean-crep-app` (slug now
+  `clean-crep-app`). Publish with `cd apps/mobile && npm run publish:preview`; open the update in
+  Expo Go with its **group** link (`exp://u.expo.dev/<projectId>/group/<groupId>`, or expo.dev →
+  Preview). The `?channel-name=preview` link fails in Expo Go (runtime is `appVersion`, Expo Go
+  asks for its SDK runtime). Latest: group `030bef93-39fd-4638-b0c3-b147609dda53`, tap-through OK.
+  Creppie chat is an iOS page sheet now (swipe down or x to close); the full-screen Modal's
+  header sometimes slid under the status bar. Website chat on phones: no autofocus, follows the
+  visual viewport (the keyboard used to push the close button off screen).
 - **Audits (bookmarked 2026-10-08)** in `docs/audits/`:
   - `2026-10-02-dm-creppie-audit.md` (+ PDF action plan): 59 IG/ManyChat threads, J$82.5k open
     pipeline, dashboard gap, Creppie fixes vs still open (address held back until name, re-greet
@@ -407,10 +416,10 @@ _Last updated: 2026-10-08_
   To change a function's return type, rename the old one and create the new one instead of dropping.
 - Renaming or adding an add-on in Supabase → update its series in PostHog "Add-on attach rate"
   (project 644953, dashboard 2168419), or it silently reads 0.
-- **Expo SDK 54 + Xcode 27:** relies on `patches/@expo+cli+54.0.27.patch`. When upgrading Expo
-  (SDK 56+ supports Device Hub natively) delete the patch — patch-package fails the install on
-  a version mismatch as a reminder. Dev builds on iOS 27 may also need the UIKit scene lifecycle
-  change (SDK 54–56); check before the first `eas build -p ios`.
+- **Expo SDK 57 (upgraded 2026-10-08 so the app opens in the current Expo Go):** Device Hub is
+  supported natively, so `patches/` is empty. Four React Compiler lint rules
+  (`react-hooks/immutability|purity|refs|set-state-in-effect`) are warnings in
+  `apps/mobile/eslint.config.js`; rework those 20 spots, then turn them back to errors.
 - On a Mac, zsh doesn't treat pasted `# comments` as comments — keep commands comment-free.
 
 - **Live migration history ≠ repo numbering.** 0001–0004 were pasted into the SQL editor (no

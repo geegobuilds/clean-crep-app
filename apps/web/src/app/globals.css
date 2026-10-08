@@ -202,7 +202,12 @@ nav:not(.site-nav) {
 }
 .creppie-input button:disabled { background: var(--border); cursor: default; }
 @media (max-width: 480px) {
-  .creppie-panel { right: 0; left: 0; bottom: 0; width: 100%; height: 100dvh; border-radius: 0; border: none; }
+  .creppie-panel {
+    top: var(--creppie-top, 0); right: 0; left: 0; bottom: auto; width: 100%;
+    height: var(--creppie-h, 100dvh); border-radius: 0; border: none;
+  }
+  .creppie-head { padding-top: calc(12px + env(safe-area-inset-top)); }
+  .creppie-close { width: 40px; height: 40px; font-size: 24px; }
   .creppie-fab:has(.creppie-fab-x) { display: none; }
 }
 
