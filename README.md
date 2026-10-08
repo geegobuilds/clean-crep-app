@@ -94,7 +94,8 @@ Terminal window open while you use the app. To test on a real phone instead, use
 `EXPO_PUBLIC_CREPPIE_URL` and the PostHog keys from `eas.json`), run
 `cd apps/mobile && npx eas-cli login && npm run publish:preview`. Open the update's page on
 expo.dev, hit **Preview**, and scan the QR with Expo Go. Builds made with `eas build` pull
-updates from the channel named after their profile.
+updates from the channel named after their profile. The script exports `.env` itself: with
+`--environment`, EAS skips `.env` and an update would ship without the Supabase keys.
 
 **One-click launcher:** `scripts/mac/Clean Crep.command` pulls the latest code, runs
 `npm install` only when dependencies changed, then `npm run ios`. Copy it to the Desktop once
