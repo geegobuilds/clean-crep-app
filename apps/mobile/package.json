@@ -56,6 +56,6 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "e2e": "scripts/e2e.sh",
-    "publish:preview": "set -a && . ./.env && set +a && eas update --channel preview --environment preview --platform all"
+    "publish:preview": "set -a && . ./.env && set +a && npx -y eas-cli update --channel preview --environment preview --platform all"
   }
 }
