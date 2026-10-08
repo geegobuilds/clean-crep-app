@@ -11,7 +11,7 @@ apply directly, but the Apple App Store and Google Play rules apply wherever you
 
 | # | Check | Status | Where |
 |---|---|---|---|
-| 1 | RLS on every table, no secrets in client code | ✅ Pass, with one small leak (see Fix 3) | Every `public` table has RLS on. `order-photos` bucket is private. The client only gets the URL, anon key and PostHog key. The Anthropic key is server-side only (`apps/web/src/app/api/*`). |
+| 1 | RLS on every table, no secrets in client code | ✅ Pass | Every `public` table has RLS on. `order-photos` bucket is private. The client only gets the URL, anon key and PostHog key. The Anthropic key is server-side only (`apps/web/src/app/api/*`). |
 | 2 | Privacy policy matches what we collect, linked in footer, signup and app | ❌ **Fail** | `apps/web/src/app/privacy/page.tsx` (last updated Aug 27): see Fix 1. Linked only from the website footer (`apps/web/src/app/page.tsx:331`). Not linked from the app or the sign-up form. |
 | 3 | Age gate if under-13s are likely | ➖ N/A | Not a kid-directed service. |
 | 4 | No analytics/replay/pixels before consent, never on form/chat/payment fields | ⚠️ Mostly OK | PostHog (`apps/web/src/lib/analytics.ts`, `apps/mobile/src/lib/analytics.tsx`) runs without a consent prompt, but with session recording off, autocapture off, URLs scrubbed and `/staff` excluded. No Meta Pixel. The real gap is disclosure: the policy says "no tracking cookies". |
@@ -39,9 +39,8 @@ apply directly, but the Apple App Store and Google Play rules apply wherever you
    App Store and Play both need a privacy policy URL.
 2. **AI disclosure:** greeting → "I'm Creppie, Clean Crep's AI assistant". Also add a rule to the
    n8n `Prompt Tweaks` so that the first Instagram reply always says Creppie is an AI assistant.
-3. **`membership_credit_balance(p_membership_id)`** can be called by any signed-in user for any
-   membership id. It doesn't check staff or ownership. The impact is low (it reveals a number,
-   and the id is a UUID), but it should check `is_membership_viewer()`.
+3. ~~`membership_credit_balance` lacks a viewer check~~. **False alarm:** it already returns
+   `null` unless `is_membership_viewer()` (member, household or staff). Verified on live, Oct 8.
 4. **Leaked-password protection:** turn it on with the Supabase Pro upgrade (already a launch-week step).
 5. **Terms:** add a Club section (credits, rollover, household, cancellation, refunds).
 6. **Accessibility pass:** add `accessibilityLabel` to icon-only buttons in the app.
@@ -50,3 +49,12 @@ apply directly, but the Apple App Store and Google Play rules apply wherever you
 
 - Check whether Clean Crep must **register with Jamaica's Office of the Information Commissioner**
   as a data controller under the DPA, and note the DPA's breach-notification duty. Confirm both with a lawyer.
+
+## Fixed (Oct 8, "fix legal")
+
+- Privacy policy rewritten. It now covers Creppie and AI, photos, the Passport page, the Club, PostHog,
+  push notifications, the services we use, data stored outside Jamaica, how long we keep data, and
+  children. It's linked from app Profile, app sign-up and the website Quick Book.
+- Terms updated: services, Creppie is an AI assistant, photos, and a Clean Crep Club section.
+- Creppie greeting now says "AI assistant" (website and app). The Instagram prompt rule is drafted in n8n.
+- App Profile rows have accessibility labels.

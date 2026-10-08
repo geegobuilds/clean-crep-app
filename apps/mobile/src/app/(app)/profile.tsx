@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { useOrders } from '@/hooks/use-orders';
 import { useFeatures } from '@/hooks/use-features';
 import { enablePush, pushStatus } from '@/lib/push';
+import { openPrivacy, openTerms } from '@/lib/legal';
 import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
 
 const LOYALTY_GOAL = 500;
@@ -67,6 +68,11 @@ export default function ProfileScreen() {
             where="profile"
             onSignIn={() => router.push('/sign-in?next=/profile')}
           />
+          <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 12, color: colors.caption, textAlign: 'center', marginTop: 20 }}>
+            <Text accessibilityRole="link" onPress={openPrivacy} style={{ color: colors.blue }}>Privacy Policy</Text>
+            {'  ·  '}
+            <Text accessibilityRole="link" onPress={openTerms} style={{ color: colors.blue }}>Terms of Service</Text>
+          </Text>
         </ScrollView>
       </SafeAreaView>
     );
@@ -177,12 +183,16 @@ export default function ProfileScreen() {
                   ...(features.has('membership') ? [{ icon: 'star', label: 'Clean Crep Club', onPress: () => router.push('/club' as Href) }] : []),
                   { icon: 'bell', label: 'Notifications', onPress: openNotificationSettings },
                   { icon: 'help', label: 'Help & Support' },
+                  { icon: 'check', label: 'Privacy Policy', onPress: openPrivacy },
+                  { icon: 'book', label: 'Terms of Service', onPress: openTerms },
                   { icon: 'settings', label: 'Account Settings' },
                   { icon: 'logout', label: 'Sign Out', danger: true, onPress: signOut },
                 ] as { icon: IconName; label: string; danger?: boolean; onPress?: () => void }[]
               ).map((item, i, arr) => (
                 <Pressable
                   key={item.label}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.label}
                   onPress={item.onPress}
                   style={{
                     flexDirection: 'row',

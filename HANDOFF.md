@@ -13,8 +13,7 @@ _Last updated: 2026-10-08_
     pipeline, dashboard gap, Creppie fixes vs still open (address held back until name, re-greet
     after manual replies, discount policy).
   - `2026-10-08-legal-security-audit.md`: RLS/secrets pass. Fails: privacy policy out of date and
-    not linked in the app; Creppie greeting doesn't say "AI". Also `membership_credit_balance`
-    lacks a viewer check.
+    not linked in the app; Creppie greeting doesn't say "AI". Fixes in progress ("fix legal", Oct 8).
 - **Vision Phases 0–1 (2026-10-06)**: roadmap in `docs/VISION.md`. Everything is behind feature
   flags (Staff › Features; staff always see all; add testers by email; "On for everyone" = launch).
   - **Phase 0 (PR #29, merged; 0020 applied to live 2026-10-06)**: flags, `pairs` with 8-char
@@ -229,6 +228,17 @@ _Last updated: 2026-10-08_
 
 ## Decisions Made
 
+- **2026-10-08**: "fix legal". Changes:
+  - The privacy policy is rewritten to match what we actually collect: Creppie/AI, photos,
+    Passport, Club, PostHog, push notifications, the services we use, data stored outside Jamaica,
+    how long we keep data, and children.
+  - Privacy and Terms links are now in app Profile (guest and signed-in), on app sign-up and on
+    website Quick Book.
+  - Terms gain a Creppie-is-AI section, a Photos section and a Club section.
+  - Creppie's web/app greeting now says "AI assistant". The Instagram first-reply AI rule is drafted
+    in n8n and **not published** until Geego says "publish".
+  - The Club refund wording ("no refund once that month's credits are used") is a placeholder
+    Geego should confirm.
 - **2026-10-06** — Website bands alternate **navy / white, starting with the navy hero** (Geego).
   "Blue" read as brand navy, since DESIGN.md keeps #1A6FD4 as the only accent, not a surface.
 - **2026-09-25** — Google Play support request for D-U-N-S alternative approved and cleared to

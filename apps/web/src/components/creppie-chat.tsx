@@ -10,7 +10,7 @@ import { track } from '@/lib/analytics';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 const STORE_KEY = 'creppie-chat-v1';
-const GREETING = "Wah gwaan! I'm Creppie, Clean Crep's assistant. Ask me about prices, turnaround, pickup, or book a clean right here.";
+const GREETING = "Wah gwaan! I'm Creppie, Clean Crep's AI assistant. Ask me about prices, turnaround, pickup, or book a clean right here.";
 const QUICK = ['How much for sneakers?', 'Book a clean', 'Do you do pickup?'];
 
 // "Need help?" nudge: once per visit, at the moment people tend to have a

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { ensureCustomerProfile } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
 import { track } from '@/lib/analytics';
+import { openPrivacy, openTerms } from '@/lib/legal';
 
 /**
  * Email/password sign-in + sign-up card. Used by the /sign-in screen and by the
@@ -97,6 +98,14 @@ export function SignInForm({ subtitle, onSuccess }: { subtitle?: string; onSucce
           {submitting ? 'Please wait…' : mode === 'signIn' ? 'Sign In' : 'Create Account'}
         </Text>
       </Pressable>
+
+      {mode === 'signUp' && (
+        <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 11, color: colors.caption, textAlign: 'center', marginTop: 12, lineHeight: 16 }}>
+          By creating an account you agree to our{' '}
+          <Text accessibilityRole="link" onPress={openTerms} style={{ color: colors.blue }}>Terms</Text> and{' '}
+          <Text accessibilityRole="link" onPress={openPrivacy} style={{ color: colors.blue }}>Privacy Policy</Text>.
+        </Text>
+      )}
 
       <Pressable
         onPress={() => {
