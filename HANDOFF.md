@@ -4,10 +4,15 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-07_
+_Last updated: 2026-10-08_
 
 ## Current Status
 
+- **Expo Go + SDK 57 (PR #36, 2026-10-08)**: app upgraded Expo SDK 54 → 57 (Expo Go on iOS only
+  runs the latest SDK) and linked to EAS project `@geegobuildss-team/clean-crep-app` (slug now
+  `clean-crep-app`). Publish with `cd apps/mobile && npm run publish:preview`; open in Expo Go via
+  the update's page on expo.dev → Preview. Latest preview update group
+  `f0489629-db6a-4b62-8ee2-65b34cc24cef`. CI green; awaiting Geego's tap-through on a real phone.
 - **Vision Phases 0–1 (2026-10-06)**: roadmap in `docs/VISION.md`. Everything is behind feature
   flags (Staff › Features; staff always see all; add testers by email; "On for everyone" = launch).
   - **Phase 0 (PR #29, merged; 0020 applied to live 2026-10-06)**: flags, `pairs` with 8-char
