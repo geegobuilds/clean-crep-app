@@ -10,9 +10,13 @@ _Last updated: 2026-10-08_
 
 - **Expo Go + SDK 57 (PR #36, 2026-10-08)**: app upgraded Expo SDK 54 → 57 (Expo Go on iOS only
   runs the latest SDK) and linked to EAS project `@geegobuildss-team/clean-crep-app` (slug now
-  `clean-crep-app`). Publish with `cd apps/mobile && npm run publish:preview`; open in Expo Go via
-  the update's page on expo.dev → Preview. Latest preview update group
-  `f0489629-db6a-4b62-8ee2-65b34cc24cef`. CI green; awaiting Geego's tap-through on a real phone.
+  `clean-crep-app`). Publish with `cd apps/mobile && npm run publish:preview`; open the update in
+  Expo Go with its **group** link (`exp://u.expo.dev/<projectId>/group/<groupId>`, or expo.dev →
+  Preview). The `?channel-name=preview` link fails in Expo Go (runtime is `appVersion`, Expo Go
+  asks for its SDK runtime). Latest: group `030bef93-39fd-4638-b0c3-b147609dda53`, tap-through OK.
+  Creppie chat is an iOS page sheet now (swipe down or x to close); the full-screen Modal's
+  header sometimes slid under the status bar. Website chat on phones: no autofocus, follows the
+  visual viewport (the keyboard used to push the close button off screen).
 - **Vision Phases 0–1 (2026-10-06)**: roadmap in `docs/VISION.md`. Everything is behind feature
   flags (Staff › Features; staff always see all; add testers by email; "On for everyone" = launch).
   - **Phase 0 (PR #29, merged; 0020 applied to live 2026-10-06)**: flags, `pairs` with 8-char
