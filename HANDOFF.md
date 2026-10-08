@@ -400,10 +400,10 @@ _Last updated: 2026-10-07_
   To change a function's return type, rename the old one and create the new one instead of dropping.
 - Renaming or adding an add-on in Supabase → update its series in PostHog "Add-on attach rate"
   (project 644953, dashboard 2168419), or it silently reads 0.
-- **Expo SDK 54 + Xcode 27:** relies on `patches/@expo+cli+54.0.27.patch`. When upgrading Expo
-  (SDK 56+ supports Device Hub natively) delete the patch — patch-package fails the install on
-  a version mismatch as a reminder. Dev builds on iOS 27 may also need the UIKit scene lifecycle
-  change (SDK 54–56); check before the first `eas build -p ios`.
+- **Expo SDK 57 (upgraded 2026-10-08 so the app opens in the current Expo Go):** Device Hub is
+  supported natively, so `patches/` is empty. Four React Compiler lint rules
+  (`react-hooks/immutability|purity|refs|set-state-in-effect`) are warnings in
+  `apps/mobile/eslint.config.js`; rework those 20 spots, then turn them back to errors.
 - On a Mac, zsh doesn't treat pasted `# comments` as comments — keep commands comment-free.
 
 - **Live migration history ≠ repo numbering.** 0001–0004 were pasted into the SQL editor (no

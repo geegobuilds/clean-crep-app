@@ -103,14 +103,10 @@ gives itself the Creppie icon on first run. If `package-lock.json` is the only l
 (newer npm on the Mac reformats it), it resets that file before pulling so updates are never
 blocked; any other local change is left alone and it runs the code you already have.
 
-**Xcode 27 note:** Xcode 27 replaced Simulator.app with **Device Hub** (`com.apple.dt.Devices`),
-which Expo SDK 54's CLI doesn't know about ("Can't determine id of Simulator app"). The repo
-carries `patches/@expo+cli+54.0.27.patch`, applied automatically by `patch-package` on every
-`npm install`: it uses the classic Simulator when present (Xcode ≤ 26) and falls back to Device
-Hub. With Device Hub, Expo can't pick the device — it opens whichever one you last booted
-(boot one first from Xcode → Open Developer Tool if needed). **Delete the patch when upgrading
-to Expo SDK 56+**, which supports Device Hub natively (patch-package will error on the version
-mismatch as a reminder).
+**Xcode 27 note:** Xcode 27 replaced Simulator.app with **Device Hub** (`com.apple.dt.Devices`).
+Expo SDK 57's CLI supports it natively (the SDK 54 patch in `patches/` is gone). With Device Hub,
+Expo can't pick the device: it opens whichever one you last booted (boot one first from Xcode →
+Open Developer Tool if needed).
 
 ## Automated phone checks (`npm run e2e`)
 

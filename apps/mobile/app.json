@@ -40,7 +40,10 @@
           "defaultChannel": "order-updates"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-font",
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true
