@@ -245,9 +245,10 @@ _Last updated: 2026-10-08_
     website Quick Book.
   - Terms gain a Creppie-is-AI section, a Photos section and a Club section.
   - Creppie's web/app greeting now says "AI assistant". The Instagram first-reply AI rule is drafted
-    in n8n and **not published** until Geego says "publish".
-  - The Club refund wording ("no refund once that month's credits are used") is a placeholder
-    Geego should confirm.
+    in n8n. It was **published 2026-10-08** (live version `c71fa002`, exported in
+    clean-crep-systems PR #9).
+  - The Club refund wording ("no refund once that month's credits are used") is **confirmed by
+    Geego for now** (2026-10-08).
 - **2026-10-06** — Website bands alternate **navy / white, starting with the navy hero** (Geego).
   "Blue" read as brand navy, since DESIGN.md keeps #1A6FD4 as the only accent, not a surface.
 - **2026-09-25** — Google Play support request for D-U-N-S alternative approved and cleared to
