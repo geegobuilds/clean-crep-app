@@ -431,7 +431,10 @@ export function QuickBook({ services, addOns, zones }: { services: Service[]; ad
           )}
         </div>
       </div>
-      <p className="qb-small">Pay cash or bank transfer at the shop. No payment online.</p>
+      <p className="qb-small">
+        Pay cash or bank transfer at the shop. No payment online. By booking you agree to our{' '}
+        <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.
+      </p>
     </form>
   );
 }

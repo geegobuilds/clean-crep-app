@@ -292,6 +292,7 @@ nav:not(.site-nav) {
 .qb-next:disabled { opacity: 0.6; cursor: default; }
 .qb-back { font-family: inherit; background: var(--offwhite); color: var(--caption); border: none; border-radius: 999px; padding: 12px 14px; font-size: 13px; cursor: pointer; }
 .qb-small { font-size: 11px; color: var(--caption); text-align: center; }
+.qb-small a { color: inherit; text-decoration: underline; }
 .qb-done-tick { width: 48px; height: 48px; border-radius: 50%; background: var(--green); color: var(--white); font-size: 24px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .qb-summary { display: flex; flex-direction: column; gap: 8px; background: var(--offwhite); border-radius: 12px; padding: 14px 16px; }
 .qb-summary div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }

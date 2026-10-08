@@ -14,7 +14,7 @@ export default function TermsPage() {
             ← Back to site
           </Link>
           <h1 className="legal-title">Terms of Service</h1>
-          <div className="legal-updated">Last updated August 27, 2026</div>
+          <div className="legal-updated">Last updated October 8, 2026</div>
         </div>
       </div>
 
@@ -28,11 +28,18 @@ export default function TermsPage() {
 
           <h2>The service</h2>
           <p>
-            We offer sneaker and Clarks cleaning services — Sneaker Clean, Clarks Clean, and Sole Refresh —
-            at the prices shown in the app at the time of booking. Sole Refresh pricing is a quote given on
-            inspection, since it depends on the condition of the pair.
+            We clean sneakers, Clarks, caps and hats, with add-ons such as Sole Refresh, at the prices shown
+            in the app, on the website or by Creppie when you book. You can drop off at the shop, book a
+            CrepRun pickup in the areas we serve, or send items by Knutsford Express. Turnaround times are
+            estimates, not guarantees.
           </p>
 
+          <h2>Creppie, our AI assistant</h2>
+          <p>
+            Creppie is an AI assistant. It can answer questions and take bookings, but it can make mistakes.
+            The prices and availability confirmed by our team, or shown in the app, are the ones that apply.
+            Ask for a person at any time.
+          </p>
           <h2>Booking and payment</h2>
           <ul>
             <li>A booking reserves a service and a date — it doesn&rsquo;t confirm your item has been
@@ -55,6 +62,12 @@ export default function TermsPage() {
             treated as abandoned. We&rsquo;ll try to reach you by app notification and WhatsApp first.
           </p>
 
+          <h2>Photos</h2>
+          <p>
+            We photograph items at drop-off and when they&rsquo;re done, to record their condition and to show
+            you the result. We won&rsquo;t post photos of your items publicly without asking you first.
+          </p>
+
           <h2>Cancellations</h2>
           <p>
             You can cancel or change a booking any time before drop-off with no charge — just link us on
@@ -73,6 +86,21 @@ export default function TermsPage() {
             no cash value, aren&rsquo;t transferable, and the program&rsquo;s structure may change — we&rsquo;ll
             reflect any change in the app.
           </p>
+
+          <h2>Clean Crep Club</h2>
+          <ul>
+            <li>The Club is a monthly plan that gives you care credits to spend on cleans. Each plan&rsquo;s
+              price and credits are shown in the app before you join.</li>
+            <li>There is no contract and no automatic charge. You pay each month by bank transfer, Lynk or
+              cash, and your credits switch on once we confirm your payment.</li>
+            <li>To cancel, just don&rsquo;t renew, or tell us on WhatsApp. Your plan stops at the end of the
+              month you paid for.</li>
+            <li>Unused credits roll over as shown in the app while your membership is active. Credits have no
+              cash value, can&rsquo;t be transferred outside your household plan, and aren&rsquo;t refundable
+              once you&rsquo;ve used any of that month&rsquo;s credits.</li>
+            <li>On a household plan, the plan owner decides who shares the credits, up to the plan&rsquo;s
+              limit.</li>
+          </ul>
 
           <h2>Changes to these terms</h2>
           <p>

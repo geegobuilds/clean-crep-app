@@ -16,7 +16,7 @@ import { track } from '@/lib/analytics';
 const face = require('../../assets/creppie/face.png');
 const wave = require('../../assets/creppie/wave-upper.png');
 
-const GREETING = "Wah gwaan! I'm Creppie, Clean Crep's assistant. Ask me about prices, turnaround, pickup, or book a clean right here.";
+const GREETING = "Wah gwaan! I'm Creppie, Clean Crep's AI assistant. Ask me about prices, turnaround, pickup, or book a clean right here.";
 const QUICK = ['How much for sneakers?', 'Book a clean', 'Do you do pickup?'];
 const AFTER_SIGN_IN = "I've signed in, please go ahead and book it.";
 
