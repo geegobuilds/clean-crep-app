@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { colors } from '@clean-crep/shared';
 import { useAuth } from '@/lib/auth';
 import { askCreppie, loadChat, saveChat, WHATSAPP_URL, type CreppieMsg } from '@/lib/creppie';
@@ -125,7 +126,12 @@ export function CreppieChat({ onClose, draft: initialDraft = '' }: { onClose: ()
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top', 'bottom']}>
+      {/* A Modal is its own native window: it needs its own provider, or the insets read 0 and the
+          header (and its close button) slides under the status bar. */}
+      <SafeAreaProvider>
+      <StatusBar style="light" />
+      <View style={{ flex: 1, backgroundColor: colors.offWhite }}>
+        <SafeAreaView edges={['top']} style={{ backgroundColor: colors.navy }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, backgroundColor: colors.navy }}>
           <Image source={face} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ice }} />
           <View style={{ flex: 1 }}>
@@ -136,6 +142,7 @@ export function CreppieChat({ onClose, draft: initialDraft = '' }: { onClose: ()
             <Text style={{ color: colors.white, fontSize: 26, lineHeight: 28 }}>×</Text>
           </Pressable>
         </View>
+        </SafeAreaView>
 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <ScrollView
@@ -208,15 +215,18 @@ export function CreppieChat({ onClose, draft: initialDraft = '' }: { onClose: ()
           </View>
         </KeyboardAvoidingView>
 
+        <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.white }}>
         <Pressable onPress={() => Linking.openURL(WHATSAPP_URL)} style={{ paddingVertical: 8, alignItems: 'center', backgroundColor: colors.white }}>
           <Text style={{ fontSize: 11, color: colors.caption, fontFamily: 'DMSans_400Regular' }}>
             Prefer a human? <Text style={{ color: colors.blue, fontFamily: 'DMSans_500Medium' }}>WhatsApp the team</Text>
           </Text>
         </Pressable>
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
 
       {/* Sign-in sheet over the chat, so the conversation is still there afterwards. */}
       <Modal visible={signingIn} animationType="slide" transparent onRequestClose={() => setSigningIn(false)}>
+        <SafeAreaProvider>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10,31,68,0.55)' }}>
           <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.navy, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
             <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
@@ -236,7 +246,9 @@ export function CreppieChat({ onClose, draft: initialDraft = '' }: { onClose: ()
             </ScrollView>
           </SafeAreaView>
         </KeyboardAvoidingView>
+        </SafeAreaProvider>
       </Modal>
+      </SafeAreaProvider>
     </Modal>
   );
 }

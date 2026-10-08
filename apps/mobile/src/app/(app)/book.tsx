@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, type TextStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
@@ -415,6 +415,7 @@ export default function BookingScreen() {
         </ScrollView>
 
         <Modal visible={signInOpen} animationType="slide" transparent onRequestClose={() => setSignInOpen(false)}>
+          <SafeAreaProvider>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10,31,68,0.55)' }}>
             <SafeAreaView edges={['bottom']} style={{ backgroundColor: c.navy, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }}>
               <ScrollView contentContainerStyle={{ padding: space.lg }} keyboardShouldPersistTaps="handled">
@@ -434,6 +435,7 @@ export default function BookingScreen() {
               </ScrollView>
             </SafeAreaView>
           </KeyboardAvoidingView>
+          </SafeAreaProvider>
         </Modal>
       </SafeAreaView>
     );
