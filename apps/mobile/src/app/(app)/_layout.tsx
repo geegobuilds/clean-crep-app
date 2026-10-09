@@ -1,16 +1,11 @@
 import { useEffect } from 'react';
-import type { ColorValue } from 'react-native';
 import { Tabs, useRouter, type Href } from 'expo-router';
-import { colors } from '@clean-crep/shared';
-import { Icon, type IconName } from '@/components/icon';
+import type { IconName } from '@/components/icon';
+import { PillTabBar } from '@/components/pill-tab-bar';
 import { ScreenSkeleton } from '@/components/states';
 import { useAuth } from '@/lib/auth';
 import { useFeatures } from '@/hooks/use-features';
 import { onPushTap } from '@/lib/push';
-
-function TabBarIcon({ iconName, color }: { iconName: IconName; color: ColorValue }) {
-  return <Icon name={iconName} size={22} color={color as string} />;
-}
 
 // No auth gate here: guests can browse Home and Book (services are public-read).
 // Sign-in is asked for only at Confirm Booking, and Orders/Inbox/Profile show a
@@ -26,32 +21,24 @@ export default function AppGroupLayout() {
 
   if (initializing) return <ScreenSkeleton />;
 
+  const tabs: { name: string; label: string; icon: IconName }[] = [
+    { name: 'index', label: 'Home', icon: 'home' },
+    { name: 'book', label: 'Book', icon: 'book' },
+    { name: 'orders', label: 'Orders', icon: 'orders' },
+    ...(features.has('vault') ? [{ name: 'vault', label: 'Vault', icon: 'vault' as IconName }] : []),
+    { name: 'inbox', label: 'Inbox', icon: 'bell' },
+    { name: 'profile', label: 'Profile', icon: 'profile' },
+  ];
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.blue,
-        tabBarInactiveTintColor: colors.caption,
-        tabBarStyle: {
-          backgroundColor: colors.white,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: 78,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: { fontFamily: 'DMSans_400Regular', fontSize: 10 },
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <TabBarIcon iconName="home" color={color} /> }} />
-      <Tabs.Screen name="book" options={{ title: 'Book', tabBarIcon: ({ color }) => <TabBarIcon iconName="book" color={color} /> }} />
-      <Tabs.Screen name="orders" options={{ title: 'Orders', tabBarIcon: ({ color }) => <TabBarIcon iconName="orders" color={color} /> }} />
-      <Tabs.Screen
-        name="vault"
-        options={{ title: 'Vault', href: features.has('vault') ? undefined : null, tabBarIcon: ({ color }) => <TabBarIcon iconName="vault" color={color} /> }}
-      />
+    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <PillTabBar {...props} tabs={tabs} />}>
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="book" options={{ title: 'Book' }} />
+      <Tabs.Screen name="orders" options={{ title: 'Orders' }} />
+      <Tabs.Screen name="vault" options={{ title: 'Vault', href: features.has('vault') ? undefined : null }} />
       <Tabs.Screen name="club" options={{ href: null }} />
-      <Tabs.Screen name="inbox" options={{ title: 'Inbox', tabBarIcon: ({ color }) => <TabBarIcon iconName="bell" color={color} /> }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => <TabBarIcon iconName="profile" color={color} /> }} />
+      <Tabs.Screen name="inbox" options={{ title: 'Inbox' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
   );
 }

@@ -4,10 +4,16 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-08_
+_Last updated: 2026-10-09_
 
 ## Current Status
 
+- **App redesign, Home + tab bar (2026-10-09, PR open, waiting on Geego's OK)**: DESIGN.md §8 —
+  three planes (huge status word at the back, Creppie-with-shoe in the middle, Book button
+  straddling the hero edge), blue only for taps, no middle sizes. Floating pill tab bar
+  (`components/pill-tab-bar.tsx`) on every screen. Home quick actions: Vault · Club · Creppie ·
+  WhatsApp (Book/Orders are in the tab bar). Next: same treatment for Vault, Club, Book, Orders,
+  Profile; swap Creppie for real shoe cutouts once Geego sends photos.
 - **Expo Go + SDK 57 (PR #36, 2026-10-08)**: app upgraded Expo SDK 54 → 57 (Expo Go on iOS only
   runs the latest SDK) and linked to EAS project `@geegobuildss-team/clean-crep-app` (slug now
   `clean-crep-app`). Publish with `cd apps/mobile && npm run publish:preview`; open the update in

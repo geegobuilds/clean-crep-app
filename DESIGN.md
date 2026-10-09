@@ -105,6 +105,22 @@ Navy-tinted, soft, and rare. A surface has a shadow **or** a border, not both.
 - **Status pill**: `pill` radius. On white: ice background, navy text. On navy: white 12%
   background, white text. Completed: blue background, white text.
 
+## 8. Depth, signal, scale (2026-10-09)
+
+Three rules every screen follows, from the Home redesign:
+
+1. **Three planes.** Big type at the back, the subject (a shoe, Creppie, a photo) in the middle,
+   the action on top, and let them overlap: the subject covers part of the word, the button
+   straddles the edge of the hero. Overlap is what makes a screen feel deep instead of flat.
+2. **One signal colour.** Blue (`accent`) only ever means "tap this": primary buttons, links,
+   the arrow in a button. Prices, numbers, progress and labels are ink (`navy`/`inkMuted`) on
+   paper (`white`/`offWhite`). If something blue can't be tapped, it's wrong.
+3. **No middle sizes.** Each screen has one huge thing (the hero word, a balance, a score) and
+   everything else is small (caption/overline/body). Skip the in-between headline sizes.
+
+Navigation is the floating pill tab bar (`components/pill-tab-bar.tsx`): the active tab is a
+navy pill with its label, the rest are icons. Shortcuts on Home never duplicate the tab bar.
+
 ## Do / Don't
 
 | Do | Don't |
