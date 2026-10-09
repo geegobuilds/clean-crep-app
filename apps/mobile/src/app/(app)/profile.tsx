@@ -1,7 +1,7 @@
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, type Href } from 'expo-router';
-import { colors, formatPrice } from '@clean-crep/shared';
+import { formatPrice } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { StatusTag } from '@/components/status-tag';
 import { useAuth } from '@/lib/auth';
@@ -10,6 +10,8 @@ import { useFeatures } from '@/hooks/use-features';
 import { enablePush, pushStatus } from '@/lib/push';
 import { openPrivacy, openTerms } from '@/lib/legal';
 import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
+import { Overline, ScreenHeader } from '@/components/ui';
+import { c, elevation, radius, space, type } from '@/theme';
 
 const LOYALTY_GOAL = 500;
 
@@ -22,13 +24,11 @@ function initials(name: string): string {
     .join('');
 }
 
-function memberSince(dateIso: string): string {
-  const months = Math.max(
-    0,
-    Math.round((Date.now() - new Date(dateIso).getTime()) / (1000 * 60 * 60 * 24 * 30))
-  );
-  if (months < 12) return `${months}mo`;
-  return `${Math.round(months / 12)}yr`;
+/** "Oct 2025", or null if the date is missing or unreadable. */
+function memberSince(dateIso: string | null | undefined): string | null {
+  const d = dateIso ? new Date(dateIso) : null;
+  if (!d || Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('en-JM', { month: 'short', year: 'numeric' });
 }
 
 async function openNotificationSettings() {
@@ -53,86 +53,83 @@ export default function ProfileScreen() {
   const pastOrders = orders.filter((o) => o.status === 'completed');
   const points = customer?.loyalty_points ?? 0;
   const pctToGoal = Math.min(100, Math.round((points / LOYALTY_GOAL) * 100));
+  const since = memberSince(customer?.member_since);
 
   if (!session) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
-        <View style={{ backgroundColor: colors.white, padding: 20, paddingTop: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <Text style={{ fontSize: 20, fontFamily: 'DMSans_500Medium', color: colors.navy }}>Profile</Text>
-          <Text style={{ fontSize: 13, color: colors.caption, marginTop: 4, fontFamily: 'DMSans_400Regular' }}>Your cleans, points and rewards.</Text>
-        </View>
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
+        <ScreenHeader title="Profile" subtitle="Your cleans, points and rewards." />
+        <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs }}>
           <SignInPrompt
             title="Sign in to see your profile"
             body={`Every clean earns loyalty points. Hit ${LOYALTY_GOAL} and your next clean is free.`}
             where="profile"
             onSignIn={() => router.push('/sign-in?next=/profile')}
           />
-          <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 12, color: colors.caption, textAlign: 'center', marginTop: 20 }}>
-            <Text accessibilityRole="link" onPress={openPrivacy} style={{ color: colors.blue }}>Privacy Policy</Text>
-            {'  ·  '}
-            <Text accessibilityRole="link" onPress={openTerms} style={{ color: colors.blue }}>Terms of Service</Text>
-          </Text>
+          <Legal />
         </ScrollView>
       </SafeAreaView>
     );
   }
 
+  const firstName = customer?.name.trim().split(/\s+/)[0];
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-        <View style={{ backgroundColor: colors.navy, padding: 20, paddingTop: 24, paddingBottom: 28, alignItems: 'center' }}>
-          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-            <Text style={{ fontSize: 22, fontFamily: 'DMSans_500Medium', color: colors.white }}>{initials(customer?.name ?? '?')}</Text>
-          </View>
-          {customer ? (
-            <>
-              <Text style={{ fontSize: 18, fontFamily: 'DMSans_500Medium', color: colors.white }}>{customer.name}</Text>
-              <Text style={{ fontSize: 12, color: colors.softBlue, marginTop: 3, fontFamily: 'DMSans_400Regular' }}>{customer.email ?? ''}</Text>
-            </>
-          ) : (
-            <View style={{ alignItems: 'center', gap: 6 }}>
-              <Skeleton width={120} height={18} style={{ opacity: 0.3 }} />
-              <Skeleton width={160} height={12} style={{ opacity: 0.3 }} />
-            </View>
-          )}
-          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 24, marginTop: 20 }}>
-            {[
-              { label: 'CLEANS', val: String(pastOrders.length) },
-              { label: 'POINTS', val: String(points) },
-              { label: 'MEMBER', val: customer ? memberSince(customer.member_since) : '—' },
-            ].map((stat) => (
-              <View key={stat.label} style={{ alignItems: 'center' }}>
-                <Text style={{ fontSize: 20, fontFamily: 'DMSans_500Medium', color: colors.white }}>{stat.val}</Text>
-                <Text style={{ fontSize: 9, color: colors.softBlue, letterSpacing: 1.5, fontFamily: 'DMSans_500Medium', marginTop: 2 }}>{stat.label}</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
+        {/* Big name, avatar on the right. */}
+        <View style={{ paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.md, flexDirection: 'row', alignItems: 'flex-end', gap: space.md }}>
+          <View style={{ flex: 1 }}>
+            <Text style={type.overline}>{since ? `Member since ${since}` : 'Clean Crep'}</Text>
+            {customer ? (
+              <>
+                <Text style={[type.hero, { marginTop: space.xxs }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} accessibilityRole="header">
+                  {firstName}
+                </Text>
+                <Text style={[type.body, { color: c.inkMuted }]} numberOfLines={1}>
+                  {customer.email ?? ''}
+                </Text>
+              </>
+            ) : (
+              <View style={{ gap: 6, marginTop: space.xs }}>
+                <Skeleton width={140} height={36} />
+                <Skeleton width={180} height={14} />
               </View>
-            ))}
+            )}
+          </View>
+          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: c.navy, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={[type.headline, { color: c.white }]}>{initials(customer?.name ?? '?')}</Text>
           </View>
         </View>
 
-        <View style={{ padding: 20, gap: 16 }}>
-          {/* Loyalty card */}
-          <View style={{ backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <View>
-                <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 2 }}>LOYALTY POINTS</Text>
-                <Text style={{ fontSize: 15, fontFamily: 'DMSans_500Medium', color: colors.navy }}>{points} / {LOYALTY_GOAL} pts</Text>
-              </View>
-              <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.ice, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="star" size={17} color={colors.blue} />
-              </View>
+        <View style={{ paddingHorizontal: space.lg, gap: space.lg }}>
+          {/* Loyalty, as a wallet card. */}
+          <View testID="loyalty-card" style={[{ backgroundColor: c.navy, borderRadius: radius.lg + 4, padding: space.lg, gap: space.sm, overflow: 'hidden' }, elevation.raised]}>
+            <View style={{ position: 'absolute', right: -60, top: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(26,111,212,0.35)' }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={[type.overline, { color: c.onNavyMuted }]}>Loyalty points</Text>
+              <Icon name="star" size={18} color={c.onNavyMuted} />
             </View>
-            <View style={{ height: 6, backgroundColor: colors.ice, borderRadius: 99, overflow: 'hidden' }}>
-              <View style={{ width: `${pctToGoal}%`, height: '100%', backgroundColor: colors.blue, borderRadius: 99 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+              <Text style={[type.hero, { color: c.white, fontSize: 56, lineHeight: 58, fontVariant: ['tabular-nums'] }]}>{points}</Text>
+              <Text style={[type.body, { color: c.onNavyMuted }]}>/ {LOYALTY_GOAL} pts</Text>
             </View>
-            <Text style={{ fontSize: 11, color: colors.caption, marginTop: 6, fontFamily: 'DMSans_400Regular' }}>
-              {Math.max(0, LOYALTY_GOAL - points)} points to a <Text style={{ color: colors.navy, fontFamily: 'DMSans_500Medium' }}>free clean</Text>.
-            </Text>
+            <View style={{ height: 6, backgroundColor: c.onNavyLine, borderRadius: radius.pill, overflow: 'hidden' }}>
+              <View style={{ width: `${pctToGoal}%`, height: '100%', backgroundColor: c.white, borderRadius: radius.pill }} />
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={[type.caption, { color: c.onNavyMuted }]}>
+                {Math.max(0, LOYALTY_GOAL - points)} points to a <Text style={{ color: c.white }}>free clean</Text>.
+              </Text>
+              <Text style={[type.caption, { color: c.onNavyMuted, fontVariant: ['tabular-nums'] }]}>
+                {pastOrders.length} clean{pastOrders.length === 1 ? '' : 's'}
+              </Text>
+            </View>
           </View>
 
           {/* Past orders */}
-          <View>
-            <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 8 }}>PAST ORDERS</Text>
+          <View style={{ gap: space.sm }}>
+            <Overline>PAST ORDERS</Overline>
             {loading && <SkeletonCard />}
             {!loading && error && <ErrorState message={error} onRetry={reload} />}
             {!loading && !error && pastOrders.length === 0 && (
@@ -144,28 +141,30 @@ export default function ProfileScreen() {
               />
             )}
             {!loading && !error && pastOrders.length > 0 && (
-              <View style={{ backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+              <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, overflow: 'hidden' }, elevation.card]}>
                 {pastOrders.map((o, i) => (
                   <View
                     key={o.id}
                     style={{
-                      padding: 13,
-                      paddingHorizontal: 16,
+                      padding: space.md,
                       flexDirection: 'row',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      gap: space.sm,
                       borderBottomWidth: i < pastOrders.length - 1 ? 1 : 0,
-                      borderBottomColor: colors.border,
+                      borderBottomColor: c.line,
                     }}
                   >
-                    <View>
-                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.navy }}>{o.item_name}</Text>
-                      <Text style={{ fontSize: 11, color: colors.caption, marginTop: 2, fontFamily: 'DMSans_400Regular' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={type.bodyStrong} numberOfLines={1}>
+                        {o.item_name}
+                      </Text>
+                      <Text style={type.caption}>
                         {o.service.name} · {new Date(o.scheduled_date).toLocaleDateString('en-JM', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </Text>
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                      <Text style={{ fontSize: 13, fontFamily: 'DMSans_500Medium', color: colors.blue }}>{formatPrice(o.price_cents)}</Text>
+                      <Text style={[type.bodyStrong, { fontVariant: ['tabular-nums'] }]}>{formatPrice(o.price_cents)}</Text>
                       <StatusTag status="completed" />
                     </View>
                   </View>
@@ -175,9 +174,9 @@ export default function ProfileScreen() {
           </View>
 
           {/* Settings */}
-          <View>
-            <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 8 }}>SETTINGS</Text>
-            <View style={{ backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+          <View style={{ gap: space.sm }}>
+            <Overline>SETTINGS</Overline>
+            <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, overflow: 'hidden' }, elevation.card]}>
               {(
                 [
                   ...(features.has('membership') ? [{ icon: 'star', label: 'Clean Crep Club', onPress: () => router.push('/club' as Href) }] : []),
@@ -186,35 +185,59 @@ export default function ProfileScreen() {
                   { icon: 'check', label: 'Privacy Policy', onPress: openPrivacy },
                   { icon: 'book', label: 'Terms of Service', onPress: openTerms },
                   { icon: 'settings', label: 'Account Settings' },
-                  { icon: 'logout', label: 'Sign Out', danger: true, onPress: signOut },
-                ] as { icon: IconName; label: string; danger?: boolean; onPress?: () => void }[]
+                ] as { icon: IconName; label: string; onPress?: () => void }[]
               ).map((item, i, arr) => (
                 <Pressable
                   key={item.label}
                   accessibilityRole="button"
                   accessibilityLabel={item.label}
                   onPress={item.onPress}
-                  style={{
+                  style={({ pressed }) => ({
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 12,
-                    padding: 13,
-                    paddingHorizontal: 16,
+                    gap: space.sm,
+                    paddingVertical: space.sm + 2,
+                    paddingHorizontal: space.md,
+                    backgroundColor: pressed ? c.bg : c.surface,
                     borderBottomWidth: i < arr.length - 1 ? 1 : 0,
-                    borderBottomColor: colors.border,
-                  }}
+                    borderBottomColor: c.line,
+                  })}
                 >
-                  <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: item.danger ? '#FEF3F0' : colors.ice, alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name={item.icon} size={16} color={item.danger ? '#993C1D' : colors.blue} />
+                  <View style={{ width: 34, height: 34, borderRadius: radius.sm + 2, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name={item.icon} size={17} color={c.navy} />
                   </View>
-                  <Text style={{ flex: 1, fontSize: 13, fontFamily: 'DMSans_400Regular', color: item.danger ? '#993C1D' : colors.charcoal }}>{item.label}</Text>
-                  {!item.danger && <Icon name="chevronR" size={16} color={colors.caption} />}
+                  <Text style={[type.body, { flex: 1 }]}>{item.label}</Text>
+                  <Icon name="chevronR" size={16} color={c.inkMuted} />
                 </Pressable>
               ))}
             </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Sign Out"
+              onPress={signOut}
+              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingVertical: space.md, borderRadius: radius.lg, backgroundColor: pressed ? c.surface : 'transparent' }]}
+            >
+              <Icon name="logout" size={17} color={c.danger} />
+              <Text style={[type.bodyStrong, { color: c.danger }]}>Sign Out</Text>
+            </Pressable>
           </View>
+          <Legal />
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function Legal() {
+  return (
+    <Text style={[type.caption, { textAlign: 'center', marginTop: space.md }]}>
+      <Text accessibilityRole="link" onPress={openPrivacy} style={{ color: c.inkMuted, textDecorationLine: 'underline' }}>
+        Privacy Policy
+      </Text>
+      {'  ·  '}
+      <Text accessibilityRole="link" onPress={openTerms} style={{ color: c.inkMuted, textDecorationLine: 'underline' }}>
+        Terms of Service
+      </Text>
+    </Text>
   );
 }

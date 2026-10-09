@@ -53,10 +53,10 @@ export default function ClubScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
       <ScreenHeader
         title="Clean Crep Club"
-        subtitle="Monthly care for every pair you own."
+        subtitle="Monthly care credits for every pair you own. Unused cleans roll over."
         left={
           <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back" hitSlop={12}>
-            <Icon name="chevronL" size={24} color={c.navy} />
+            <Icon name="chevronL" size={20} color={c.navy} />
           </Pressable>
         }
       />
@@ -95,30 +95,43 @@ export default function ClubScreen() {
 
 function PlanCard({ plan, cleanPrice, busy, current, onJoin }: { plan: MembershipPlan; cleanPrice: number | null; busy: boolean; current: boolean; onJoin: () => void }) {
   const worth = cleanPrice ? plan.credits_per_month * cleanPrice : null;
+  // The middle tier is the one we want most people on: it gets the navy card.
+  const featured = plan.slug === 'sneakerhead';
+  const fg = featured ? c.white : c.ink;
+  const muted = featured ? c.onNavyMuted : c.inkMuted;
   return (
-    <View testID="club-plan" style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg, gap: space.sm }, elevation.card]}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <Text style={type.headline}>{plan.name}</Text>
-        {plan.max_household > 1 && <Text style={type.caption}>Up to {plan.max_household} people</Text>}
+    <View
+      testID="club-plan"
+      style={[{ backgroundColor: featured ? c.navy : c.surface, borderRadius: radius.lg + 4, padding: space.lg, gap: space.sm, overflow: 'hidden' }, featured ? elevation.raised : elevation.card]}
+    >
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text style={[type.overline, { color: muted }]}>{plan.max_household > 1 ? `Up to ${plan.max_household} people` : `${plan.credits_per_month} cleans a month`}</Text>
+        {featured && (
+          <View style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.sm }}>
+            <Text style={[type.overline, { color: c.white, fontSize: 10, letterSpacing: 1.2 }]}>MOST CHOSEN</Text>
+          </View>
+        )}
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-        <Text style={type.priceLg}>{formatPrice(plan.price_cents)}</Text>
-        <Text style={type.caption}>/ month</Text>
+      <Text style={[type.title, { color: fg }]}>{plan.name}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+        <Text style={[type.hero, { color: fg, fontVariant: ['tabular-nums'] }]}>{formatPrice(plan.price_cents)}</Text>
+        <Text style={[type.caption, { color: muted }]}>/ month</Text>
       </View>
       {worth !== null && worth > plan.price_cents && (
-        <Text style={[type.bodyStrong, { color: c.accent }]}>
+        <Text style={[type.bodyStrong, { color: fg }]}>
           {plan.credits_per_month} cleans worth {formatPrice(worth)}. You save {formatPrice(worth - plan.price_cents)}.
         </Text>
       )}
-      <View style={{ gap: 6, marginTop: space.xxs }}>
+      <View style={{ height: 1, backgroundColor: featured ? c.onNavyLine : c.line, marginVertical: space.xs }} />
+      <View style={{ gap: space.xs }}>
         {plan.perks.map((perk) => (
-          <View key={perk} style={{ flexDirection: 'row', gap: space.xs, alignItems: 'flex-start' }}>
-            <Icon name="check" size={18} color={c.accent} />
-            <Text style={[type.body, { flex: 1 }]}>{perk}</Text>
+          <View key={perk} style={{ flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' }}>
+            <Icon name="check" size={18} color={featured ? c.onNavyMuted : c.navy} />
+            <Text style={[type.body, { flex: 1, color: fg }]}>{perk}</Text>
           </View>
         ))}
       </View>
-      <Button label={busy ? 'Joining…' : current ? 'Selected' : `Join ${plan.name}`} disabled={busy || current} onPress={onJoin} style={{ marginTop: space.xs }} />
+      <Button label={busy ? 'Joining…' : current ? 'Selected' : `Join ${plan.name}`} disabled={busy || current} onPress={onJoin} style={{ marginTop: space.sm }} />
     </View>
   );
 }

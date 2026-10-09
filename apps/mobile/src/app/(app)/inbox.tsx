@@ -1,18 +1,20 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, type Notification, type NotificationType } from '@clean-crep/shared';
+import { type Notification, type NotificationType } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { useNotifications } from '@/hooks/use-notifications';
 import { useAuth } from '@/lib/auth';
 import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
+import { Overline, ScreenHeader } from '@/components/ui';
+import { c, elevation, radius, space, type } from '@/theme';
 
-const ICON_MAP: Record<NotificationType, { icon: IconName; bg: string; color: string }> = {
-  ready: { icon: 'truck', bg: '#E8F1FB', color: '#0A1F44' },
-  progress: { icon: 'clock', bg: '#D6EAF8', color: '#1A6FD4' },
-  promo: { icon: 'star', bg: '#FEF9E7', color: '#B45309' },
-  received: { icon: 'pkg', bg: '#F5F7FA', color: '#5A6A8A' },
-  complete: { icon: 'check', bg: '#DCFCE7', color: '#16A34A' },
+const ICON_MAP: Record<NotificationType, { icon: IconName }> = {
+  ready: { icon: 'truck' },
+  progress: { icon: 'clock' },
+  promo: { icon: 'star' },
+  received: { icon: 'pkg' },
+  complete: { icon: 'check' },
 };
 
 function isToday(iso: string): boolean {
@@ -39,22 +41,20 @@ export default function InboxScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top']}>
-      <View style={{ backgroundColor: colors.white, padding: 20, paddingTop: 16, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <View>
-          <Text style={{ fontSize: 20, fontFamily: 'DMSans_500Medium', color: colors.navy }}>Inbox</Text>
-          <Text style={{ fontSize: 13, color: colors.caption, marginTop: 3, fontFamily: 'DMSans_400Regular' }}>
-            {!session ? 'Order updates land here.' : unread > 0 ? `${unread} unread notification${unread > 1 ? 's' : ''}` : 'All caught up.'}
-          </Text>
-        </View>
-        {unread > 0 && (
-          <Pressable onPress={markAllRead}>
-            <Text style={{ fontSize: 12, color: colors.blue, fontFamily: 'DMSans_500Medium' }}>Mark all read</Text>
-          </Pressable>
-        )}
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
+      <ScreenHeader
+        title="Inbox"
+        subtitle={!session ? 'Order updates land here.' : unread > 0 ? `${unread} unread notification${unread > 1 ? 's' : ''}` : 'All caught up.'}
+        right={
+          unread > 0 ? (
+            <Pressable onPress={markAllRead} accessibilityRole="button" hitSlop={8} style={{ backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: space.xs, paddingHorizontal: space.md, ...elevation.card }}>
+              <Text style={[type.bodyStrong, { color: c.accent, fontSize: 14 }]}>Mark all read</Text>
+            </Pressable>
+          ) : undefined
+        }
+      />
 
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 20 }}>
+      <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, gap: space.lg, paddingBottom: 140 }}>
         {!session && (
           <SignInPrompt
             title="Sign in to see your updates"
@@ -82,37 +82,35 @@ export default function InboxScreen() {
 
 function NotificationSection({ label, items, onPress }: { label: string; items: Notification[]; onPress: (n: Notification) => void }) {
   return (
-    <View>
-      <Text style={{ fontSize: 10, fontFamily: 'DMSans_500Medium', color: colors.caption, letterSpacing: 2, marginBottom: 8 }}>{label}</Text>
-      <View style={{ backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+    <View style={{ gap: space.sm }}>
+      <Overline>{label}</Overline>
+      <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, overflow: 'hidden' }, elevation.card]}>
         {items.map((n, i) => {
           const ico = ICON_MAP[n.type];
           return (
             <Pressable
               key={n.id}
               onPress={() => onPress(n)}
-              style={{
+              style={({ pressed }) => ({
                 flexDirection: 'row',
-                gap: 12,
-                padding: 13,
+                gap: space.sm,
+                padding: space.md,
                 borderBottomWidth: i < items.length - 1 ? 1 : 0,
-                borderBottomColor: colors.border,
-                backgroundColor: !n.read ? 'rgba(26,111,212,0.04)' : colors.white,
-              }}
+                borderBottomColor: c.line,
+                backgroundColor: pressed ? c.bg : c.surface,
+              })}
             >
-              {!n.read && <View style={{ position: 'absolute', top: 16, left: 6, width: 5, height: 5, borderRadius: 3, backgroundColor: colors.blue }} />}
-              <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: ico.bg, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name={ico.icon} size={16} color={ico.color} />
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: n.read ? c.bg : c.navy, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={ico.icon} size={17} color={n.read ? c.inkMuted : c.white} />
               </View>
               <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: 13, fontFamily: n.read ? 'DMSans_400Regular' : 'DMSans_500Medium', color: colors.navy, flex: 1 }}>{n.title}</Text>
-                  <Text style={{ fontSize: 10, color: colors.caption, marginLeft: 8, fontFamily: 'DMSans_400Regular' }}>{formatTime(n.created_at)}</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.xs }}>
+                  <Text style={[n.read ? type.body : type.bodyStrong, { flex: 1 }]}>{n.title}</Text>
+                  {!n.read && <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.accent }} />}
+                  <Text style={[type.caption, { fontSize: 12 }]}>{formatTime(n.created_at)}</Text>
                 </View>
-                <Text style={{ fontSize: 11, color: colors.caption, lineHeight: 16, marginTop: 3, fontFamily: 'DMSans_400Regular' }}>{n.body}</Text>
-                {n.order_id && (
-                  <Text style={{ fontSize: 10, color: colors.blue, fontFamily: 'DMSans_500Medium', marginTop: 4 }}>Order update</Text>
-                )}
+                <Text style={[type.caption, { marginTop: 2 }]}>{n.body}</Text>
+                {n.order_id && <Text style={[type.caption, { color: c.accent, marginTop: 4 }]}>Order update</Text>}
               </View>
             </Pressable>
           );

@@ -3,15 +3,27 @@ import { Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-nat
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { c, elevation, radius, space, spring, type } from '@/theme';
 
-/** Screen title block: Archivo title + one line of body copy. */
-export function ScreenHeader({ title, subtitle, left }: { title: string; subtitle?: string; left?: ReactNode }) {
+/**
+ * Screen title block: one huge title on the page background (no white band), a
+ * line of muted copy, and an optional back button / action above it.
+ */
+export function ScreenHeader({ title, subtitle, left, right }: { title: string; subtitle?: string; left?: ReactNode; right?: ReactNode }) {
   return (
-    <View style={{ backgroundColor: c.surface, paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-      {left}
-      <View style={{ flex: 1 }}>
-        <Text style={type.title}>{title}</Text>
-        {!!subtitle && <Text style={[type.body, { color: c.inkMuted, marginTop: space.xxs }]}>{subtitle}</Text>}
-      </View>
+    <View style={{ backgroundColor: c.bg, paddingHorizontal: space.lg, paddingTop: left || right ? space.xs : space.lg, paddingBottom: space.md }}>
+      {!!(left || right) && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, marginBottom: space.sm }}>
+          {left ? (
+            <View style={[{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }, elevation.card]}>{left}</View>
+          ) : (
+            <View />
+          )}
+          {right}
+        </View>
+      )}
+      <Text style={type.hero} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7} accessibilityRole="header">
+        {title}
+      </Text>
+      {!!subtitle && <Text style={[type.body, { color: c.inkMuted, marginTop: space.xs }]}>{subtitle}</Text>}
     </View>
   );
 }

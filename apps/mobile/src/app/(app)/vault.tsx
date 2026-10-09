@@ -1,18 +1,18 @@
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, Share, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, Share, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter } from 'expo-router';
 import { gradesFor, pairTitle, passportUrl, type PairCategory } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { CreppieChat } from '@/components/creppie-chat';
 import { StatusTag } from '@/components/status-tag';
-import { Button, Card, Overline, ScreenHeader } from '@/components/ui';
+import { Button, Card, Overline, PressScale, ScreenHeader } from '@/components/ui';
 import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
 import { useFeatureState } from '@/hooks/use-features';
 import { useVault, type VaultPair } from '@/hooks/use-vault';
 import { useAuth } from '@/lib/auth';
 import { tapLight } from '@/lib/haptics';
-import { c, elevation, radius, space, type } from '@/theme';
+import { c, radius, space, type } from '@/theme';
 
 // The Vault (docs/VISION.md, Phase 1): every pair the customer owns, with its
 // care history and Crep Passport. Pairs appear on their own from orders
@@ -31,6 +31,8 @@ function cleanedLine(p: VaultPair): string {
 
 export default function VaultScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const tile = Math.floor((Math.min(width, 600) - space.lg * 2 - space.md) / 2);
   const { session } = useAuth();
   const { features, loaded } = useFeatureState();
   const { pairs, loading, error, reload, savePair } = useVault();
@@ -64,7 +66,7 @@ export default function VaultScreen() {
 
         {session && !loading && !error && (
           <>
-            <View style={{ flexDirection: 'row', gap: space.sm }}>
+            <View style={{ flexDirection: 'row', gap: space.xl }}>
               <Stat value={String(pairs.length)} label={pairs.length === 1 ? 'Pair' : 'Pairs'} />
               <Stat value={String(cleans)} label={cleans === 1 ? 'Clean' : 'Cleans'} />
             </View>
@@ -78,31 +80,39 @@ export default function VaultScreen() {
               />
             )}
 
-            {pairs.map((p) => (
-              <Pressable
-                key={p.id}
-                testID="vault-pair"
-                onPress={() => {
-                  tapLight();
-                  setOpenId(p.id);
-                }}
-                style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.sm, flexDirection: 'row', alignItems: 'center', gap: space.md }, elevation.card]}
-              >
-                <Cover pair={p} size={72} />
-                <View style={{ flex: 1 }}>
-                  <Text style={type.bodyStrong} numberOfLines={1}>
-                    {pairTitle(p)}
-                  </Text>
-                  {!!p.colorway && (
-                    <Text style={type.caption} numberOfLines={1}>
-                      {p.colorway}
-                    </Text>
-                  )}
-                  <Text style={[type.caption, { marginTop: 2 }]}>{cleanedLine(p)}</Text>
-                </View>
-                <Icon name="chevronR" size={18} color={c.inkMuted} />
-              </Pressable>
-            ))}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.md }}>
+              {pairs.map((p) => {
+                const n = p.cleans.filter((o) => o.status === 'completed').length;
+                return (
+                  <PressScale
+                    key={p.id}
+                    testID="vault-pair"
+                    onPress={() => {
+                      tapLight();
+                      setOpenId(p.id);
+                    }}
+                    style={{ width: tile, gap: space.xs }}
+                  >
+                    <View>
+                      <Cover pair={p} size={tile} />
+                      {n > 0 && (
+                        <View style={{ position: 'absolute', top: space.sm, right: space.sm, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
+                          <Text style={[type.caption, { color: c.ink, fontVariant: ['tabular-nums'] }]}>{n}× clean</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={{ paddingHorizontal: 2 }}>
+                      <Text style={type.bodyStrong} numberOfLines={1}>
+                        {pairTitle(p)}
+                      </Text>
+                      <Text style={type.caption} numberOfLines={1}>
+                        {p.colorway || cleanedLine(p)}
+                      </Text>
+                    </View>
+                  </PressScale>
+                );
+              })}
+            </View>
 
             {adding ? (
               <PairForm
@@ -126,8 +136,8 @@ export default function VaultScreen() {
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <View style={[{ flex: 1, backgroundColor: c.surface, borderRadius: radius.md, padding: space.md }, elevation.card]}>
-      <Text style={type.priceLg}>{value}</Text>
+    <View>
+      <Text style={[type.hero, { fontSize: 56, lineHeight: 58, fontVariant: ['tabular-nums'] }]}>{value}</Text>
       <Text style={type.overline}>{label}</Text>
     </View>
   );
@@ -135,11 +145,11 @@ function Stat({ value, label }: { value: string; label: string }) {
 
 /** Latest after-photo, else a navy tile with the pair's initial. */
 function Cover({ pair, size, wide }: { pair: VaultPair; size: number; wide?: boolean }) {
-  const style = { width: wide ? '100%' : size, height: size, borderRadius: wide ? radius.lg : radius.md } as const;
+  const style = { width: wide ? '100%' : size, height: size, borderRadius: radius.lg } as const;
   if (pair.cover) return <Image source={{ uri: pair.cover }} style={style} resizeMode="cover" accessibilityIgnoresInvertColors />;
   return (
     <View style={[style, { backgroundColor: c.navy, alignItems: 'center', justifyContent: 'center' }]}>
-      <Text style={[type.title, { color: c.white, fontSize: wide ? 44 : 26, lineHeight: wide ? 48 : 30 }]}>{pairTitle(pair).charAt(0).toUpperCase()}</Text>
+      <Text style={[type.hero, { color: c.white, fontSize: Math.round(size * 0.42), lineHeight: Math.round(size * 0.46) }]}>{pairTitle(pair).charAt(0).toUpperCase()}</Text>
     </View>
   );
 }
@@ -225,7 +235,7 @@ function PairDetail({
         subtitle={details || (pair.nickname && pair.nickname !== pairTitle(pair) ? pair.nickname : undefined)}
         left={
           <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back to Vault" hitSlop={12}>
-            <Icon name="chevronL" size={24} color={c.navy} />
+            <Icon name="chevronL" size={20} color={c.navy} />
           </Pressable>
         }
       />

@@ -8,12 +8,15 @@ _Last updated: 2026-10-09_
 
 ## Current Status
 
-- **App redesign, Home + tab bar (2026-10-09, PR open, waiting on Geego's OK)**: DESIGN.md §8 —
-  three planes (huge status word at the back, Creppie-with-shoe in the middle, Book button
-  straddling the hero edge), blue only for taps, no middle sizes. Floating pill tab bar
-  (`components/pill-tab-bar.tsx`) on every screen. Home quick actions: Vault · Club · Creppie ·
-  WhatsApp (Book/Orders are in the tab bar). Next: same treatment for Vault, Club, Book, Orders,
-  Profile; swap Creppie for real shoe cutouts once Geego sends photos.
+- **App redesign (2026-10-09)**: DESIGN.md §8. Home + floating pill tab bar merged (#42). Second
+  pass (open PR) gives every tab the same language: one huge title on the page background
+  (`ScreenHeader` + `type.hero`), Book as a numbered menu with a blue arrow (the only tap colour),
+  Vault as a 2-column collection grid with big pair/clean counts, Club plans as cards (Sneakerhead
+  navy, "Most chosen"), Profile rebuilt on theme tokens with a navy wallet-style loyalty card (fixes
+  "NaNyr member"), Inbox restyled. Copy the e2e tests look for is unchanged.
+  **Old design is kept** on branch `archive/ui-v1-before-redesign` (main before #42) for Geego's
+  build-in-public before/after; revert = cherry-pick/revert the redesign commits. Next: swap Creppie
+  for real shoe cutouts once Geego sends photos; Book steps 1–2 and pair detail still old style.
 - **Expo Go + SDK 57 (PR #36, 2026-10-08)**: app upgraded Expo SDK 54 → 57 (Expo Go on iOS only
   runs the latest SDK) and linked to EAS project `@geegobuildss-team/clean-crep-app` (slug now
   `clean-crep-app`). Publish with `cd apps/mobile && npm run publish:preview`; open the update in
