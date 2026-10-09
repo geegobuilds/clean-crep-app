@@ -15,8 +15,12 @@ _Last updated: 2026-10-09_
   navy, "Most chosen"), Profile rebuilt on theme tokens with a navy wallet-style loyalty card (fixes
   "NaNyr member"), Inbox restyled. Copy the e2e tests look for is unchanged.
   **Old design is kept** on branch `archive/ui-v1-before-redesign` (main before #42) for Geego's
-  build-in-public before/after; revert = cherry-pick/revert the redesign commits. Next: swap Creppie
-  for real shoe cutouts once Geego sends photos; Book steps 1–2 and pair detail still old style.
+  build-in-public before/after; revert = cherry-pick/revert the redesign commits. #43 merged.
+  Booking flow (open PR): numbered sections (01 Your pair … 05 Notes), navy selection states, a
+  receipt card with a huge total and the pill Confirm button; the booked screen is a navy hero with
+  BOOKED dropping in letter by letter, Creppie springing in, and a ticket (date huge, tear line).
+  Next: real shoe cutouts once Geego sends photos (Cowork: Shoe Cutouts prompt); pair detail page
+  still old style.
 - **Expo Go + SDK 57 (PR #36, 2026-10-08)**: app upgraded Expo SDK 54 → 57 (Expo Go on iOS only
   runs the latest SDK) and linked to EAS project `@geegobuildss-team/clean-crep-app` (slug now
   `clean-crep-app`). Publish with `cd apps/mobile && npm run publish:preview`; open the update in
