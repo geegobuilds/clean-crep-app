@@ -1,11 +1,23 @@
-import { useEffect, useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, type Href } from 'expo-router';
-import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
+import { useCallback, useEffect, useState } from 'react';
+import { Image, Linking, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { setStatusBarStyle } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  Extrapolation,
+  FadeInDown,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+} from 'react-native-reanimated';
+import Svg, { Defs, Ellipse, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { formatPrice, TRACKER_STEPS, stepFromStatus, type OrderStatus } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { readyBy } from '@/components/order-ticket';
+import { PressScale } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { success, tapLight } from '@/lib/haptics';
 import { useServices } from '@/hooks/use-services';
@@ -16,15 +28,17 @@ import { ReviewAsk } from '@/components/review-ask';
 import { CreppieChat } from '@/components/creppie-chat';
 import { c, elevation, radius, space, spring, type } from '@/theme';
 
-// Home, built on three rules (DESIGN.md §8):
-//  1. Three planes: one huge word at the back, Creppie with a clean shoe in the
-//     middle, the Book button on top, overlapping the edge so the screen has depth.
-//  2. One signal colour: blue only ever means "tap this". Prices and labels are ink.
-//  3. No middle sizes: the hero word is huge, everything else is small.
+// Home (DESIGN.md §8):
+//  - Three planes that move at different speeds: one huge word at the back
+//    (half speed), Creppie with a clean shoe in the middle under a spotlight,
+//    the Book button on top straddling the hero's edge.
+//  - Blue only means "tap this". No middle sizes.
+//  - A compact header fades in once the hero scrolls away.
 
 const logo = require('../../../assets/brand/logo.png');
 const creppieShoe = require('../../../assets/creppie/success.png');
 const WHATSAPP_URL = 'https://wa.me/18765072163';
+const HERO_H = 480;
 
 const HERO_WORD: Partial<Record<OrderStatus, string>> = {
   received: 'RECEIVED',
@@ -40,6 +54,7 @@ function formatEta(d: Date): string {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { session, customer } = useAuth();
   const features = useFeatures();
@@ -50,12 +65,40 @@ export default function HomeScreen() {
   const lead = activeOrders[0] ?? null;
   const lastCompleted = orders.find((o) => o.status === 'completed') ?? null;
   const firstName = customer?.name?.split(' ')[0];
+  const [chatOpen, setChatOpen] = useState(false);
+
+  // Light status bar over the navy hero, dark again when leaving Home.
+  useFocusEffect(
+    useCallback(() => {
+      setStatusBarStyle('light');
+      return () => setStatusBarStyle('dark');
+    }, [])
+  );
 
   const word = (lead && HERO_WORD[lead.status]) || 'FRESH';
-  // One line, edge to edge: size the word to the screen (Archivo 800 is ~0.7em per letter).
   const wordSize = Math.min(132, Math.floor((width - space.lg * 2) / (word.length * 0.7)));
+  const pairName = lead ? lead.item_name.replace(/^\s*\d+\s*x\s*/i, '') : null;
 
-  const [chatOpen, setChatOpen] = useState(false);
+  // Parallax: the word drifts at half speed and fades, Creppie lags and shrinks a touch.
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const wordStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: interpolate(scrollY.value, [-120, 0, HERO_H], [-30, 0, HERO_H * 0.5], Extrapolation.CLAMP) }],
+    opacity: interpolate(scrollY.value, [0, HERO_H * 0.6], [1, 0], Extrapolation.CLAMP),
+  }));
+  const subjectStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(scrollY.value, [-120, 0, HERO_H], [-10, 0, HERO_H * 0.25], Extrapolation.CLAMP) },
+      { scale: interpolate(scrollY.value, [-120, 0, HERO_H], [1.08, 1, 0.9], Extrapolation.CLAMP) },
+    ],
+  }));
+  const compactStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [HERO_H - 300, HERO_H - 230], [0, 1], Extrapolation.CLAMP),
+    transform: [{ translateY: interpolate(scrollY.value, [HERO_H - 300, HERO_H - 230], [-8, 0], Extrapolation.CLAMP) }],
+  }));
+
   // Book and Orders live in the tab bar; these are the shortcuts that don't.
   const actions: { icon: IconName; label: string; onPress: () => void }[] = [
     ...(features.has('vault') ? [{ icon: 'vault' as IconName, label: 'Vault', onPress: () => router.push('/vault') }] : []),
@@ -65,11 +108,29 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={[]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-        {/* ── Hero: three planes ─────────────────────────────────────── */}
-        <View style={{ backgroundColor: c.navy, borderBottomLeftRadius: 36, borderBottomRightRadius: 36, paddingTop: 56, height: 470, overflow: 'visible' }}>
-          {/* Small stuff only up here */}
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+        {/* ── Hero ─────────────────────────────────────────────────────── */}
+        <View style={{ height: HERO_H, paddingTop: insets.top + space.md, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, overflow: 'hidden', backgroundColor: c.navy }}>
+          {/* Rich navy: deeper at the top, a lift of blue towards the bottom */}
+          <Svg style={{ position: 'absolute', top: 0, left: 0 }} width={width} height={HERO_H}>
+            <Defs>
+              <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor="#061329" />
+                <Stop offset="1" stopColor="#0E2A5C" />
+              </LinearGradient>
+              <RadialGradient id="spot" cx="50%" cy="50%" r="50%">
+                <Stop offset="0" stopColor="#1A6FD4" stopOpacity="0.55" />
+                <Stop offset="0.55" stopColor="#1A6FD4" stopOpacity="0.14" />
+                <Stop offset="1" stopColor="#1A6FD4" stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
+            <Rect x="0" y="0" width={width} height={HERO_H} fill="url(#sky)" />
+            {/* Spotlight behind the subject */}
+            <Ellipse cx={width / 2} cy={HERO_H * 0.62} rx={width * 0.62} ry={HERO_H * 0.42} fill="url(#spot)" />
+          </Svg>
+
+          {/* Small stuff up top */}
           <View style={{ paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
             <Image source={logo} style={{ width: 28, height: 28, borderRadius: 14 }} />
             <Text style={[type.caption, { color: c.onNavyMuted, flex: 1 }]}>{firstName ? `Hi, ${firstName}` : 'Clean Crep Jamaica'}</Text>
@@ -80,64 +141,72 @@ export default function HomeScreen() {
             </Pressable>
           </View>
           <Text style={[type.overline, { color: c.onNavyMuted, paddingHorizontal: space.lg, marginTop: space.lg }]}>
-            {lead ? `${lead.item_name.replace(/^\s*\d+\s*x\s*/i, '')} · ${lead.order_number}` : 'Sneakers · Clarks · Caps'}
+            {pairName ? `${pairName} · ${lead?.order_number}` : 'Sneakers · Clarks · Caps'}
           </Text>
 
-          {/* Plane 1 (back): the one huge thing */}
-          <Text
-            testID="hero-word"
-            numberOfLines={1}
-            style={{
-              fontFamily: type.display.fontFamily,
-              fontSize: wordSize,
-              lineHeight: wordSize * 1.02,
-              letterSpacing: -wordSize * 0.04,
-              color: c.white,
-              paddingHorizontal: space.lg - 4,
-              marginTop: space.xxs,
-            }}
-          >
-            {word}
-          </Text>
+          {/* Plane 1 (back): the one huge word, dropping in letter by letter */}
+          <Animated.View testID="hero-word" style={[{ flexDirection: 'row', paddingHorizontal: space.lg - 4, marginTop: space.xxs }, wordStyle]} accessible accessibilityLabel={word}>
+            {word.split('').map((ch, i) => (
+              <Animated.Text
+                key={`${word}-${i}`}
+                entering={FadeInDown.delay(80 + i * 45).springify().damping(14)}
+                style={{ fontFamily: type.display.fontFamily, fontSize: wordSize, lineHeight: wordSize * 1.02, letterSpacing: -wordSize * 0.04, color: c.white }}
+              >
+                {ch}
+              </Animated.Text>
+            ))}
+          </Animated.View>
 
-          {/* Plane 2 (middle): the subject, overlapping the word and spilling past the edge */}
-          <Animated.View entering={FadeInDown.springify().damping(16)} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 120 + wordSize * 0.45, alignItems: 'center' }}>
-            <Image source={creppieShoe} style={{ width: 300, height: 300 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          {/* Plane 2 (middle): the subject under the spotlight, with a ground shadow */}
+          <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, right: 0, top: insets.top + 96 + wordSize * 0.45, alignItems: 'center' }, subjectStyle]}>
+            <Svg width={220} height={40} style={{ position: 'absolute', top: 268 }}>
+              <Defs>
+                <RadialGradient id="ground" cx="50%" cy="50%" r="50%">
+                  <Stop offset="0" stopColor="#000" stopOpacity="0.45" />
+                  <Stop offset="1" stopColor="#000" stopOpacity="0" />
+                </RadialGradient>
+              </Defs>
+              <Ellipse cx={110} cy={20} rx={110} ry={20} fill="url(#ground)" />
+            </Svg>
+            <Animated.Image
+              entering={FadeInDown.delay(260).springify().damping(15)}
+              source={creppieShoe}
+              style={{ width: 300, height: 300 }}
+              resizeMode="contain"
+              accessibilityIgnoresInvertColors
+            />
           </Animated.View>
         </View>
 
-        {/* Plane 3 (top): the action, sitting on the hero's edge */}
+        {/* Plane 3 (top): the action, straddling the hero's edge */}
         <View style={{ paddingHorizontal: space.lg, marginTop: -30, gap: space.lg }}>
-          <Pressable
+          <PressScale
             testID="hero-book"
             onPress={() => {
               tapLight();
               router.push('/book');
             }}
-            accessibilityRole="button"
-            style={[
-              {
-                height: 60,
-                borderRadius: radius.pill,
-                backgroundColor: c.accent,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingLeft: space.lg,
-                paddingRight: 6,
-              },
-              elevation.raised,
-            ]}
+            accessibilityLabel={lead ? 'Book another pair' : 'Book a clean'}
+            style={{
+              height: 60,
+              borderRadius: radius.pill,
+              backgroundColor: c.accent,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingLeft: space.lg,
+              paddingRight: 6,
+              boxShadow: '0 14px 30px rgba(26,111,212,0.35), 0 2px 6px rgba(10,31,68,0.18)',
+            }}
           >
             <Text style={[type.button, { color: c.white }]}>{lead ? 'Book another pair' : 'Book a clean'}</Text>
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.white, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="arrowR" size={20} color={c.accent} strokeWidth={2} />
             </View>
-          </Pressable>
+          </PressScale>
 
-          {/* Active order: small, quiet, one glance */}
           {session && !ordersLoading && lead && (
-            <Pressable testID="home-order" onPress={() => router.push('/orders')} style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md, gap: space.sm }, elevation.card]}>
+            <PressScale testID="home-order" onPress={() => router.push('/orders')} style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md, gap: space.sm }, elevation.card]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <Text style={type.overline}>Your order</Text>
                 <Text style={type.caption}>
@@ -146,34 +215,29 @@ export default function HomeScreen() {
                 </Text>
               </View>
               <Steps step={stepFromStatus(lead.status)} />
-            </Pressable>
+            </PressScale>
           )}
           {session && ordersError && !ordersLoading && <ErrorState message={ordersError} onRetry={reloadOrders} />}
           {!session && (
             <SignInPrompt title="Track your cleans here" body="Sign in to see live updates on your pairs." where="home" onSignIn={() => router.push('/sign-in?next=/')} />
           )}
 
-          {/* Quick actions: small circles */}
           <View style={{ flexDirection: 'row', justifyContent: actions.length < 4 ? 'space-around' : 'space-between' }}>
-            {actions.map((a) => (
-              <Pressable
-                key={a.label}
-                onPress={a.onPress}
-                accessibilityRole="button"
-                accessibilityLabel={a.label}
-                style={{ alignItems: 'center', gap: 6, width: 72 }}
-              >
-                <View style={[{ width: 56, height: 56, borderRadius: 28, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }, elevation.card]}>
-                  <Icon name={a.icon} size={22} color={c.navy} />
-                </View>
-                <Text style={[type.caption, { color: c.ink }]}>{a.label}</Text>
-              </Pressable>
+            {actions.map((a, i) => (
+              <Animated.View key={a.label} entering={FadeInDown.delay(420 + i * 60).springify().damping(16)}>
+                <PressScale onPress={a.onPress} accessibilityLabel={a.label} style={{ alignItems: 'center', gap: 6, width: 72 }}>
+                  <View style={[{ width: 56, height: 56, borderRadius: 28, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }, elevation.card]}>
+                    <Icon name={a.icon} size={22} color={c.navy} />
+                  </View>
+                  <Text style={[type.caption, { color: c.ink }]}>{a.label}</Text>
+                </PressScale>
+              </Animated.View>
             ))}
           </View>
 
           {session && !ordersLoading && <ReviewAsk itemName={lastCompleted?.item_name ?? null} />}
 
-          {/* Menu: a quiet list, prices in ink (blue is only for taps) */}
+          {/* Menu: quiet list, prices in ink */}
           <View>
             <Text style={[type.overline, { marginBottom: space.xs }]}>Menu</Text>
             {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
@@ -189,7 +253,7 @@ export default function HomeScreen() {
                 <Pressable
                   key={s.id}
                   onPress={() => router.push('/book')}
-                  style={{
+                  style={({ pressed }) => ({
                     flexDirection: 'row',
                     alignItems: 'center',
                     paddingVertical: 14,
@@ -197,7 +261,8 @@ export default function HomeScreen() {
                     borderTopWidth: i === 0 ? 0 : 1,
                     borderTopColor: c.line,
                     gap: space.sm,
-                  }}
+                    backgroundColor: pressed ? c.bg : c.surface,
+                  })}
                 >
                   <Text style={[type.bodyStrong, { flex: 1 }]} numberOfLines={1}>
                     {s.name}
@@ -211,18 +276,43 @@ export default function HomeScreen() {
 
           <Text style={[type.caption, { textAlign: 'center' }]}>Shop 19, Pristine Plaza, Half Way Tree</Text>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Compact header: fades in once the hero has scrolled away */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            paddingTop: insets.top + space.xs,
+            paddingBottom: space.sm,
+            paddingHorizontal: space.lg,
+            backgroundColor: 'rgba(6,19,41,0.94)',
+            flexDirection: 'row',
+            alignItems: 'baseline',
+            gap: space.xs,
+          },
+          compactStyle,
+        ]}
+      >
+        <Text style={{ fontFamily: type.display.fontFamily, fontSize: 20, color: c.white, letterSpacing: -0.5 }}>{word}</Text>
+        {pairName && <Text style={[type.caption, { color: c.onNavyMuted }]}>{pairName}</Text>}
+      </Animated.View>
+
       {chatOpen && <CreppieChat onClose={() => setChatOpen(false)} />}
-    </SafeAreaView>
+    </View>
   );
 }
 
-/** Four dots on a line: Received → Cleaning → Ready → Collected. Springs to the current step. */
+/** Four dots on a line: Received → In Progress → Ready → Picked Up. Springs to the current step. */
 function Steps({ step }: { step: number }) {
   const p = useSharedValue(0);
   const total = TRACKER_STEPS.length;
   useEffect(() => {
-    p.value = withDelay(120, withSpring(Math.max(0, step - 1) / (total - 1), spring));
+    p.value = withDelay(300, withSpring(Math.max(0, step - 1) / (total - 1), spring));
   }, [step, total, p]);
   const fill = useAnimatedStyle(() => ({ width: `${Math.round(p.value * 100)}%` }));
   return (

@@ -95,3 +95,36 @@ export function Card({ children, style, bordered, testID }: { children: ReactNod
     </View>
   );
 }
+
+/**
+ * Anything tappable that should feel physical: springs down to 96% on press
+ * (DESIGN.md §6). Use for cards, quick actions and custom buttons.
+ */
+export function PressScale({
+  children,
+  onPress,
+  style,
+  testID,
+  accessibilityLabel,
+}: {
+  children: ReactNode;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+  testID?: string;
+  accessibilityLabel?: string;
+}) {
+  const scale = useSharedValue(1);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      onPressIn={() => (scale.value = withSpring(0.96, spring))}
+      onPressOut={() => (scale.value = withSpring(1, spring))}
+    >
+      <Animated.View style={[anim, style]}>{children}</Animated.View>
+    </Pressable>
+  );
+}
