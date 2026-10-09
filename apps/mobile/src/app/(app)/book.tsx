@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, 
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
-import { Icon, type IconName } from '@/components/icon';
+import { Icon } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
 import { useMembership } from '@/hooks/use-membership';
 import { useServices } from '@/hooks/use-services';
@@ -17,7 +17,7 @@ import { EmptyState, ErrorState, SkeletonList } from '@/components/states';
 import { PushOffer } from '@/components/push-offer';
 import { CreppieArt, MOODS } from '@/components/creppie';
 import { track } from '@/lib/analytics';
-import { Button, Overline, ScreenHeader } from '@/components/ui';
+import { Button, Overline, PressScale, ScreenHeader } from '@/components/ui';
 import { success, tapLight } from '@/lib/haptics';
 import { c, elevation, radius, space, type } from '@/theme';
 
@@ -442,8 +442,8 @@ export default function BookingScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-      <ScreenHeader title="Book a Clean" subtitle="Choose a service to get started." />
-      <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: 104, gap: space.sm }}>
+      <ScreenHeader title="Book" subtitle="Pick a service. We handle the rest." />
+      <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, paddingBottom: 140, gap: space.md }}>
         <Overline style={{ marginBottom: space.xxs }}>AVAILABLE SERVICES</Overline>
         {servicesLoading && services.length === 0 && <SkeletonList count={4} variant="service" />}
         {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
@@ -455,38 +455,39 @@ export default function BookingScreen() {
             onAction={() => Linking.openURL(WHATSAPP_URL)}
           />
         )}
-        {services.map((svc) => (
-          <Pressable
+        {services.map((svc, i) => (
+          <PressScale
             key={svc.id}
+            testID="service-card"
             onPress={() => {
               setSelected(svc);
               setStep(1);
               track('booking_started', { service: svc.name, platform: 'app' });
             }}
-            style={[
-              { backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg },
-              svc.popular ? { borderWidth: 1.5, borderColor: c.accent } : elevation.card,
-            ]}
+            style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg, gap: space.xs }, elevation.card]}
           >
-            {svc.popular && (
-              <View style={{ position: 'absolute', top: space.md, right: space.md, backgroundColor: c.accent, borderRadius: radius.pill, paddingVertical: 2, paddingHorizontal: space.sm }}>
-                <Text style={[type.overline, { color: c.white, fontSize: 11, letterSpacing: 1.2 }]}>MOST POPULAR</Text>
-              </View>
-            )}
-            <View style={{ flexDirection: 'row', gap: space.md }}>
-              <View style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: c.ice, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name={svc.icon as IconName} size={20} color={c.accent} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[type.headline, { marginBottom: space.xxs, paddingRight: svc.popular ? 104 : 0 }]}>{svc.name}</Text>
-                <Text style={[type.body, { color: c.inkMuted, marginBottom: space.sm }]}>{svc.description}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
-                  <Text style={type.price}>{formatPrice(svc.price_cents)}</Text>
-                  <Text style={type.caption}>{svc.note}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.xxs }}>
+              <Text style={[type.overline, { fontVariant: ['tabular-nums'] }]}>{String(i + 1).padStart(2, '0')}</Text>
+              {svc.popular && (
+                <View style={{ backgroundColor: c.navy, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.sm }}>
+                  <Text style={[type.overline, { color: c.white, fontSize: 10, letterSpacing: 1.2 }]}>MOST POPULAR</Text>
                 </View>
+              )}
+            </View>
+            <Text style={type.title}>{svc.name}</Text>
+            <Text style={[type.body, { color: c.inkMuted }]} numberOfLines={2}>
+              {svc.description}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
+                <Text style={type.priceLg}>{formatPrice(svc.price_cents)}</Text>
+                <Text style={type.caption}>{svc.note}</Text>
+              </View>
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="arrowR" size={20} color={c.white} />
               </View>
             </View>
-          </Pressable>
+          </PressScale>
         ))}
       </ScrollView>
       <CreppieButton />

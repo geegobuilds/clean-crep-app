@@ -19,6 +19,8 @@ const t = (s: TextStyle): TextStyle => s;
 
 /** Type scale (DESIGN.md §2). Body text is never below 15. */
 export const type = {
+  /** Screen titles: the one huge thing on a screen (DESIGN.md §8). */
+  hero: t({ fontFamily: fontFamily.display, fontSize: 44, lineHeight: 46, letterSpacing: -1.4, color: c.ink }),
   display: t({ fontFamily: fontFamily.display, fontSize: 34, lineHeight: 38, letterSpacing: -0.5, color: c.ink }),
   title: t({ fontFamily: fontFamily.display, fontSize: 26, lineHeight: 30, letterSpacing: -0.3, color: c.ink }),
   headline: t({ fontFamily: fontFamily.displayBold, fontSize: 19, lineHeight: 24, color: c.ink }),
