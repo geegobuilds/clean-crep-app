@@ -117,7 +117,7 @@ test('after a completed order, Home asks once for a Google review', async ({ pag
 
   // Once means once: it stays gone after a reload.
   await page.reload();
-  await expect(text(page, 'ACTIVE ORDERS', false)).toBeVisible();
+  await expect(page.getByTestId('hero-word')).toBeVisible();
   await expect(text(page, 'How did your AF1 Triple White come out?', false)).toHaveCount(0);
 });
 

@@ -10,6 +10,6 @@ export default async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch(launchOptions);
   const page = await browser.newPage();
   await page.goto(baseURL ?? 'http://localhost:8081', { timeout: 300_000 });
-  await page.getByText('Book', { exact: true }).first().waitFor({ timeout: 300_000 });
+  await page.getByRole('tab', { name: 'Book' }).waitFor({ timeout: 300_000 });
   await browser.close();
 }
