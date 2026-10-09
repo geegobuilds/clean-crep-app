@@ -21,11 +21,13 @@ test('guest asks Creppie to book, is asked to sign in, and the booking goes ahea
   });
 
   await page.goto('/');
-  await text(page, 'Ask Creppie').click();
+  // Home opens Creppie from its quick actions.
+  await text(page, 'Creppie').click();
   await expect(text(page, /Wah gwaan! I'm Creppie/)).toBeVisible();
   await shot(page, '20-creppie-open');
 
-  await text(page, 'Book a clean').click();
+  // Home's own "Book a clean" button sits behind the chat; the chat's quick reply renders last.
+  await page.getByText('Book a clean', { exact: true }).last().click();
   await expect(text(page, /Nearly there!/)).toBeVisible();
   await expect(text(page, 'Sign in to book')).toBeVisible();
   await shot(page, '21-creppie-sign-in-card');
