@@ -25,6 +25,8 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.cleancrep.com'),
   title: TITLE,
+  // Name under the icon when someone adds the site to their iPhone Home Screen.
+  appleWebApp: { title: 'Clean Crep' },
   description: DESCRIPTION,
   openGraph: {
     type: 'website',
