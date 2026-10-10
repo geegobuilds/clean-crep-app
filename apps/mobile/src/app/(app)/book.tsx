@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, type TextStyle } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions, type TextStyle } from 'react-native';
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
+import Svg, { Defs, Ellipse, LinearGradient as SvgGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
@@ -22,6 +25,7 @@ import { success, tapLight } from '@/lib/haptics';
 import { c, elevation, radius, space, type } from '@/theme';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
+const BOOKED_HERO_H = 400;
 
 interface Day {
   short: string;
@@ -51,6 +55,8 @@ function nextPickup(zone: Zone): Day | null {
 
 export default function BookingScreen() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const bookedSize = Math.min(120, Math.floor((width - 40) / (6 * 0.72)));
   const router = useRouter();
   const { session } = useAuth();
   const { services, loading: servicesLoading, error: servicesError, reload: reloadServices } = useServices();
@@ -72,6 +78,12 @@ export default function BookingScreen() {
   // This is a sheet over the Book screen (not a route change), so every
   // selection above stays in state through sign-in.
   const [signInOpen, setSignInOpen] = useState(false);
+
+  // The booked screen sits on a navy hero: light status bar there only.
+  useEffect(() => {
+    setStatusBarStyle(step === 2 ? 'light' : 'dark');
+    return () => setStatusBarStyle('dark');
+  }, [step]);
 
   // Drop-off: the next 7 shop days (closed Sundays).
   const days: Day[] = useMemo(() => {
@@ -190,229 +202,330 @@ export default function BookingScreen() {
   }
 
   if (step === 2) {
+    const when = date ? `${date.short} ${date.num}`.toUpperCase() : '—';
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-        <Header title="Confirm Booking" onBack={() => setStep(1)} />
-        <ScrollView contentContainerStyle={{ padding: space.lg, alignItems: 'center', paddingBottom: space.xxl }}>
-          <View style={{ marginBottom: space.md }}>
-            <CreppieArt mood="success" size={136} />
-          </View>
-          <Text style={[type.title, { marginBottom: space.xxs }]}>You&apos;re booked.</Text>
-          <Text style={[type.bodyStrong, { color: c.accent, marginBottom: space.xs }]}>{MOODS.success.title}</Text>
-          <Text style={[type.body, { color: c.inkMuted, marginBottom: space.lg, textAlign: 'center' }]}>
-            {dropoff ? 'Bring in' : 'CrepRun collects'} your {selected?.name === 'Clarks Clean' ? 'Clarks' : 'creps'} on{' '}
-            <Text style={{ color: c.navy, fontFamily: type.bodyStrong.fontFamily }}>
-              {date?.short} {date?.num}
+      <View style={{ flex: 1, backgroundColor: c.bg }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
+          {/* Navy hero: the one huge word, Creppie under a spotlight */}
+          <View style={{ height: BOOKED_HERO_H, paddingTop: insets.top + space.md, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, overflow: 'hidden', backgroundColor: c.navy }}>
+            <Svg style={{ position: 'absolute', top: 0, left: 0 }} width={width} height={BOOKED_HERO_H}>
+              <Defs>
+                <SvgGradient id="bsky" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor="#061329" />
+                  <Stop offset="1" stopColor="#0E2A5C" />
+                </SvgGradient>
+                <RadialGradient id="bspot" cx="50%" cy="50%" r="50%">
+                  <Stop offset="0" stopColor="#1A6FD4" stopOpacity="0.6" />
+                  <Stop offset="0.55" stopColor="#1A6FD4" stopOpacity="0.14" />
+                  <Stop offset="1" stopColor="#1A6FD4" stopOpacity="0" />
+                </RadialGradient>
+              </Defs>
+              <Rect x="0" y="0" width={width} height={BOOKED_HERO_H} fill="url(#bsky)" />
+              <Ellipse cx={width / 2} cy={BOOKED_HERO_H * 0.66} rx={width * 0.6} ry={BOOKED_HERO_H * 0.4} fill="url(#bspot)" />
+            </Svg>
+            <Text style={[type.overline, { color: c.onNavyMuted, paddingHorizontal: space.lg }]}>
+              {selected?.name ?? 'Clean Crep'} · {shoeType || 'Your pair'}
             </Text>
-            .{dropoff ? '\nShop 19, Pristine Plaza, Half Way Tree.' : ''}
-          </Text>
-
-          <PushOffer />
-
-          <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg, width: '100%', marginBottom: space.lg }, elevation.card]}>
-            <Overline style={{ marginBottom: space.sm }}>BOOKING SUMMARY</Overline>
-            {[
-              ['Service', selected?.name ?? '—'],
-              ['Shoe Type', shoeType || '—'],
-              ['Drop-off', dropoff ? 'In-store drop-off' : `CrepRun pickup · ${zone?.name ?? ''}`],
-              ['Date', date ? `${date.short} ${date.num} ${date.month}` : '—'],
-              [selected?.name ?? 'Service', selected ? formatPrice(selected.price_cents) : '—'],
-              ...charged.map((a) => [a.name, a.price_cents === null ? 'On inspection' : `+${formatPrice(a.price_cents)}`]),
-              ...(creditApplied && selected ? [[`Care credit${creditCost > 1 ? `s (${creditCost})` : ''}`, `−${formatPrice(selected.price_cents)}`]] : []),
-            ].map(([k, v]) => (
-              <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space.sm, marginBottom: space.xs }}>
-                <Text style={[type.body, { color: c.inkMuted, flexShrink: 1 }]}>{k}</Text>
-                <Text style={[type.bodyStrong, { flexShrink: 1, textAlign: 'right' }]}>{v}</Text>
-              </View>
-            ))}
-            <View style={{ height: 1, backgroundColor: c.line, marginVertical: space.sm }} />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Text style={type.overline}>Total</Text>
-              <Text style={type.priceLg}>{formatPrice(total)}</Text>
+            <View style={{ flexDirection: 'row', paddingHorizontal: space.lg - 4, marginTop: space.xxs }} accessible accessibilityLabel="Booked">
+              {'BOOKED'.split('').map((ch, i) => (
+                <Animated.Text
+                  key={i}
+                  entering={FadeInDown.delay(60 + i * 50).springify().damping(13)}
+                  style={{ fontFamily: type.display.fontFamily, fontSize: bookedSize, lineHeight: bookedSize * 1.02, letterSpacing: -bookedSize * 0.04, color: c.white }}
+                >
+                  {ch}
+                </Animated.Text>
+              ))}
             </View>
-            <Text style={[type.caption, { marginTop: space.sm }]}>
-              {dropoff ? 'Payment on drop-off.' : "We'll WhatsApp you on collection day."} Cash & transfer accepted.
-              {hasKit ? ' Kits are paid for and collected at the shop.' : ''}
-            </Text>
+            <Animated.View entering={ZoomIn.delay(380).springify().damping(12)} style={{ position: 'absolute', left: 0, right: 0, bottom: 34, alignItems: 'center' }}>
+              <CreppieArt mood="success" size={220} />
+            </Animated.View>
           </View>
 
-          <View style={{ width: '100%', gap: space.sm }}>
+          {/* The ticket, straddling the hero edge */}
+          <Animated.View entering={FadeInUp.delay(520).springify().damping(16)} style={{ paddingHorizontal: space.lg, marginTop: -44 }}>
+            <View testID="booked-ticket" style={[{ backgroundColor: c.surface, borderRadius: radius.lg + 4, overflow: 'hidden' }, elevation.raised]}>
+              <View style={{ padding: space.lg, gap: space.xs }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c.navy, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="check" size={18} color={c.white} strokeWidth={3} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={type.title}>You&apos;re booked.</Text>
+                    <Text style={type.caption}>{MOODS.success.title}</Text>
+                  </View>
+                </View>
+                <View style={{ marginTop: space.md }}>
+                  <Text style={type.overline}>{dropoff ? 'Drop-off' : 'CrepRun collects'}</Text>
+                  <Text style={[type.hero, { fontVariant: ['tabular-nums'] }]}>
+                    {when} <Text style={[type.title, { color: c.inkMuted }]}>{date?.month}</Text>
+                  </Text>
+                </View>
+                <Text style={[type.body, { color: c.inkMuted }]}>
+                  {dropoff ? 'Shop 19, Pristine Plaza, Half Way Tree.' : `We collect from ${zone?.name ?? 'your area'} and bring them back clean.`}
+                </Text>
+              </View>
+
+              <Perforation />
+
+              <View style={{ padding: space.lg, gap: space.xs }}>
+                {[
+                  ['Shoe Type', shoeType || '—'],
+                  ['Drop-off', dropoff ? 'In-store drop-off' : `CrepRun pickup · ${zone?.name ?? ''}`],
+                  [selected?.name ?? 'Service', selected ? formatPrice(selected.price_cents) : '—'],
+                  ...charged.map((a) => [a.name, a.price_cents === null ? 'On inspection' : `+${formatPrice(a.price_cents)}`]),
+                  ...(creditApplied && selected ? [[`Care credit${creditCost > 1 ? `s (${creditCost})` : ''}`, `−${formatPrice(selected.price_cents)}`]] : []),
+                ].map(([k, v]) => (
+                  <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space.sm }}>
+                    <Text style={[type.body, { color: c.inkMuted, flexShrink: 1 }]}>{k}</Text>
+                    <Text style={[type.bodyStrong, { flexShrink: 1, textAlign: 'right' }]}>{v}</Text>
+                  </View>
+                ))}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: space.sm }}>
+                  <Text style={type.overline}>Total</Text>
+                  <Text style={[type.hero, { fontSize: 36, lineHeight: 40, fontVariant: ['tabular-nums'] }]}>{formatPrice(total)}</Text>
+                </View>
+                <Text style={type.caption}>
+                  {dropoff ? 'Payment on drop-off.' : "We'll WhatsApp you on collection day."} Cash & transfer accepted.
+                  {hasKit ? ' Kits are paid for and collected at the shop.' : ''}
+                </Text>
+              </View>
+            </View>
+          </Animated.View>
+
+          <View style={{ paddingHorizontal: space.lg, paddingTop: space.lg, gap: space.sm }}>
+            <PushOffer />
             <Button variant="dark" label="Back to Home" onPress={resetAndGoHome} />
             <Button variant="secondary" label="Link Us on WhatsApp" icon={<Icon name="wa" size={18} color={c.navy} />} onPress={() => Linking.openURL(WHATSAPP_URL)} />
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (step === 1 && selected) {
+    let n = 0;
+    const num = () => String(++n).padStart(2, '0');
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-        <Header title="Booking Details" onBack={() => setStep(0)} />
-        <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.lg, paddingBottom: space.xxl }}>
-          <View style={{ backgroundColor: c.navy, borderRadius: radius.lg, padding: space.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm }}>
-            <View style={{ flex: 1 }}>
-              <Text style={[type.overline, { color: c.onNavyMuted }]}>SELECTED SERVICE</Text>
-              <Text style={[type.headline, { color: c.white, marginTop: 2 }]}>{selected.name}</Text>
-            </View>
-            <Text style={[type.price, { color: c.white }]}>{formatPrice(selected.price_cents)}</Text>
-          </View>
-
-          <View>
-            <Label>SHOE TYPE / MODEL</Label>
-            <TextInput
-              value={shoeType}
-              onChangeText={setShoeType}
-              placeholder="e.g. Nike Air Force 1, Clarks Desert Boot"
-              placeholderTextColor={c.inkMuted}
-              style={inputStyle}
-            />
-          </View>
-
-          <View>
-            <Label>DROP-OFF METHOD</Label>
-            <View style={{ flexDirection: 'row', backgroundColor: c.ice, borderRadius: radius.md, padding: space.xxs }}>
-              {[{ label: 'Drop Off', val: true }, { label: 'Pickup', val: false }].map((opt) => {
-                const on = dropoff === opt.val;
-                return (
-                  <Pressable
-                    key={String(opt.val)}
-                    onPress={() => {
-                      if (!on) tapLight();
-                      setDropoff(opt.val);
-                    }}
-                    accessibilityRole="radio"
-                    aria-checked={on}
-                    style={[{ flex: 1, minHeight: 44, borderRadius: radius.sm + 2, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.surface : 'transparent' }, on ? elevation.card : null]}
-                  >
-                    <Text style={[on ? type.bodyStrong : type.body, { color: on ? c.navy : c.inkMuted }]}>{opt.label}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-          {!dropoff && (
+        <ScrollView contentContainerStyle={{ paddingBottom: 140 }} keyboardShouldPersistTaps="handled">
+          <ScreenHeader
+            title="Booking Details"
+            subtitle={`${selected.name} · ${formatPrice(selected.price_cents)}${selected.price_cents === null ? ' on inspection' : ''}`}
+            left={
+              <Pressable onPress={() => setStep(0)} accessibilityRole="button" accessibilityLabel="Back" hitSlop={12}>
+                <Icon name="chevronL" size={20} color={c.navy} />
+              </Pressable>
+            }
+            right={<Text style={type.overline}>Step 1 of 2</Text>}
+          />
+          <View style={{ paddingHorizontal: space.lg, gap: space.xl }}>
             <View>
-              <Label>YOUR AREA · CREPRUN</Label>
-              {zones.length === 0 ? (
-                <Text style={[type.body, { color: c.inkMuted }]}>Couldn&apos;t load pickup areas. Message us on WhatsApp to arrange pickup.</Text>
-              ) : (
-                <View style={{ gap: space.xs }}>
-                  {zones.map((z) => (
-                    <ZoneRow key={z.id} zone={z} on={z.id === zoneId} onPress={() => selectZone(z)} />
-                  ))}
-                  <Text style={type.caption}>We collect and bring them back clean. Area not listed? Message us on WhatsApp.</Text>
-                </View>
-              )}
+              <Label n={num()}>YOUR PAIR</Label>
+              <TextInput
+                value={shoeType}
+                onChangeText={setShoeType}
+                placeholder="e.g. Nike Air Force 1, Clarks Desert Boot"
+                placeholderTextColor={c.inkMuted}
+                style={inputStyle}
+              />
             </View>
-          )}
 
-          {!dropoff ? (
-            pickupDay && (
-              <View style={{ backgroundColor: c.ice, borderRadius: radius.md, padding: space.md }}>
-                <Text style={type.body}>
-                  CrepRun collects on{' '}
-                  <Text style={{ fontFamily: type.bodyStrong.fontFamily }}>
-                    {pickupDay.short} {pickupDay.num} {pickupDay.month}
-                  </Text>
-                </Text>
-              </View>
-            )
-          ) : (
             <View>
-              <Label>SELECT DATE</Label>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.lg }} contentContainerStyle={{ gap: space.xs, paddingHorizontal: space.lg, paddingVertical: space.xxs }}>
-                {days.map((d, i) => {
-                  const on = selDay === i;
+              <Label n={num()}>HOW THEY GET TO US</Label>
+              <View style={[{ flexDirection: 'row', backgroundColor: c.surface, borderRadius: radius.pill, padding: 4 }, elevation.card]}>
+                {[
+                  { label: 'Drop Off', val: true, icon: 'pkg' as const },
+                  { label: 'Pickup', val: false, icon: 'truck' as const },
+                ].map((opt) => {
+                  const on = dropoff === opt.val;
                   return (
                     <Pressable
-                      key={i}
+                      key={String(opt.val)}
                       onPress={() => {
                         if (!on) tapLight();
-                        setSelDay(i);
+                        setDropoff(opt.val);
                       }}
-                      style={[
-                        { width: 60, alignItems: 'center', paddingVertical: space.sm, borderRadius: radius.md, backgroundColor: on ? c.accent : c.surface },
-                        on ? null : elevation.bordered,
-                      ]}
+                      accessibilityRole="radio"
+                      aria-checked={on}
+                      style={{ flex: 1, minHeight: 48, borderRadius: radius.pill, flexDirection: 'row', gap: space.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.navy : 'transparent' }}
                     >
-                      <Text style={[type.caption, { color: on ? c.white : c.inkMuted }]}>{d.short}</Text>
-                      <Text style={[type.headline, { fontSize: 22, lineHeight: 26, color: on ? c.white : c.navy }]}>{d.num}</Text>
+                      <Icon name={opt.icon} size={17} color={on ? c.white : c.inkMuted} />
+                      <Text style={[on ? type.bodyStrong : type.body, { color: on ? c.white : c.inkMuted }]}>{opt.label}</Text>
                     </Pressable>
                   );
                 })}
-              </ScrollView>
-            </View>
-          )}
-
-          {pickable.length > 0 && (
-            <View>
-              <Label>LEVEL IT UP</Label>
-              <View style={{ gap: space.xs }}>
-                {pickable.map((a) => (
-                  <AddOnRow key={a.id} addOn={a} on={picked.includes(a.id)} onPress={() => togglePick(a.id)} />
-                ))}
               </View>
-              {hasKit && (
-                <Text style={[type.caption, { marginTop: space.xs }]}>Kits are paid for and collected at the shop. We&apos;ll confirm stock when you drop off.</Text>
+              <Text style={[type.caption, { marginTop: space.xs }]}>
+                {dropoff ? 'Shop 19, Pristine Plaza, Half Way Tree. Closed Sundays.' : 'CrepRun collects from your area and brings them back clean.'}
+              </Text>
+            </View>
+
+            {!dropoff && (
+              <View>
+                <Label n={num()}>YOUR AREA · CREPRUN</Label>
+                {zones.length === 0 ? (
+                  <Text style={[type.body, { color: c.inkMuted }]}>Couldn&apos;t load pickup areas. Message us on WhatsApp to arrange pickup.</Text>
+                ) : (
+                  <View style={{ gap: space.xs }}>
+                    {zones.map((z) => (
+                      <ZoneRow key={z.id} zone={z} on={z.id === zoneId} onPress={() => selectZone(z)} />
+                    ))}
+                    <Text style={type.caption}>Area not listed? Message us on WhatsApp.</Text>
+                  </View>
+                )}
+                {pickupDay && (
+                  <View style={{ marginTop: space.sm, backgroundColor: c.navy, borderRadius: radius.lg, padding: space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+                    <Icon name="truck" size={18} color={c.onNavyMuted} />
+                    <Text style={[type.body, { color: c.white, flex: 1 }]}>
+                      CrepRun collects on{' '}
+                      <Text style={{ fontFamily: type.bodyStrong.fontFamily }}>
+                        {pickupDay.short} {pickupDay.num} {pickupDay.month}
+                      </Text>
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {dropoff && (
+              <View>
+                <Label n={num()}>WHEN</Label>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.lg }} contentContainerStyle={{ gap: space.xs, paddingHorizontal: space.lg, paddingVertical: space.xs }}>
+                  {days.map((d, i) => {
+                    const on = selDay === i;
+                    return (
+                      <Pressable
+                        key={i}
+                        onPress={() => {
+                          if (!on) tapLight();
+                          setSelDay(i);
+                        }}
+                        accessibilityRole="radio"
+                        aria-checked={on}
+                        style={[{ width: 64, alignItems: 'center', paddingVertical: space.sm, borderRadius: radius.lg, backgroundColor: on ? c.navy : c.surface }, on ? elevation.raised : elevation.card]}
+                      >
+                        <Text style={[type.caption, { color: on ? c.onNavyMuted : c.inkMuted }]}>{d.short}</Text>
+                        <Text style={[type.title, { fontVariant: ['tabular-nums'], color: on ? c.white : c.navy }]}>{d.num}</Text>
+                        <Text style={[type.caption, { fontSize: 11, color: on ? c.onNavyMuted : c.inkMuted }]}>{d.month}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
+            {pickable.length > 0 && (
+              <View>
+                <Label n={num()}>LEVEL IT UP</Label>
+                <View style={{ gap: space.xs }}>
+                  {pickable.map((a) => (
+                    <AddOnRow key={a.id} addOn={a} on={picked.includes(a.id)} onPress={() => togglePick(a.id)} />
+                  ))}
+                </View>
+                {hasKit && (
+                  <Text style={[type.caption, { marginTop: space.xs }]}>Kits are paid for and collected at the shop. We&apos;ll confirm stock when you drop off.</Text>
+                )}
+              </View>
+            )}
+
+            <View>
+              <Label n={num()}>NOTES (OPTIONAL)</Label>
+              <TextInput
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Any special instructions for your pair…"
+                placeholderTextColor={c.inkMuted}
+                multiline
+                numberOfLines={3}
+                style={[inputStyle, { minHeight: 96, textAlignVertical: 'top' }]}
+              />
+            </View>
+
+            {canUseCredit && membership && (
+              <Pressable
+                testID="use-credit"
+                onPress={() => setUseCredit((v) => !v)}
+                accessibilityRole="checkbox"
+                aria-checked={useCredit}
+                style={[{ flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.lg, backgroundColor: useCredit ? c.navy : c.surface }, useCredit ? elevation.raised : elevation.card]}
+              >
+                <Tick on={useCredit} dark />
+                <View style={{ flex: 1 }}>
+                  <Text style={[type.bodyStrong, { color: useCredit ? c.white : c.ink }]}>
+                    Use {creditCost} care credit{creditCost > 1 ? 's' : ''}
+                  </Text>
+                  <Text style={[type.caption, { color: useCredit ? c.onNavyMuted : c.inkMuted }]}>
+                    Covers the {formatPrice(selected?.price_cents ?? null)} clean · {membership.balance} left on {membership.plan.name}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+
+            {/* Receipt + the one primary action */}
+            <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg + 4, padding: space.lg, gap: space.xs }, elevation.card]}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space.sm }}>
+                <Text style={[type.body, { color: c.inkMuted }]}>{selected.name}</Text>
+                <Text style={type.bodyStrong}>{formatPrice(selected.price_cents)}</Text>
+              </View>
+              {charged.map((a) => (
+                <View key={a.name} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space.sm }}>
+                  <Text style={[type.body, { color: c.inkMuted, flexShrink: 1 }]}>{a.name}</Text>
+                  <Text style={type.bodyStrong}>{a.price_cents === null ? 'On inspection' : `+${formatPrice(a.price_cents)}`}</Text>
+                </View>
+              ))}
+              {creditApplied && (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space.sm }}>
+                  <Text style={[type.body, { color: c.inkMuted }]}>Care credit{creditCost > 1 ? `s (${creditCost})` : ''}</Text>
+                  <Text style={type.bodyStrong}>−{formatPrice(selected.price_cents)}</Text>
+                </View>
+              )}
+              <View style={{ height: 1, backgroundColor: c.line, marginVertical: space.xs }} />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <Text style={type.overline}>TOTAL</Text>
+                <Text style={[type.hero, { fontSize: 40, lineHeight: 44, fontVariant: ['tabular-nums'] }]}>{formatPrice(total)}</Text>
+              </View>
+
+              {error && (
+                <View style={{ gap: space.xs, marginTop: space.xs }}>
+                  <Text style={[type.body, { color: c.danger }]}>{error}</Text>
+                  <Pressable onPress={() => Linking.openURL(WHATSAPP_URL)}>
+                    <Text style={[type.bodyStrong, { color: c.accent }]}>Message us on WhatsApp</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              <PressScale
+                testID="confirm-booking"
+                onPress={() => {
+                  if (submitting) return;
+                  tapLight();
+                  confirmBooking();
+                }}
+                style={{
+                  marginTop: space.sm,
+                  height: 60,
+                  borderRadius: radius.pill,
+                  backgroundColor: c.accent,
+                  opacity: submitting ? 0.6 : 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingLeft: space.lg,
+                  paddingRight: 6,
+                  boxShadow: '0 14px 30px rgba(26,111,212,0.3), 0 2px 6px rgba(10,31,68,0.16)',
+                }}
+              >
+                <Text style={[type.button, { color: c.white }]}>{submitting ? 'Booking…' : 'Confirm Booking'}</Text>
+                <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.white, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="arrowR" size={20} color={c.accent} strokeWidth={2} />
+                </View>
+              </PressScale>
+              {!session && (
+                <Text style={[type.caption, { textAlign: 'center', marginTop: space.xs }]}>You&apos;ll sign in or create an account to confirm. Your details stay filled in.</Text>
               )}
             </View>
-          )}
-
-          <View>
-            <Label>NOTES (OPTIONAL)</Label>
-            <TextInput
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Any special instructions for your pair…"
-              placeholderTextColor={c.inkMuted}
-              multiline
-              numberOfLines={3}
-              style={[inputStyle, { minHeight: 88, textAlignVertical: 'top' }]}
-            />
           </View>
-
-          {error && (
-            <View style={{ gap: space.xs }}>
-              <Text style={[type.body, { color: c.danger }]}>{error}</Text>
-              <Pressable onPress={() => Linking.openURL(WHATSAPP_URL)}>
-                <Text style={[type.bodyStrong, { color: c.accent }]}>Message us on WhatsApp</Text>
-              </Pressable>
-            </View>
-          )}
-
-          {canUseCredit && membership && (
-            <Pressable
-              testID="use-credit"
-              onPress={() => setUseCredit((v) => !v)}
-              accessibilityRole="checkbox"
-              aria-checked={useCredit}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md, borderWidth: 1.5, borderColor: useCredit ? c.accent : c.line, backgroundColor: useCredit ? c.ice : c.surface }}
-            >
-              <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: useCredit ? c.accent : c.line, backgroundColor: useCredit ? c.accent : c.surface, alignItems: 'center', justifyContent: 'center' }}>
-                {useCredit && <Icon name="check" size={14} color={c.white} strokeWidth={2.5} />}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={type.bodyStrong}>
-                  Use {creditCost} care credit{creditCost > 1 ? 's' : ''}
-                </Text>
-                <Text style={type.caption}>
-                  Covers the {formatPrice(selected?.price_cents ?? null)} clean · {membership.balance} left on {membership.plan.name}
-                </Text>
-              </View>
-            </Pressable>
-          )}
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Text style={type.overline}>TOTAL</Text>
-            <Text style={type.priceLg}>{formatPrice(total)}</Text>
-          </View>
-
-          <Button label={submitting ? 'Booking…' : 'Confirm Booking'} onPress={confirmBooking} disabled={submitting} />
-          {!session && (
-            <Text style={[type.caption, { textAlign: 'center' }]}>You&apos;ll sign in or create an account to confirm. Your details stay filled in.</Text>
-          )}
         </ScrollView>
 
         <Modal visible={signInOpen} animationType="slide" transparent onRequestClose={() => setSignInOpen(false)}>
@@ -495,13 +608,23 @@ export default function BookingScreen() {
   );
 }
 
-function Header({ title, onBack }: { title: string; onBack: () => void }) {
+/** Ticket tear line with a notch cut out of each side. */
+function Perforation() {
   return (
-    <View style={{ backgroundColor: c.surface, paddingHorizontal: space.md, paddingVertical: space.sm, flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
-      <Pressable onPress={onBack} accessibilityLabel="Back" style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name="chevronL" size={22} color={c.navy} />
-      </Pressable>
-      <Text style={type.headline}>{title}</Text>
+    <View style={{ height: 24, justifyContent: 'center' }}>
+      <View style={{ position: 'absolute', left: -12, width: 24, height: 24, borderRadius: 12, backgroundColor: c.bg }} />
+      <View style={{ position: 'absolute', right: -12, width: 24, height: 24, borderRadius: 12, backgroundColor: c.bg }} />
+      <View style={{ marginHorizontal: space.lg, borderTopWidth: 1.5, borderColor: c.line, borderStyle: 'dashed' }} />
+    </View>
+  );
+}
+
+/** Round tick: navy when on (white on a navy card). */
+function Tick({ on, dark }: { on: boolean; dark?: boolean }) {
+  const fill = dark && on ? c.white : c.navy;
+  return (
+    <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: on ? fill : c.line, backgroundColor: on ? fill : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+      {on && <Icon name="check" size={14} color={dark ? c.navy : c.white} strokeWidth={3} />}
     </View>
   );
 }
@@ -513,17 +636,18 @@ function ZoneRow({ zone, on, onPress }: { zone: Zone; on: boolean; onPress: () =
       accessibilityRole="radio"
       aria-checked={on}
       style={[
-        { backgroundColor: on ? c.ice : c.surface, borderRadius: radius.md, padding: space.md, flexDirection: 'row', gap: space.sm, alignItems: 'center' },
-        on ? { borderWidth: 1.5, borderColor: c.accent } : elevation.bordered,
+        { backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md, flexDirection: 'row', gap: space.sm, alignItems: 'center', borderWidth: 1.5, borderColor: on ? c.navy : 'transparent' },
+        on ? null : elevation.card,
       ]}
     >
+      <Tick on={on} />
       <View style={{ flex: 1 }}>
         <Text style={type.bodyStrong}>
           {zone.name} · {zone.pickup_day}s
         </Text>
         <Text style={[type.caption, { marginTop: 2 }]}>{zone.areas}</Text>
       </View>
-      <Text style={[type.bodyStrong, { color: c.accent }]}>+{formatPrice(zone.rate_cents)}</Text>
+      <Text style={[type.bodyStrong, { fontVariant: ['tabular-nums'] }]}>+{formatPrice(zone.rate_cents)}</Text>
     </Pressable>
   );
 }
@@ -535,24 +659,11 @@ function AddOnRow({ addOn, on, onPress }: { addOn: AddOn; on: boolean; onPress: 
       accessibilityRole="checkbox"
       aria-checked={on}
       style={[
-        { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: on ? c.ice : c.surface, borderRadius: radius.md, padding: space.md },
-        on ? { borderWidth: 1.5, borderColor: c.accent } : elevation.bordered,
+        { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md, borderWidth: 1.5, borderColor: on ? c.navy : 'transparent' },
+        on ? null : elevation.card,
       ]}
     >
-      <View
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: radius.sm - 2,
-          borderWidth: 1.5,
-          borderColor: on ? c.accent : c.line,
-          backgroundColor: on ? c.accent : c.surface,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {on && <Icon name="check" size={14} color={c.white} strokeWidth={3} />}
-      </View>
+      <Tick on={on} />
       <View style={{ flex: 1 }}>
         <Text style={type.bodyStrong}>
           {addOn.name}
@@ -560,20 +671,27 @@ function AddOnRow({ addOn, on, onPress }: { addOn: AddOn; on: boolean; onPress: 
         </Text>
         {!!addOn.description && <Text style={[type.caption, { marginTop: 2 }]}>{addOn.description}</Text>}
       </View>
-      <Text style={[type.bodyStrong, { color: c.accent }]}>{addOn.price_cents === null ? 'Quote' : `+${formatPrice(addOn.price_cents)}`}</Text>
+      <Text style={[type.bodyStrong, { fontVariant: ['tabular-nums'] }]}>{addOn.price_cents === null ? 'Quote' : `+${formatPrice(addOn.price_cents)}`}</Text>
     </Pressable>
   );
 }
 
-function Label({ children }: { children: string }) {
-  return <Overline style={{ marginBottom: space.xs }}>{children}</Overline>;
+/** Numbered section label: "01  YOUR PAIR". */
+function Label({ n, children }: { n: string; children: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.sm, marginBottom: space.sm }}>
+      <Text style={[type.overline, { color: c.ink, fontVariant: ['tabular-nums'] }]}>{n}</Text>
+      <Overline>{children}</Overline>
+    </View>
+  );
 }
 
 const inputStyle: TextStyle = {
-  borderWidth: 1,
-  borderColor: c.line,
-  borderRadius: radius.md,
-  minHeight: 52,
+  borderWidth: 1.5,
+  borderColor: 'transparent',
+  borderRadius: radius.lg,
+  minHeight: 56,
+  boxShadow: elevation.card.boxShadow as string,
   paddingVertical: space.sm,
   paddingHorizontal: space.md,
   fontFamily: type.body.fontFamily,
