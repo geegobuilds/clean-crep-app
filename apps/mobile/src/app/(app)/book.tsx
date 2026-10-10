@@ -222,6 +222,9 @@ export default function BookingScreen() {
     setPicked([]);
     setShoeType('');
     setPairId(null);
+    // Drop ?pair= so the next "Book its next clean" (even for the same item) applies again.
+    router.setParams({ pair: '' });
+    setSeenParam(undefined);
     setNotes('');
     router.push('/');
   }
@@ -374,17 +377,17 @@ export default function BookingScreen() {
                   })}
                 </View>
               )}
-              <TextInput
-                value={shoeType}
-                onChangeText={(t) => {
-                  setShoeType(t);
-                  // Typing something else means a different item than the Vault one.
-                  if (chosenPair && t !== pairTitle(chosenPair)) setPairId(null);
-                }}
-                placeholder={headwear ? 'e.g. New Era 59FIFTY, Nike dad cap' : 'e.g. Nike Air Force 1, Clarks Desert Boot'}
-                placeholderTextColor={c.inkMuted}
-                style={inputStyle}
-              />
+              {chosenPair ? (
+                <Text style={type.caption}>From your Vault. Tap it again to book something else.</Text>
+              ) : (
+                <TextInput
+                  value={shoeType}
+                  onChangeText={setShoeType}
+                  placeholder={headwear ? 'e.g. New Era 59FIFTY, Nike dad cap' : 'e.g. Nike Air Force 1, Clarks Desert Boot'}
+                  placeholderTextColor={c.inkMuted}
+                  style={inputStyle}
+                />
+              )}
             </View>
 
             <View>
