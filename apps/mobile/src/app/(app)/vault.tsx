@@ -9,7 +9,7 @@ import { StatusTag } from '@/components/status-tag';
 import { Button, Card, Overline, PressScale, ScreenHeader } from '@/components/ui';
 import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
 import { useFeatureState } from '@/hooks/use-features';
-import { useVault, type VaultPair } from '@/hooks/use-vault';
+import { useVault, type VaultClean, type VaultPair } from '@/hooks/use-vault';
 import { useAuth } from '@/lib/auth';
 import { tapLight } from '@/lib/haptics';
 import { usePullRefresh } from '@/hooks/use-pull-refresh';
@@ -30,6 +30,18 @@ function cleanedLine(p: VaultPair): string {
   return `Cleaned ${done.length}× · last ${day(done[0].created_at)}`;
 }
 
+/** The clean this item is in for right now (booked, cleaning or ready), if any. */
+function activeClean(p: VaultPair): VaultClean | null {
+  return p.cleans.find((o) => o.status !== 'completed') ?? null;
+}
+
+/** Short stage for a Vault item that's in for a clean. */
+function stageLabel(o: VaultClean): string {
+  if (o.status === 'in_progress') return 'Cleaning';
+  if (o.status === 'ready_for_pickup') return o.drop_method === 'pickup' ? 'On its way back' : 'Ready for pickup';
+  return 'Booked in';
+}
+
 export default function VaultScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -46,7 +58,7 @@ export default function VaultScreen() {
   if (loaded && !features.has('vault')) return <Redirect href="/" />;
 
   if (open) {
-    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onRemove={async () => { const err = await removePair(open.id); if (!err) setOpenId(null); return err; }} onBook={() => router.push({ pathname: '/book', params: { pair: open.id } })} />;
+    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onRemove={async () => { const err = await removePair(open.id); if (!err) setOpenId(null); return err; }} onBook={() => router.push({ pathname: '/book', params: { pair: open.id } })} onTrack={() => router.push('/orders')} />;
   }
 
   const capCount = pairs.filter((p) => p.category === 'cap').length;
@@ -89,6 +101,7 @@ export default function VaultScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.md }}>
               {pairs.map((p) => {
                 const n = p.cleans.filter((o) => o.status === 'completed').length;
+                const active = activeClean(p);
                 return (
                   <PressScale
                     key={p.id}
@@ -101,6 +114,12 @@ export default function VaultScreen() {
                   >
                     <View>
                       <Cover pair={p} size={tile} />
+                      {active && (
+                        <View testID="vault-stage" style={{ position: 'absolute', left: space.sm, bottom: space.sm, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
+                          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.accent }} />
+                          <Text style={[type.caption, { color: c.ink, fontFamily: type.bodyStrong.fontFamily }]}>{stageLabel(active)}</Text>
+                        </View>
+                      )}
                       {n > 0 && (
                         <View style={{ position: 'absolute', top: space.sm, right: space.sm, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
                           <Text style={[type.caption, { color: c.ink, fontVariant: ['tabular-nums'] }]}>{n}× clean</Text>
@@ -226,6 +245,7 @@ function PairDetail({
   onSave,
   onRemove,
   onBook,
+  onTrack,
 }: {
   pair: VaultPair;
   showPassport: boolean;
@@ -235,6 +255,7 @@ function PairDetail({
   onSave: (f: PairFields) => Promise<string | null>;
   onRemove: () => Promise<string | null>;
   onBook: () => void;
+  onTrack: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [removing, setRemoving] = useState<'ask' | 'busy' | null>(null);
@@ -243,6 +264,7 @@ function PairDetail({
   const details = [pair.colorway, pair.size && `Size ${pair.size}`].filter(Boolean).join(' · ');
   const { width } = useWindowDimensions();
   const done = pair.cleans.filter((o) => o.status === 'completed');
+  const active = activeClean(pair);
   const g = latestGrades(pair);
   const stats = [
     { label: done.length === 1 ? 'Clean' : 'Cleans', value: String(done.length) },
@@ -275,9 +297,23 @@ function PairDetail({
             ))}
           </View>
 
+          {/* In for a clean right now: say so here instead of offering another booking. */}
+          {active && (
+            <View testID="pair-in-clean" style={[{ backgroundColor: c.navy, borderRadius: radius.lg + 4, padding: space.lg, gap: space.xxs }, elevation.raised]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.accent }} />
+                <Text style={[type.overline, { color: c.onNavyMuted }]}>In for a clean</Text>
+              </View>
+              <Text style={[type.title, { color: c.white }]}>{stageLabel(active)}</Text>
+              <Text style={[type.caption, { color: c.onNavyMuted }]}>
+                {active.service?.name ?? 'Clean'} · {active.order_number}
+              </Text>
+            </View>
+          )}
+
           <PressScale
-            testID="pair-book"
-            onPress={onBook}
+            testID={active ? 'pair-track' : 'pair-book'}
+            onPress={active ? onTrack : onBook}
             style={{
               height: 60,
               borderRadius: radius.pill,
@@ -290,7 +326,7 @@ function PairDetail({
               boxShadow: '0 14px 30px rgba(26,111,212,0.3), 0 2px 6px rgba(10,31,68,0.16)',
             }}
           >
-            <Text style={[type.button, { color: c.white }]}>{done.length ? 'Book its next clean' : 'Book its first clean'}</Text>
+            <Text style={[type.button, { color: c.white }]}>{active ? 'Track this clean' : done.length ? 'Book its next clean' : 'Book its first clean'}</Text>
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.white, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="arrowR" size={20} color={c.accent} strokeWidth={2} />
             </View>

@@ -44,6 +44,15 @@ test('booking a cap from its Vault page adds the clean to that cap, not a new on
 
   expect(sql(`select count(*) from pairs where customer_id = '${userId}'`)).toBe('1');
   expect(sql(`select pair_id from orders where customer_id = '${userId}'`)).toBe(capId);
+
+  // The Vault shows the same cap, now in for a clean.
+  await page.goto('/vault');
+  await expect(byTestId(page, 'vault-pair')).toHaveCount(1);
+  await expect(byTestId(page, 'vault-stage')).toContainText('Booked in');
+  await byTestId(page, 'vault-pair').click();
+  await expect(byTestId(page, 'pair-in-clean')).toBeVisible();
+  await expect(text(page, 'Track this clean')).toBeVisible();
+  await shot(page, '31-vault-in-for-a-clean');
 });
 
 test('a never-cleaned Vault item can be removed', async ({ page }) => {
