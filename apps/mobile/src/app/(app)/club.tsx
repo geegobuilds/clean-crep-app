@@ -53,7 +53,7 @@ export default function ClubScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
       <ScreenHeader
         title="Clean Crep Club"
-        subtitle="Monthly care credits for every pair you own. Unused cleans roll over."
+        subtitle="Monthly care credits for your sneakers, Clarks and caps. Unused cleans roll over."
         left={
           <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back" hitSlop={12}>
             <Icon name="chevronL" size={20} color={c.navy} />
@@ -156,8 +156,9 @@ function PendingCard({ m, onChange }: { m: MyMembership; onChange: () => void })
 }
 
 function MemberCard({ m, onBook }: { m: MyMembership; onBook: () => void }) {
+  const [now] = useState(() => Date.now());
   const paused = m.status === 'paused';
-  const renewSoon = !!m.current_period_end && new Date(`${m.current_period_end}T12:00:00`).getTime() - Date.now() < 5 * 864e5;
+  const renewSoon = !!m.current_period_end && new Date(`${m.current_period_end}T12:00:00`).getTime() - now < 5 * 864e5;
   const renewMsg = `Hi Clean Crep! I'd like to renew my ${m.plan.name} (${formatPrice(m.plan.price_cents)}). Reference ${m.payment_ref}.`;
   return (
     <View style={{ gap: space.lg }}>

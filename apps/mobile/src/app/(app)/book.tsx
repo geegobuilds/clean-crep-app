@@ -5,7 +5,7 @@ import Svg, { Defs, Ellipse, LinearGradient as SvgGradient, RadialGradient, Rect
 import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
+import { formatPrice, orderTotal, serviceKind, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
 import { useMembership } from '@/hooks/use-membership';
@@ -98,7 +98,9 @@ export default function BookingScreen() {
 
   // Extras the customer ticked, plus their CrepRun zone's rate when picking
   // up: the same rule the database applies in price_app_order().
-  const pickable = addOns.filter((a) => a.kind !== 'delivery');
+  // Sole and suede extras only make sense for footwear: a cap gets the rest.
+  const forHeadwear = serviceKind(selected?.name) === 'headwear';
+  const pickable = addOns.filter((a) => a.kind !== 'delivery' && !(forHeadwear && /sole|suede/i.test(`${a.slug} ${a.name}`)));
   const extras = pickable.filter((a) => picked.includes(a.id));
   const zone = zones.find((z) => z.id === zoneId) ?? null;
   const pickupDay = zone ? nextPickup(zone) : null;
@@ -113,6 +115,7 @@ export default function BookingScreen() {
   const fullTotal = selected ? orderTotal(selected.price_cents, charged) : null;
   const total = fullTotal !== null && creditApplied && selected?.price_cents != null ? Math.max(fullTotal - selected.price_cents, 0) : fullTotal;
   const hasKit = extras.some((a) => a.kind === 'kit');
+  const headwear = forHeadwear;
 
   function togglePick(id: string) {
     tapLight();
@@ -224,7 +227,7 @@ export default function BookingScreen() {
               <Ellipse cx={width / 2} cy={BOOKED_HERO_H * 0.66} rx={width * 0.6} ry={BOOKED_HERO_H * 0.4} fill="url(#bspot)" />
             </Svg>
             <Text style={[type.overline, { color: c.onNavyMuted, paddingHorizontal: space.lg }]}>
-              {selected?.name ?? 'Clean Crep'} · {shoeType || 'Your pair'}
+              {selected?.name ?? 'Clean Crep'} · {shoeType || (headwear ? 'Your cap' : 'Your pair')}
             </Text>
             <View style={{ flexDirection: 'row', paddingHorizontal: space.lg - 4, marginTop: space.xxs }} accessible accessibilityLabel="Booked">
               {'BOOKED'.split('').map((ch, i) => (
@@ -270,8 +273,8 @@ export default function BookingScreen() {
 
               <View style={{ padding: space.lg, gap: space.xs }}>
                 {[
-                  ['Shoe Type', shoeType || '—'],
-                  ['Drop-off', dropoff ? 'In-store drop-off' : `CrepRun pickup · ${zone?.name ?? ''}`],
+                  [headwear ? 'Cap' : 'Shoe', shoeType || '—'],
+                  [dropoff ? 'Drop-off' : 'Collection', dropoff ? 'In-store drop-off' : `CrepRun pickup · ${zone?.name ?? ''}`],
                   [selected?.name ?? 'Service', selected ? formatPrice(selected.price_cents) : '—'],
                   ...charged.map((a) => [a.name, a.price_cents === null ? 'On inspection' : `+${formatPrice(a.price_cents)}`]),
                   ...(creditApplied && selected ? [[`Care credit${creditCost > 1 ? `s (${creditCost})` : ''}`, `−${formatPrice(selected.price_cents)}`]] : []),
@@ -287,7 +290,7 @@ export default function BookingScreen() {
                 </View>
                 <Text style={type.caption}>
                   {dropoff ? 'Payment on drop-off.' : "We'll WhatsApp you on collection day."} Cash & transfer accepted.
-                  {hasKit ? ' Kits are paid for and collected at the shop.' : ''}
+                  {hasKit ? (dropoff ? ' Kits are paid for and collected at the shop.' : ' Kits are settled with your order.') : ''}
                 </Text>
               </View>
             </View>
@@ -321,11 +324,11 @@ export default function BookingScreen() {
           />
           <View style={{ paddingHorizontal: space.lg, gap: space.xl }}>
             <View>
-              <Label n={num()}>YOUR PAIR</Label>
+              <Label n={num()}>{headwear ? 'YOUR CAP' : 'YOUR PAIR'}</Label>
               <TextInput
                 value={shoeType}
                 onChangeText={setShoeType}
-                placeholder="e.g. Nike Air Force 1, Clarks Desert Boot"
+                placeholder={headwear ? 'e.g. New Era 59FIFTY, Nike dad cap' : 'e.g. Nike Air Force 1, Clarks Desert Boot'}
                 placeholderTextColor={c.inkMuted}
                 style={inputStyle}
               />
@@ -424,7 +427,11 @@ export default function BookingScreen() {
                   ))}
                 </View>
                 {hasKit && (
-                  <Text style={[type.caption, { marginTop: space.xs }]}>Kits are paid for and collected at the shop. We&apos;ll confirm stock when you drop off.</Text>
+                  <Text style={[type.caption, { marginTop: space.xs }]}>
+                    {dropoff
+                      ? "Kits are paid for and collected at the shop. We'll confirm stock when you drop off."
+                      : "We'll confirm stock before CrepRun collects and settle the kit with your order."}
+                  </Text>
                 )}
               </View>
             )}
@@ -434,7 +441,7 @@ export default function BookingScreen() {
               <TextInput
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Any special instructions for your pair…"
+                placeholder={headwear ? 'Any special instructions for your cap…' : 'Any special instructions for your pair…'}
                 placeholderTextColor={c.inkMuted}
                 multiline
                 numberOfLines={3}
@@ -541,7 +548,7 @@ export default function BookingScreen() {
                 </View>
                 <SignInForm
                   bare
-                  subtitle={`Sign in to confirm your ${selected.name}. We'll use this to send you updates on your pair.`}
+                  subtitle={`Sign in to confirm your ${selected.name}. We'll use this to send you updates on your ${headwear ? 'cap' : 'pair'}.`}
                   onSuccess={() => {
                     setSignInOpen(false);
                     placeBooking();
@@ -554,6 +561,10 @@ export default function BookingScreen() {
       </SafeAreaView>
     );
   }
+
+  // Footwear first, then caps & hats under their own heading; numbered straight through.
+  const ordered = [...services.filter((x) => serviceKind(x.name) === 'footwear'), ...services.filter((x) => serviceKind(x.name) === 'headwear')];
+  const menu = ordered.map((svc, i) => ({ svc, i, groupStart: i > 0 && serviceKind(svc.name) === 'headwear' && serviceKind(ordered[i - 1].name) !== 'headwear' }));
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
@@ -570,39 +581,42 @@ export default function BookingScreen() {
             onAction={() => Linking.openURL(WHATSAPP_URL)}
           />
         )}
-        {services.map((svc, i) => (
-          <PressScale
-            key={svc.id}
-            testID="service-card"
-            onPress={() => {
-              setSelected(svc);
-              setStep(1);
-              track('booking_started', { service: svc.name, platform: 'app' });
-            }}
-            style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg, gap: space.xs }, elevation.card]}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.xxs }}>
-              <Text style={[type.overline, { fontVariant: ['tabular-nums'] }]}>{String(i + 1).padStart(2, '0')}</Text>
-              {svc.popular && (
-                <View style={{ backgroundColor: c.navy, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.sm }}>
-                  <Text style={[type.overline, { color: c.white, fontSize: 10, letterSpacing: 1.2 }]}>MOST POPULAR</Text>
+        {menu.map(({ svc, i, groupStart }) => (
+          <View key={svc.id} style={{ gap: space.sm }}>
+            {groupStart && <Overline style={{ marginTop: space.md }}>CAPS & HATS</Overline>}
+            <PressScale
+              testID="service-card"
+              onPress={() => {
+                setSelected(svc);
+                setStep(1);
+                track('booking_started', { service: svc.name, platform: 'app' });
+              }}
+              style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg, gap: space.xs }, elevation.card]}
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.xxs }}>
+                <Text style={[type.overline, { fontVariant: ['tabular-nums'] }]}>{String(i + 1).padStart(2, '0')}</Text>
+                {svc.popular && (
+                  <View style={{ backgroundColor: c.navy, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.sm }}>
+                    <Text style={[type.overline, { color: c.white, fontSize: 10, letterSpacing: 1.2 }]}>MOST POPULAR</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={type.title}>{svc.name}</Text>
+              <Text style={[type.body, { color: c.inkMuted }]} numberOfLines={2}>
+                {svc.description}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm }}>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
+                  <Text style={type.priceLg}>{formatPrice(svc.price_cents)}</Text>
+                  <Text style={type.caption}>{svc.note}</Text>
                 </View>
-              )}
-            </View>
-            <Text style={type.title}>{svc.name}</Text>
-            <Text style={[type.body, { color: c.inkMuted }]} numberOfLines={2}>
-              {svc.description}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm }}>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
-                <Text style={type.priceLg}>{formatPrice(svc.price_cents)}</Text>
-                <Text style={type.caption}>{svc.note}</Text>
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="arrowR" size={20} color={c.white} />
+                </View>
               </View>
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="arrowR" size={20} color={c.white} />
-              </View>
-            </View>
-          </PressScale>
+            </PressScale>
+
+          </View>
         ))}
         {services.length > 0 && (
           <View style={{ marginTop: space.sm }}>

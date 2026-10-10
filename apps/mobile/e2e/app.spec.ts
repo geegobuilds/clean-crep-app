@@ -53,7 +53,7 @@ test('guest books, signs up in the sheet, and the order is placed with details k
   await expect(text(page, "Get a heads-up when it's ready?", false)).toBeVisible();
   await shot(page, '05-booked');
   await text(page, 'Turn on updates').click();
-  await expect(text(page, "Updates on. We'll ping you the moment your pair is ready.", false)).toBeVisible();
+  await expect(text(page, "Updates on. We'll ping you the moment your order is ready.", false)).toBeVisible();
 
   const [customer] = await adminSelect<{ id: string; name: string }>('customers', `email=eq.${encodeURIComponent(c.email)}&select=id,name`);
   expect(customer?.name).toBe(c.name);

@@ -27,7 +27,7 @@ export function PushOffer() {
       <View style={{ backgroundColor: '#DCFCE7', borderRadius: radius.card, padding: 14, flexDirection: 'row', gap: 10, alignItems: 'center', width: '100%', marginBottom: 20 }}>
         <Icon name="check" size={18} color="#16A34A" strokeWidth={2} />
         <Text style={{ flex: 1, fontSize: 12, color: colors.navy, fontFamily: 'DMSans_500Medium' }}>
-          Updates on. We&apos;ll ping you the moment your pair is ready.
+          Updates on. We&apos;ll ping you the moment your order is ready.
         </Text>
       </View>
     );
@@ -44,7 +44,7 @@ export function PushOffer() {
             Get a heads-up when it&apos;s ready?
           </Text>
           <Text style={{ fontSize: 12, color: colors.caption, lineHeight: 17, fontFamily: 'DMSans_400Regular' }}>
-            Only updates on your orders: received, being cleaned, ready for pickup. No spam.
+            Only updates on your orders: received, being cleaned, ready. No spam.
           </Text>
         </View>
       </View>

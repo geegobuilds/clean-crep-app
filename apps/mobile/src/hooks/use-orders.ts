@@ -18,8 +18,11 @@ export interface OrderWithService extends Order {
 export function useOrders({ onReady }: { onReady?: (order: OrderWithService) => void } = {}) {
   const { session } = useAuth();
   const [orders, setOrders] = useState<OrderWithService[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Whose orders are in state. Loading = signed in but no data for this user
+  // yet, so a sign-in or account switch shows the loading state, never the
+  // previous account's list.
+  const [dataFor, setDataFor] = useState<string | null>(null);
   // Several screens use this hook at once (Home, Orders, Profile). supabase.channel()
   // returns the existing channel for a repeated name, and adding .on() to an
   // already-subscribed channel throws — so each hook instance needs its own name.
@@ -28,15 +31,14 @@ export function useOrders({ onReady }: { onReady?: (order: OrderWithService) => 
   const latest = useRef(0);
   const known = useRef<Map<string, OrderStatus> | null>(null);
   const onReadyRef = useRef(onReady);
-  onReadyRef.current = onReady;
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  });
 
   const reload = useCallback(async () => {
     const call = ++latest.current;
     if (!session) {
       known.current = null;
-      setOrders([]);
-      setError(null);
-      setLoading(false);
       return;
     }
     const { data, error: queryError } = await supabase
@@ -60,18 +62,15 @@ export function useOrders({ onReady }: { onReady?: (order: OrderWithService) => 
       known.current = new Map(next.map((o) => [o.id, o.status]));
       setOrders(next);
     }
-    setLoading(false);
+    setDataFor(session.user.id);
   }, [session]);
 
-  // A different user (or a sign-in) means the current list is stale: show the
-  // loading state rather than flashing an empty list before the fetch lands.
-  const userId = session?.user.id;
-  useEffect(() => {
-    if (userId) setLoading(true);
-  }, [userId]);
+  const userId = session?.user.id ?? null;
+  const current = !!userId && dataFor === userId;
 
   useEffect(() => {
     // Initial fetch, then subscribe below — the intended fetch-then-subscribe pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async: state is only set after the fetch resolves
     reload();
     if (!session) return;
     const channel = supabase
@@ -87,5 +86,5 @@ export function useOrders({ onReady }: { onReady?: (order: OrderWithService) => 
     };
   }, [session, reload, instanceId]);
 
-  return { orders, loading, error, reload };
+  return { orders: current ? orders : [], loading: !!userId && !current, error: userId ? error : null, reload };
 }

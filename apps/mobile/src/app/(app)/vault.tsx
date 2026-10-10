@@ -49,16 +49,18 @@ export default function VaultScreen() {
     return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onBook={() => router.push('/book')} />;
   }
 
+  const capCount = pairs.filter((p) => p.category === 'cap').length;
+  const shoeCount = pairs.length - capCount;
   const cleans = pairs.reduce((n, p) => n + p.cleans.filter((o) => o.status === 'completed').length, 0);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-      <ScreenHeader title="Vault" subtitle="Every pair you own, and how we've cared for it." />
+      <ScreenHeader title="Vault" subtitle="Your sneakers, Clarks and caps, and how we've cared for them." />
       <ScrollView refreshControl={session ? refresh : undefined} contentContainerStyle={{ padding: space.lg, gap: space.md, paddingBottom: 140 }}>
         {!session && (
           <SignInPrompt
             title="Sign in to open your Vault"
-            body="Every pair you've had cleaned, with its full care history."
+            body="Everything you've had cleaned, with its full care history."
             where="vault"
             onSignIn={() => router.push('/sign-in?next=/vault')}
           />
@@ -69,15 +71,17 @@ export default function VaultScreen() {
         {session && !loading && !error && (
           <>
             <View style={{ flexDirection: 'row', gap: space.xl }}>
-              <Stat value={String(pairs.length)} label={pairs.length === 1 ? 'Pair' : 'Pairs'} />
+              {/* Caps are counted on their own: a cap is not a pair. */}
+              {shoeCount > 0 && <Stat value={String(shoeCount)} label={shoeCount === 1 ? 'Pair' : 'Pairs'} />}
+              {capCount > 0 && <Stat value={String(capCount)} label={capCount === 1 ? 'Cap' : 'Caps'} />}
               <Stat value={String(cleans)} label={cleans === 1 ? 'Clean' : 'Cleans'} />
             </View>
 
             {pairs.length === 0 && !adding && (
               <EmptyState
                 title="Your Vault is empty."
-                body="Pairs show up here after your first clean. Add the ones you already own too."
-                actionLabel="Add a pair"
+                body="Your sneakers, Clarks and caps show up here after your first clean. Add the ones you already own too."
+                actionLabel="Add to Vault"
                 onAction={() => setAdding(true)}
               />
             )}
@@ -118,7 +122,7 @@ export default function VaultScreen() {
 
             {adding ? (
               <PairForm
-                title="Add a pair"
+                title="Add to your Vault"
                 onCancel={() => setAdding(false)}
                 onSave={async (f) => {
                   const err = await savePair(null, f);
@@ -127,7 +131,7 @@ export default function VaultScreen() {
                 }}
               />
             ) : (
-              pairs.length > 0 && <Button variant="secondary" label="Add a pair" onPress={() => setAdding(true)} />
+              pairs.length > 0 && <Button variant="secondary" label="Add to Vault" onPress={() => setAdding(true)} />
             )}
           </>
         )}
@@ -158,7 +162,7 @@ function Cover({ pair, size, wide }: { pair: VaultPair; size: number; wide?: boo
 
 /** Context for Creppie: what the pair is and how we've cared for it. */
 function creppieDraft(pair: VaultPair): string {
-  const facts = [pair.colorway, pair.size && `size ${pair.size}`, pair.category === 'clarks' ? 'Clarks' : null].filter(Boolean).join(', ');
+  const facts = [pair.colorway, pair.size && `size ${pair.size}`, pair.category === 'clarks' ? 'Clarks' : pair.category === 'cap' ? 'a cap' : null].filter(Boolean).join(', ');
   const done = pair.cleans.filter((o) => o.status === 'completed');
   const g = latestGrades(pair);
   const history = [
@@ -335,7 +339,7 @@ function PairDetail({
                             {day(o.created_at)} · {o.order_number}
                           </Text>
                         </View>
-                        <StatusTag status={o.status} />
+                        <StatusTag status={o.status} method={o.drop_method} />
                       </View>
                     </View>
                   );

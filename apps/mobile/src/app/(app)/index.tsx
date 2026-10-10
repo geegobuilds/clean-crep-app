@@ -14,7 +14,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { formatPrice, TRACKER_STEPS, stepFromStatus, type OrderStatus } from '@clean-crep/shared';
+import { formatPrice, trackerSteps, stepFromStatus, type DropMethod, type OrderStatus } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { readyBy } from '@/components/order-ticket';
 import { PressScale } from '@/components/ui';
@@ -186,7 +186,7 @@ export default function HomeScreen() {
               tapLight();
               router.push('/book');
             }}
-            accessibilityLabel={lead ? 'Book another pair' : 'Book a clean'}
+            accessibilityLabel={lead ? 'Book another clean' : 'Book a clean'}
             style={{
               height: 60,
               borderRadius: radius.pill,
@@ -199,7 +199,7 @@ export default function HomeScreen() {
               boxShadow: '0 14px 30px rgba(26,111,212,0.35), 0 2px 6px rgba(10,31,68,0.18)',
             }}
           >
-            <Text style={[type.button, { color: c.white }]}>{lead ? 'Book another pair' : 'Book a clean'}</Text>
+            <Text style={[type.button, { color: c.white }]}>{lead ? 'Book another clean' : 'Book a clean'}</Text>
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.white, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="arrowR" size={20} color={c.accent} strokeWidth={2} />
             </View>
@@ -210,11 +210,11 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <Text style={type.overline}>Your order</Text>
                 <Text style={type.caption}>
-                  Ready {formatEta(readyBy(lead))}
+                  {lead.drop_method === 'pickup' ? 'Back' : 'Ready'} {formatEta(readyBy(lead))}
                   {activeOrders.length > 1 ? ` · +${activeOrders.length - 1} more` : ''}
                 </Text>
               </View>
-              <Steps step={stepFromStatus(lead.status)} />
+              <Steps step={stepFromStatus(lead.status)} method={lead.drop_method} />
             </PressScale>
           )}
           {session && ordersError && !ordersLoading && <ErrorState message={ordersError} onRetry={reloadOrders} />}
@@ -307,10 +307,11 @@ export default function HomeScreen() {
   );
 }
 
-/** Four dots on a line: Received → In Progress → Ready → Picked Up. Springs to the current step. */
-function Steps({ step }: { step: number }) {
+/** Four dots on a line: Received → In Progress → Ready → Picked Up (Delivered for CrepRun). Springs to the current step. */
+function Steps({ step, method }: { step: number; method?: DropMethod | null }) {
+  const STEPS = trackerSteps(method);
   const p = useSharedValue(0);
-  const total = TRACKER_STEPS.length;
+  const total = STEPS.length;
   useEffect(() => {
     p.value = withDelay(300, withSpring(Math.max(0, step - 1) / (total - 1), spring));
   }, [step, total, p]);
@@ -321,7 +322,7 @@ function Steps({ step }: { step: number }) {
         <Animated.View style={[{ height: 4, backgroundColor: c.navy, borderRadius: 2 }, fill]} />
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: -8 }}>
-        {TRACKER_STEPS.map((s, i) => {
+        {STEPS.map((s, i) => {
           const done = i < step;
           return (
             <View key={s} style={{ alignItems: i === 0 ? 'flex-start' : i === total - 1 ? 'flex-end' : 'center', width: 70 }}>

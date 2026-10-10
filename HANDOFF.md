@@ -4,10 +4,19 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-09_
+_Last updated: 2026-10-10_
 
 ## Current Status
 
+- **Caps ≠ pairs, pickup ≠ drop-off (2026-10-10, Geego)**: wording is now method- and item-aware.
+  Shared `statusLabel(status, method)` / `trackerSteps(method)` (CrepRun ends "Ready for Delivery" →
+  "Delivered"), `serviceKind(name)` (footwear vs headwear). Book groups CAPS & HATS, cap bookings say
+  "Your cap" and hide sole/suede add-ons; Vault counts pairs and caps apart. Migrations 0025 (order
+  notifications per method; fixed 2 live inbox rows that said "Drop-off confirmed" on pickups) and
+  0026 (cap grammar "is due a clean 🧢"; ready-and-waiting nudge only for drop-off) applied live.
+  Data hooks keep state per account (no previous-account flash); lint is at zero warnings.
+  Phone check without a Mac/KVM: `sim.js` in the scratchpad drives the Expo web build with the
+  iPhone 15 Pro and Pixel 7 profiles through every section (same idea as CI's phone checks).
 - **App redesign (2026-10-09)**: DESIGN.md §8. Home + floating pill tab bar merged (#42). Second
   pass (open PR) gives every tab the same language: one huge title on the page background
   (`ScreenHeader` + `type.hero`), Book as a numbered menu with a blue arrow (the only tap colour),

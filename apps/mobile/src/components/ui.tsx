@@ -76,8 +76,8 @@ export function Button({
         accessibilityRole="button"
         onPress={onPress}
         disabled={disabled}
-        onPressIn={() => (scale.value = withSpring(0.97, spring))}
-        onPressOut={() => (scale.value = withSpring(1, spring))}
+        onPressIn={() => scale.set(withSpring(0.97, spring))}
+        onPressOut={() => scale.set(withSpring(1, spring))}
         style={{
           backgroundColor: v.bg,
           borderRadius: radius.md,
@@ -133,8 +133,8 @@ export function PressScale({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      onPressIn={() => (scale.value = withSpring(0.96, spring))}
-      onPressOut={() => (scale.value = withSpring(1, spring))}
+      onPressIn={() => scale.set(withSpring(0.96, spring))}
+      onPressOut={() => scale.set(withSpring(1, spring))}
     >
       <Animated.View style={[anim, style]}>{children}</Animated.View>
     </Pressable>

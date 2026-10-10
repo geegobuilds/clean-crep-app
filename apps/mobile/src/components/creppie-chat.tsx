@@ -266,7 +266,7 @@ export function CreppieChat({ onClose, draft: initialDraft = '' }: { onClose: ()
                 </Pressable>
               </View>
               <SignInForm
-                subtitle="Sign in so Creppie can put this booking on your account. We'll send you updates on your pair."
+                subtitle="Sign in so Creppie can put this booking on your account. We'll send you updates on your order."
                 onSuccess={() => {
                   setSigningIn(false);
                   send(AFTER_SIGN_IN);

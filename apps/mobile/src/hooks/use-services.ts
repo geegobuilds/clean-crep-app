@@ -12,10 +12,10 @@ export function useServices() {
   // can settle after a newer one (e.g. after Try Again). Only the latest wins.
   const latest = useRef(0);
 
-  const reload = useCallback(async () => {
+  // The fetch itself only sets state once it lands; `reload` (Try Again)
+  // also flips back to the loading state first.
+  const load = useCallback(async () => {
     const call = ++latest.current;
-    setLoading(true);
-    setError(null);
     try {
       const { data, error: queryError } = await supabase
         .from('services')
@@ -33,9 +33,16 @@ export function useServices() {
     }
   }, []);
 
+  const reload = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    return load();
+  }, [load]);
+
   useEffect(() => {
-    reload();
-  }, [reload]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async: state is only set after the fetch resolves
+    load();
+  }, [load]);
 
   return { services, loading, error, reload };
 }

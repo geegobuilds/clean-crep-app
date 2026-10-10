@@ -29,6 +29,22 @@ export const STATUS_STYLES: Record<OrderStatus, { bg: string; fg: string }> = {
 
 // Order Tracker screen's 4-step progress bar.
 export const TRACKER_STEPS = ['Received', 'In Progress', 'Ready', 'Picked Up'] as const;
+// CrepRun (pickup) orders come back to the customer, so they end in "Delivered".
+export const PICKUP_TRACKER_STEPS = ['Received', 'In Progress', 'Ready', 'Delivered'] as const;
+
+/** The tracker steps for how the order travels. */
+export function trackerSteps(method?: 'dropoff' | 'pickup' | null): readonly string[] {
+  return method === 'pickup' ? PICKUP_TRACKER_STEPS : TRACKER_STEPS;
+}
+
+/** Customer-facing status label; CrepRun orders are delivered, not picked up. */
+export function statusLabel(status: OrderStatus, method?: 'dropoff' | 'pickup' | null): string {
+  if (method === 'pickup') {
+    if (status === 'ready_for_pickup') return 'Ready for Delivery';
+    if (status === 'completed') return 'Delivered';
+  }
+  return ORDER_STATUS_LABEL[status];
+}
 
 /**
  * Maps a flat order status to a step index (1-4) on the tracker's progress

@@ -33,13 +33,13 @@ export default function OrdersScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-      <ScreenHeader title="Orders" subtitle="Track every pair, drop-off to pickup." />
+      <ScreenHeader title="Orders" subtitle="Every order, live, until it's back with you." />
 
       <ScrollView refreshControl={session ? refresh : undefined} contentContainerStyle={{ padding: space.lg, gap: space.lg, paddingBottom: 140 }}>
         {!session && (
           <SignInPrompt
             title="Sign in to see your orders"
-            body="Track every pair from drop-off to pickup, live."
+            body="Track every order live, from booking until it's back with you."
             where="orders"
             onSignIn={() => router.push('/sign-in?next=/orders')}
           />
@@ -94,7 +94,7 @@ export default function OrdersScreen() {
                       alignItems: 'center',
                       gap: space.sm,
                     },
-                    isActive ? { borderWidth: 1.5, borderColor: c.accent } : elevation.card,
+                    isActive ? { borderWidth: 1.5, borderColor: c.navy } : elevation.card,
                   ]}
                 >
                   <View style={{ flex: 1 }}>
@@ -102,10 +102,10 @@ export default function OrdersScreen() {
                       {o.item_name}
                     </Text>
                     <Text style={type.caption}>
-                      {o.order_number} · {o.service?.name ?? '—'} · Ready {shortDay(readyBy(o))}
+                      {o.order_number} · {o.service?.name ?? '—'} · {o.drop_method === 'pickup' ? 'Back' : 'Ready'} {shortDay(readyBy(o))}
                     </Text>
                   </View>
-                  <StatusTag status={o.status} />
+                  <StatusTag status={o.status} method={o.drop_method} />
                 </Pressable>
               );
             })}

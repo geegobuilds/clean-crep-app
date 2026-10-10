@@ -9,7 +9,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { fontFamily, TRACKER_STEPS, stepFromStatus, type OrderStatus } from '@clean-crep/shared';
+import { fontFamily, trackerSteps, stepFromStatus, type DropMethod, type OrderStatus } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { StatusTag } from '@/components/status-tag';
 import type { OrderWithService } from '@/hooks/use-orders';
@@ -67,7 +67,7 @@ export function OrderTicket({ order }: { order: OrderWithService }) {
       <View style={{ padding: space.lg, paddingBottom: space.md }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={[type.overline, { color: c.onNavyMuted }]}>Clean Crep · {order.order_number}</Text>
-          <StatusTag status={order.status} onDark />
+          <StatusTag status={order.status} method={order.drop_method} onDark />
         </View>
         <Text style={[type.title, { color: c.white, marginTop: space.sm }]} numberOfLines={2}>
           {order.item_name}
@@ -95,7 +95,7 @@ export function OrderTicket({ order }: { order: OrderWithService }) {
           <StubField label="Service" value={order.service?.name ?? order.item_name} flex={2} />
         </View>
         <StubField label="Add-ons" value={extras.length ? extras.join(' · ') : 'None'} />
-        <StatusTimeline status={order.status} events={order.events ?? []} />
+        <StatusTimeline status={order.status} method={order.drop_method} events={order.events ?? []} />
       </View>
     </View>
   );
@@ -145,16 +145,26 @@ const DOT = 22;
  * Four steps; the filled track springs to the current one, and the current
  * dot pulses. Re-animates whenever the status changes (e.g. live to Ready).
  */
-export function StatusTimeline({ status, events }: { status: OrderStatus; events: { status: OrderStatus; created_at: string }[] }) {
+export function StatusTimeline({
+  status,
+  method,
+  events,
+}: {
+  status: OrderStatus;
+  method?: DropMethod | null;
+  events: { status: OrderStatus; created_at: string }[];
+}) {
+  const STEPS = trackerSteps(method);
   const step = stepFromStatus(status); // 0..4
   const [trackW, setTrackW] = useState(0);
   const fill = useSharedValue(0);
   const pulse = useSharedValue(0);
 
+  const stepCount = STEPS.length;
   useEffect(() => {
-    const target = trackW * Math.max(0, Math.min((step - 1) / (TRACKER_STEPS.length - 1), 1));
+    const target = trackW * Math.max(0, Math.min((step - 1) / (stepCount - 1), 1));
     fill.value = withDelay(150, withSpring(target, spring));
-  }, [step, trackW, fill]);
+  }, [step, stepCount, trackW, fill]);
 
   useEffect(() => {
     pulse.value = 0;
@@ -173,13 +183,13 @@ export function StatusTimeline({ status, events }: { status: OrderStatus; events
   };
 
   return (
-    <View testID="status-timeline" accessibilityLabel={`Status: step ${step} of ${TRACKER_STEPS.length}`} style={{ marginTop: space.xs }}>
-      <View style={{ height: DOT, justifyContent: 'center', marginHorizontal: `${50 / TRACKER_STEPS.length}%` }}>
+    <View testID="status-timeline" accessibilityLabel={`Status: step ${step} of ${STEPS.length}`} style={{ marginTop: space.xs }}>
+      <View style={{ height: DOT, justifyContent: 'center', marginHorizontal: `${50 / STEPS.length}%` }}>
         <View onLayout={(e) => setTrackW(e.nativeEvent.layout.width)} style={{ height: 2, borderRadius: 1, backgroundColor: c.onNavyLine }} />
         <Animated.View style={[{ position: 'absolute', left: 0, height: 2, borderRadius: 1, backgroundColor: c.accent }, fillStyle]} />
       </View>
       <View style={{ flexDirection: 'row', marginTop: -DOT }}>
-        {TRACKER_STEPS.map((label, i) => {
+        {STEPS.map((label, i) => {
           // Completed = every step ticked, nothing left pulsing.
           const finished = status === 'completed';
           const done = i < step - 1 || (finished && i === step - 1);

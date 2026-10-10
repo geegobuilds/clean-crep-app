@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { OrderStatus, Pair } from '@clean-crep/shared';
+import type { DropMethod, OrderStatus, Pair } from '@clean-crep/shared';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
@@ -8,6 +8,7 @@ export interface VaultClean {
   id: string;
   order_number: string;
   created_at: string;
+  drop_method?: DropMethod;
   status: OrderStatus;
   service: { name: string } | null;
 }
@@ -35,26 +36,21 @@ const BUCKET = 'order-photos';
 export function useVault() {
   const { session } = useAuth();
   const [pairs, setPairs] = useState<VaultPair[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dataFor, setDataFor] = useState<string | null>(null);
   const latest = useRef(0);
 
   const reload = useCallback(async () => {
     const call = ++latest.current;
-    if (!session) {
-      setPairs([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+    if (!session) return;
     const { data, error: qe } = await supabase
       .from('pairs')
-      .select('*, cleans:orders(id, order_number, created_at, status, service:services(name)), events:pair_events(kind, order_id, data, created_at)')
+      .select('*, cleans:orders(id, order_number, created_at, status, drop_method, service:services(name)), events:pair_events(kind, order_id, data, created_at)')
       .order('created_at', { ascending: false });
     if (call !== latest.current) return;
     if (qe) {
       setError(friendlyError(qe, 'load'));
-      setLoading(false);
+      setDataFor(session.user.id);
       return;
     }
     const rows = ((data ?? []) as unknown as Omit<VaultPair, 'cover'>[]).map((p) => ({
@@ -90,11 +86,12 @@ export function useVault() {
     if (call !== latest.current) return;
     setError(null);
     setPairs(rows.map((p) => ({ ...p, cover: covers.get(p.id) ?? null })));
-    setLoading(false);
+    setDataFor(session.user.id);
   }, [session]);
 
   useEffect(() => {
     // One-shot load per account.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async: state is only set after the fetch resolves
     reload();
   }, [reload]);
 
@@ -112,5 +109,7 @@ export function useVault() {
     [session, reload]
   );
 
-  return { pairs, loading, error, reload, savePair };
+  const userId = session?.user.id ?? null;
+  const current = !!userId && dataFor === userId;
+  return { pairs: current ? pairs : [], loading: !!userId && !current, error: userId ? error : null, reload, savePair };
 }

@@ -41,7 +41,7 @@ async function ensureAndroidChannel() {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(ORDER_UPDATES_CHANNEL, {
     name: 'Order updates',
-    description: 'When your pair is received, being cleaned, and ready for pickup.',
+    description: 'When your order is received, being cleaned, and ready.',
     importance: Notifications.AndroidImportance.HIGH,
   });
 }
