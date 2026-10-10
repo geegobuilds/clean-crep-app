@@ -25,7 +25,9 @@ _Last updated: 2026-10-09_
   Polish pass (open PR): Vault pair detail rebuilt (big stats, pill CTA, condition before → after,
   passport wallet card, care-history timeline), pull-to-refresh on Orders/Vault/Inbox/Profile,
   shimmer skeletons shaped like the new cards, Ask Creppie on Book as an inline card (no longer
-  floats over the menu). Next: real shoe cutouts once Geego sends photos (Cowork: Shoe Cutouts).
+  floats over the menu). Sign-in rebuilt: navy hero with Creppie waving over a white sheet, filled
+  fields with focus outline, Show/Hide password, autofill + keyboard next/go, pill submit; the
+  booking sign-in sheet is white too. Next: real shoe cutouts once Geego sends photos (Cowork: Shoe Cutouts).
 - **Expo Go + SDK 57 (PR #36, 2026-10-08)**: app upgraded Expo SDK 54 → 57 (Expo Go on iOS only
   runs the latest SDK) and linked to EAS project `@geegobuildss-team/clean-crep-app` (slug now
   `clean-crep-app`). Publish with `cd apps/mobile && npm run publish:preview`; open the update in

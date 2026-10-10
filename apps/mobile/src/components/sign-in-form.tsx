@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
-import { colors } from '@clean-crep/shared';
+import { forwardRef, useRef, useState, type ReactNode } from 'react';
+import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { PressScale } from '@/components/ui';
+import { c, elevation, radius, space, type } from '@/theme';
 import { supabase } from '@/lib/supabase';
 import { ensureCustomerProfile } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
@@ -13,8 +14,11 @@ import { openPrivacy, openTerms } from '@/lib/legal';
  * onSuccess fires once there is a session AND the customers row exists, so a
  * caller can place an order straight away.
  */
-export function SignInForm({ subtitle, onSuccess }: { subtitle?: string; onSuccess?: () => void }) {
+export function SignInForm({ subtitle, onSuccess, bare }: { subtitle?: string; onSuccess?: () => void; bare?: boolean }) {
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const [showPassword, setShowPassword] = useState(false);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -66,92 +70,138 @@ export function SignInForm({ subtitle, onSuccess }: { subtitle?: string; onSucce
     }
   }
 
+  const isSignUp = mode === 'signUp';
   return (
-    <View style={{ backgroundColor: colors.white, borderRadius: 16, padding: 20 }}>
-      <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 16, color: colors.navy, marginBottom: 4 }}>
-        {mode === 'signIn' ? 'Welcome back' : 'Create your account'}
-      </Text>
-      <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 12, color: colors.caption, marginBottom: 20 }}>
-        {subtitle ?? (mode === 'signIn' ? 'Sign in to book and track your cleans.' : 'Book your first clean in a minute.')}
+    <View style={bare ? null : [{ backgroundColor: c.surface, borderRadius: radius.lg + 4, padding: space.lg }, elevation.raised]}>
+      <Text style={type.title}>{isSignUp ? 'Create your account' : 'Welcome back'}</Text>
+      <Text style={[type.body, { color: c.inkMuted, marginTop: space.xxs, marginBottom: space.lg }]}>
+        {subtitle ?? (isSignUp ? 'Book your first clean in a minute.' : 'Sign in to book and track your cleans.')}
       </Text>
 
-      {mode === 'signUp' && <Field label="NAME" value={name} onChangeText={setName} placeholder="Geego" />}
-      <Field label="EMAIL" value={email} onChangeText={setEmail} placeholder="you@email.com" keyboardType="email-address" autoCapitalize="none" />
-      <Field label="PASSWORD" value={password} onChangeText={setPassword} placeholder="••••••••" secureTextEntry />
+      {isSignUp && (
+        <Field label="NAME" value={name} onChangeText={setName} placeholder="Geego" autoComplete="name" textContentType="name" returnKeyType="next" onSubmitEditing={() => emailRef.current?.focus()} />
+      )}
+      <Field
+        ref={emailRef}
+        label="EMAIL"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="you@email.com"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
+        textContentType="emailAddress"
+        returnKeyType="next"
+        onSubmitEditing={() => passwordRef.current?.focus()}
+      />
+      <Field
+        ref={passwordRef}
+        label="PASSWORD"
+        value={password}
+        onChangeText={setPassword}
+        placeholder="••••••••"
+        secureTextEntry={!showPassword}
+        autoCapitalize="none"
+        autoComplete={isSignUp ? 'new-password' : 'current-password'}
+        textContentType={isSignUp ? 'newPassword' : 'password'}
+        returnKeyType="go"
+        onSubmitEditing={handleSubmit}
+        accessory={
+          <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={10} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+            <Text style={[type.caption, { color: c.ink, fontFamily: type.bodyStrong.fontFamily }]}>{showPassword ? 'Hide' : 'Show'}</Text>
+          </Pressable>
+        }
+      />
 
-      {error && <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 12, color: '#993C1D', marginBottom: 12 }}>{error}</Text>}
-      {info && <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 12, color: '#16A34A', marginBottom: 12 }}>{info}</Text>}
+      {error && <Text style={[type.body, { color: c.danger, marginBottom: space.sm }]}>{error}</Text>}
+      {info && <Text style={[type.body, { color: c.ink, marginBottom: space.sm }]}>{info}</Text>}
 
-      <Pressable
-        onPress={handleSubmit}
-        disabled={submitting}
+      <PressScale
+        testID="auth-submit"
+        onPress={() => {
+          if (!submitting) handleSubmit();
+        }}
         style={{
-          backgroundColor: colors.blue,
-          borderRadius: 8,
-          paddingVertical: 14,
-          alignItems: 'center',
+          marginTop: space.xs,
+          height: 56,
+          borderRadius: radius.pill,
+          backgroundColor: c.accent,
           opacity: submitting ? 0.6 : 1,
-          marginTop: 4,
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 12px 26px rgba(26,111,212,0.3), 0 2px 6px rgba(10,31,68,0.14)',
         }}
       >
-        <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 14, color: colors.white }}>
-          {submitting ? 'Please wait…' : mode === 'signIn' ? 'Sign In' : 'Create Account'}
-        </Text>
-      </Pressable>
+        <Text style={[type.button, { color: c.white }]}>{submitting ? 'Please wait…' : isSignUp ? 'Create Account' : 'Sign In'}</Text>
+      </PressScale>
 
-      {mode === 'signUp' && (
-        <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 11, color: colors.caption, textAlign: 'center', marginTop: 12, lineHeight: 16 }}>
+      {isSignUp && (
+        <Text style={[type.caption, { textAlign: 'center', marginTop: space.sm }]}>
           By creating an account you agree to our{' '}
-          <Text accessibilityRole="link" onPress={openTerms} style={{ color: colors.blue }}>Terms</Text> and{' '}
-          <Text accessibilityRole="link" onPress={openPrivacy} style={{ color: colors.blue }}>Privacy Policy</Text>.
+          <Text accessibilityRole="link" onPress={openTerms} style={{ color: c.ink, textDecorationLine: 'underline' }}>
+            Terms
+          </Text>{' '}
+          and{' '}
+          <Text accessibilityRole="link" onPress={openPrivacy} style={{ color: c.ink, textDecorationLine: 'underline' }}>
+            Privacy Policy
+          </Text>
+          .
         </Text>
       )}
 
       <Pressable
         onPress={() => {
-          setMode(mode === 'signIn' ? 'signUp' : 'signIn');
+          setMode(isSignUp ? 'signIn' : 'signUp');
           setError(null);
           setInfo(null);
         }}
-        style={{ marginTop: 16, alignItems: 'center' }}
+        hitSlop={8}
+        style={{ marginTop: space.md, alignItems: 'center', paddingVertical: space.xs }}
       >
-        <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 12, color: colors.blue }}>
-          {mode === 'signIn' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-        </Text>
+        <Text style={[type.bodyStrong, { color: c.accent }]}>{isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}</Text>
       </Pressable>
     </View>
   );
 }
 
-function Field(props: {
+type FieldProps = {
   label: string;
   value: string;
   onChangeText: (v: string) => void;
-  placeholder?: string;
-  secureTextEntry?: boolean;
-  keyboardType?: 'default' | 'email-address';
-  autoCapitalize?: 'none' | 'sentences';
-}) {
-  const { label, ...inputProps } = props;
+  accessory?: ReactNode;
+} & Pick<
+  TextInputProps,
+  'placeholder' | 'secureTextEntry' | 'keyboardType' | 'autoCapitalize' | 'autoComplete' | 'textContentType' | 'returnKeyType' | 'onSubmitEditing'
+>;
+
+/** Filled field: soft fill at rest, a navy outline while you type in it. */
+const Field = forwardRef<TextInput, FieldProps>(function Field({ label, accessory, ...inputProps }, ref) {
+  const [focused, setFocused] = useState(false);
   return (
-    <View style={{ marginBottom: 14 }}>
-      <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 10, color: colors.caption, letterSpacing: 2, marginBottom: 8 }}>
-        {label}
-      </Text>
-      <TextInput
-        {...inputProps}
-        placeholderTextColor={colors.caption}
+    <View style={{ marginBottom: space.md }}>
+      <Text style={[type.overline, { marginBottom: space.xs }]}>{label}</Text>
+      <View
         style={{
-          borderWidth: 1,
-          borderColor: colors.border,
-          borderRadius: 8,
-          paddingVertical: 11,
-          paddingHorizontal: 14,
-          fontSize: 13,
-          fontFamily: 'DMSans_400Regular',
-          color: colors.charcoal,
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: focused ? c.surface : c.bg,
+          borderWidth: 1.5,
+          borderColor: focused ? c.navy : 'transparent',
+          borderRadius: radius.md,
+          paddingRight: accessory ? space.md : 0,
         }}
-      />
+      >
+        <TextInput
+          ref={ref}
+          {...inputProps}
+          accessibilityLabel={label.charAt(0) + label.slice(1).toLowerCase()}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholderTextColor={c.inkMuted}
+          style={{ flex: 1, minHeight: 52, paddingHorizontal: space.md, fontFamily: type.body.fontFamily, fontSize: 16, color: c.ink }}
+        />
+        {accessory}
+      </View>
     </View>
   );
-}
+});
