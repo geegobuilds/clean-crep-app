@@ -19,10 +19,10 @@ _Last updated: 2026-10-09_
   Booking flow (open PR): numbered sections (01 Your pair … 05 Notes), navy selection states, a
   receipt card with a huge total and the pill Confirm button; the booked screen is a navy hero with
   BOOKED dropping in letter by letter, Creppie springing in, and a ticket (date huge, tear line).
-  #44 merged and published to Expo Go (update group 8d402431-0f0a-4db7-89c3-e0bea6cc16b2, 2026-10-10;
+  #44 merged and published to Expo Go (update group 8d402431-…, then 65ef4248-5789-4428-9e07-923a3dd22a81 after #45, 2026-10-10;
   the agent proxy injects the EXPO robot token, so `EXPO_TOKEN=x npm run publish:preview` works from
   a cloud session after writing apps/mobile/.env from eas.json's preview env).
-  Polish pass (open PR): Vault pair detail rebuilt (big stats, pill CTA, condition before → after,
+  Polish pass (#45, merged): Vault pair detail rebuilt (big stats, pill CTA, condition before → after,
   passport wallet card, care-history timeline), pull-to-refresh on Orders/Vault/Inbox/Profile,
   shimmer skeletons shaped like the new cards, Ask Creppie on Book as an inline card (no longer
   floats over the menu). Sign-in rebuilt: navy hero with Creppie waving over a white sheet, filled
