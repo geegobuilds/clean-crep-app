@@ -7,6 +7,8 @@ import { useAuth } from '@/lib/auth';
 import { askCreppie, loadChat, saveChat, WHATSAPP_URL, type CreppieMsg } from '@/lib/creppie';
 import { SignInForm } from '@/components/sign-in-form';
 import { track } from '@/lib/analytics';
+import { Icon } from '@/components/icon';
+import { c, elevation, radius, space, type } from '@/theme';
 
 // "Ask Creppie" in the app: a floating face button that opens a full-screen
 // chat. Anyone can ask questions; booking needs an account, so when Creppie
@@ -40,40 +42,65 @@ function Linkified({ text }: { text: string }) {
   );
 }
 
-/** Floating "Ask Creppie" button. Place it as the last child of a screen's root view. */
-export function CreppieButton() {
+/**
+ * "Ask Creppie". Floating face button by default (place it as the last child of a
+ * screen's root view); `inline` renders it as a card in the page flow instead, so
+ * it never sits on top of content.
+ */
+export function CreppieButton({ inline }: { inline?: boolean } = {}) {
   const [open, setOpen] = useState(false);
+  const onPress = () => {
+    setOpen(true);
+    track('creppie_chat_opened', { platform: 'app' });
+  };
   return (
     <>
-      <Pressable
-        onPress={() => {
-          setOpen(true);
-          track('creppie_chat_opened', { platform: 'app' });
-        }}
-        accessibilityRole="button"
-        accessibilityLabel="Ask Creppie"
-        style={{
-          position: 'absolute',
-          right: 16,
-          bottom: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          backgroundColor: colors.navy,
-          borderRadius: 30,
-          paddingVertical: 4,
-          paddingLeft: 4,
-          paddingRight: 14,
-          shadowColor: '#0A1F44',
-          shadowOpacity: 0.25,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 6,
-        }}
-      >
-        <Image source={face} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.ice }} />
-        <Text style={{ color: colors.white, fontSize: 13, fontFamily: 'DMSans_500Medium' }}>Ask Creppie</Text>
-      </Pressable>
+      {inline ? (
+        <Pressable
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel="Ask Creppie"
+          style={({ pressed }) => [
+            { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: c.navy, borderRadius: radius.lg + 4, padding: space.sm, paddingRight: space.md },
+            elevation.raised,
+            pressed && { transform: [{ scale: 0.98 }] },
+          ]}
+        >
+          <Image source={face} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: c.ice }} />
+          <View style={{ flex: 1 }}>
+            <Text style={[type.bodyStrong, { color: c.white }]}>Ask Creppie</Text>
+            <Text style={[type.caption, { color: c.onNavyMuted }]}>Not sure which clean? Ask about stains, suede, pickup or prices.</Text>
+          </View>
+          <Icon name="chevronR" size={18} color={c.onNavyMuted} />
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel="Ask Creppie"
+          style={{
+            position: 'absolute',
+            right: 16,
+            bottom: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            backgroundColor: colors.navy,
+            borderRadius: 30,
+            paddingVertical: 4,
+            paddingLeft: 4,
+            paddingRight: 14,
+            shadowColor: '#0A1F44',
+            shadowOpacity: 0.25,
+            shadowRadius: 10,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 6,
+          }}
+        >
+          <Image source={face} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.ice }} />
+          <Text style={{ color: colors.white, fontSize: 13, fontFamily: 'DMSans_500Medium' }}>Ask Creppie</Text>
+        </Pressable>
+      )}
       {open && <CreppieChat onClose={() => setOpen(false)} />}
     </>
   );

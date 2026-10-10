@@ -12,6 +12,7 @@ import { openPrivacy, openTerms } from '@/lib/legal';
 import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
 import { Overline, ScreenHeader } from '@/components/ui';
 import { c, elevation, radius, space, type } from '@/theme';
+import { usePullRefresh } from '@/hooks/use-pull-refresh';
 
 const LOYALTY_GOAL = 500;
 
@@ -50,6 +51,7 @@ export default function ProfileScreen() {
   const features = useFeatures();
   const { session, customer, signOut } = useAuth();
   const { orders, loading, error, reload } = useOrders();
+  const refresh = usePullRefresh(reload);
   const pastOrders = orders.filter((o) => o.status === 'completed');
   const points = customer?.loyalty_points ?? 0;
   const pctToGoal = Math.min(100, Math.round((points / LOYALTY_GOAL) * 100));
@@ -76,7 +78,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
+      <ScrollView refreshControl={refresh} contentContainerStyle={{ paddingBottom: 140 }}>
         {/* Big name, avatar on the right. */}
         <View style={{ paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.md, flexDirection: 'row', alignItems: 'flex-end', gap: space.md }}>
           <View style={{ flex: 1 }}>

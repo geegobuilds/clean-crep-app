@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
 import { Overline, ScreenHeader } from '@/components/ui';
 import { c, elevation, radius, space, type } from '@/theme';
+import { usePullRefresh } from '@/hooks/use-pull-refresh';
 
 const ICON_MAP: Record<NotificationType, { icon: IconName }> = {
   ready: { icon: 'truck' },
@@ -31,6 +32,7 @@ export default function InboxScreen() {
   const router = useRouter();
   const { session } = useAuth();
   const { notifications, loading, error, reload, markRead, markAllRead } = useNotifications();
+  const refresh = usePullRefresh(reload);
   const unread = notifications.filter((n) => !n.read).length;
   const today = notifications.filter((n) => isToday(n.created_at));
   const earlier = notifications.filter((n) => !isToday(n.created_at));
@@ -54,7 +56,7 @@ export default function InboxScreen() {
         }
       />
 
-      <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, gap: space.lg, paddingBottom: 140 }}>
+      <ScrollView refreshControl={session ? refresh : undefined} contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, gap: space.lg, paddingBottom: 140 }}>
         {!session && (
           <SignInPrompt
             title="Sign in to see your updates"

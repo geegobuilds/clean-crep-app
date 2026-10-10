@@ -602,8 +602,12 @@ export default function BookingScreen() {
             </View>
           </PressScale>
         ))}
+        {services.length > 0 && (
+          <View style={{ marginTop: space.sm }}>
+            <CreppieButton inline />
+          </View>
+        )}
       </ScrollView>
-      <CreppieButton />
     </SafeAreaView>
   );
 }
