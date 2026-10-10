@@ -36,7 +36,7 @@ export default function VaultScreen() {
   const tile = Math.floor((Math.min(width, 600) - space.lg * 2 - space.md) / 2);
   const { session } = useAuth();
   const { features, loaded } = useFeatureState();
-  const { pairs, loading, error, reload, savePair } = useVault();
+  const { pairs, loading, error, reload, savePair, removePair } = useVault();
   const refresh = usePullRefresh(reload);
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -46,7 +46,7 @@ export default function VaultScreen() {
   if (loaded && !features.has('vault')) return <Redirect href="/" />;
 
   if (open) {
-    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onBook={() => router.push('/book')} />;
+    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onRemove={async () => { const err = await removePair(open.id); if (!err) setOpenId(null); return err; }} onBook={() => router.push({ pathname: '/book', params: { pair: open.id } })} />;
   }
 
   const capCount = pairs.filter((p) => p.category === 'cap').length;
@@ -224,6 +224,7 @@ function PairDetail({
   showCreppie,
   onBack,
   onSave,
+  onRemove,
   onBook,
 }: {
   pair: VaultPair;
@@ -232,9 +233,12 @@ function PairDetail({
   showCreppie: boolean;
   onBack: () => void;
   onSave: (f: PairFields) => Promise<string | null>;
+  onRemove: () => Promise<string | null>;
   onBook: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [removing, setRemoving] = useState<'ask' | 'busy' | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const details = [pair.colorway, pair.size && `Size ${pair.size}`].filter(Boolean).join(' · ');
   const { width } = useWindowDimensions();
@@ -365,6 +369,37 @@ function PairDetail({
                 <Button variant="secondary" label="Ask Creppie" onPress={() => setAsking(true)} style={{ flex: 1 }} />
               )}
               <Button variant="secondary" label="Edit details" onPress={() => setEditing(true)} style={{ flex: 1 }} />
+            </View>
+          )}
+          {/* Only never-cleaned items can go: anything we've cleaned keeps its care history. */}
+          {pair.cleans.length === 0 && !editing && (
+            <View style={{ alignItems: 'center', gap: space.xs }}>
+              {removing === null ? (
+                <Pressable onPress={() => setRemoving('ask')} hitSlop={8} accessibilityRole="button">
+                  <Text style={[type.bodyStrong, { color: c.danger }]}>Remove from Vault</Text>
+                </Pressable>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+                  <Text style={type.body}>Remove {pairTitle(pair)}?</Text>
+                  <Pressable
+                    testID="confirm-remove"
+                    onPress={async () => {
+                      setRemoving('busy');
+                      const err = await onRemove();
+                      setRemoveError(err);
+                      if (err) setRemoving(null);
+                    }}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                  >
+                    <Text style={[type.bodyStrong, { color: c.danger }]}>{removing === 'busy' ? 'Removing…' : 'Remove'}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setRemoving(null)} hitSlop={8} accessibilityRole="button">
+                    <Text style={[type.bodyStrong, { color: c.inkMuted }]}>Cancel</Text>
+                  </Pressable>
+                </View>
+              )}
+              {removeError && <Text style={[type.caption, { color: c.danger }]}>{removeError}</Text>}
             </View>
           )}
         </View>

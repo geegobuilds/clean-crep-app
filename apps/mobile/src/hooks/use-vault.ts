@@ -109,7 +109,20 @@ export function useVault() {
     [session, reload]
   );
 
+  /** Remove a never-cleaned item (RLS refuses anything with a clean). */
+  const removePair = useCallback(
+    async (id: string) => {
+      if (!session) return 'Sign in first.';
+      const { data, error: e } = await supabase.from('pairs').delete().eq('id', id).select('id');
+      if (e) return friendlyError(e, 'save');
+      if (!data?.length) return "This one has care history, so it stays in your Vault.";
+      await reload();
+      return null;
+    },
+    [session, reload]
+  );
+
   const userId = session?.user.id ?? null;
   const current = !!userId && dataFor === userId;
-  return { pairs: current ? pairs : [], loading: !!userId && !current, error: userId ? error : null, reload, savePair };
+  return { pairs: current ? pairs : [], loading: !!userId && !current, error: userId ? error : null, reload, savePair, removePair };
 }

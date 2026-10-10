@@ -4,12 +4,14 @@ import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated'
 import Svg, { Defs, Ellipse, LinearGradient as SvgGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { formatPrice, orderTotal, serviceKind, type AddOn, type Service, type Zone } from '@clean-crep/shared';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { formatPrice, orderTotal, pairFitsService, pairTitle, serviceKind, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
 import { useMembership } from '@/hooks/use-membership';
 import { useServices } from '@/hooks/use-services';
+import { useFeatures } from '@/hooks/use-features';
+import { useVault } from '@/hooks/use-vault';
 import { useAddOns } from '@/hooks/use-add-ons';
 import { useZones } from '@/hooks/use-zones';
 import { supabase } from '@/lib/supabase';
@@ -70,6 +72,22 @@ export default function BookingScreen() {
   const [selDay, setSelDay] = useState(0);
   const [notes, setNotes] = useState('');
   const [shoeType, setShoeType] = useState('');
+  // The Vault item this clean is for (sent as pair_id, so repeat cleans build
+  // one item's history instead of adding a new one). /book?pair=<id> comes
+  // from "Book its next clean" on a Vault item.
+  const features = useFeatures();
+  const { pairs: vaultPairs } = useVault();
+  const vaultOn = features.has('vault');
+  const { pair: pairParam } = useLocalSearchParams<{ pair?: string }>();
+  const [pairId, setPairId] = useState<string | null>(null);
+  const [seenParam, setSeenParam] = useState<string | undefined>(undefined);
+  const paramPair = vaultOn && pairParam ? vaultPairs.find((p) => p.id === pairParam) : undefined;
+  if (paramPair && seenParam !== paramPair.id) {
+    setSeenParam(paramPair.id);
+    setPairId(paramPair.id);
+    setShoeType(pairTitle(paramPair));
+  }
+  const chosenPair = pairId ? (vaultPairs.find((p) => p.id === pairId) ?? null) : null;
   const [submitting, setSubmitting] = useState(false);
   const [useCredit, setUseCredit] = useState(true);
   const { membership, reload: reloadMembership } = useMembership();
@@ -116,6 +134,8 @@ export default function BookingScreen() {
   const total = fullTotal !== null && creditApplied && selected?.price_cents != null ? Math.max(fullTotal - selected.price_cents, 0) : fullTotal;
   const hasKit = extras.some((a) => a.kind === 'kit');
   const headwear = forHeadwear;
+  // Vault items this service can clean, shown as one-tap choices.
+  const fitting = vaultOn && selected ? vaultPairs.filter((p) => pairFitsService(p.category, selected.name)) : [];
 
   function togglePick(id: string) {
     tapLight();
@@ -165,6 +185,7 @@ export default function BookingScreen() {
       service_id: selected.id,
       location_id: selected.location_id,
       item_name: shoeType || selected.name,
+      pair_id: chosenPair?.id ?? null,
       drop_method: dropoff ? 'dropoff' : 'pickup',
       zone_id: dropoff ? null : zoneId,
       // For pickups the database sets this to the zone's next CrepRun day.
@@ -200,6 +221,7 @@ export default function BookingScreen() {
     setSelected(null);
     setPicked([]);
     setShoeType('');
+    setPairId(null);
     setNotes('');
     router.push('/');
   }
@@ -325,9 +347,40 @@ export default function BookingScreen() {
           <View style={{ paddingHorizontal: space.lg, gap: space.xl }}>
             <View>
               <Label n={num()}>{headwear ? 'YOUR CAP' : 'YOUR PAIR'}</Label>
+              {fitting.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginBottom: space.sm }}>
+                  {fitting.map((p) => {
+                    const on = p.id === chosenPair?.id;
+                    return (
+                      <Pressable
+                        key={p.id}
+                        testID="vault-choice"
+                        onPress={() => {
+                          tapLight();
+                          setPairId(on ? null : p.id);
+                          setShoeType(on ? '' : pairTitle(p));
+                        }}
+                        accessibilityRole="radio"
+                        aria-checked={on}
+                        style={[
+                          { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: space.xs, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: on ? c.navy : c.surface },
+                          on ? null : elevation.card,
+                        ]}
+                      >
+                        {on && <Icon name="check" size={14} color={c.white} strokeWidth={3} />}
+                        <Text style={[type.bodyStrong, { fontSize: 14, color: on ? c.white : c.ink }]}>{pairTitle(p)}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
               <TextInput
                 value={shoeType}
-                onChangeText={setShoeType}
+                onChangeText={(t) => {
+                  setShoeType(t);
+                  // Typing something else means a different item than the Vault one.
+                  if (chosenPair && t !== pairTitle(chosenPair)) setPairId(null);
+                }}
                 placeholder={headwear ? 'e.g. New Era 59FIFTY, Nike dad cap' : 'e.g. Nike Air Force 1, Clarks Desert Boot'}
                 placeholderTextColor={c.inkMuted}
                 style={inputStyle}
@@ -563,13 +616,35 @@ export default function BookingScreen() {
   }
 
   // Footwear first, then caps & hats under their own heading; numbered straight through.
-  const ordered = [...services.filter((x) => serviceKind(x.name) === 'footwear'), ...services.filter((x) => serviceKind(x.name) === 'headwear')];
+  // Booking for a Vault item: only the services that can clean it.
+  const offered = chosenPair ? services.filter((x) => pairFitsService(chosenPair.category, x.name)) : services;
+  const ordered = [...offered.filter((x) => serviceKind(x.name) === 'footwear'), ...offered.filter((x) => serviceKind(x.name) === 'headwear')];
   const menu = ordered.map((svc, i) => ({ svc, i, groupStart: i > 0 && serviceKind(svc.name) === 'headwear' && serviceKind(ordered[i - 1].name) !== 'headwear' }));
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
       <ScreenHeader title="Book" subtitle="Pick a service. We handle the rest." />
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, paddingBottom: 140, gap: space.md }}>
+        {chosenPair && (
+          <View testID="booking-for" style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: c.navy, borderRadius: radius.lg, padding: space.md }}>
+            <Icon name="vault" size={18} color={c.onNavyMuted} />
+            <View style={{ flex: 1 }}>
+              <Text style={[type.overline, { color: c.onNavyMuted }]}>Booking for</Text>
+              <Text style={[type.bodyStrong, { color: c.white }]}>{pairTitle(chosenPair)}</Text>
+            </View>
+            <Pressable
+              onPress={() => {
+                setPairId(null);
+                setShoeType('');
+              }}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Book something else"
+            >
+              <Text style={[type.bodyStrong, { color: c.onNavyMuted }]}>Change</Text>
+            </Pressable>
+          </View>
+        )}
         <Overline style={{ marginBottom: space.xxs }}>AVAILABLE SERVICES</Overline>
         {servicesLoading && services.length === 0 && <SkeletonList count={4} variant="service" />}
         {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
@@ -588,6 +663,10 @@ export default function BookingScreen() {
               testID="service-card"
               onPress={() => {
                 setSelected(svc);
+                if (chosenPair && !pairFitsService(chosenPair.category, svc.name)) {
+                  setPairId(null);
+                  setShoeType('');
+                }
                 setStep(1);
                 track('booking_started', { service: svc.name, platform: 'app' });
               }}
