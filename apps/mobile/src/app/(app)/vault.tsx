@@ -12,7 +12,8 @@ import { useFeatureState } from '@/hooks/use-features';
 import { useVault, type VaultPair } from '@/hooks/use-vault';
 import { useAuth } from '@/lib/auth';
 import { tapLight } from '@/lib/haptics';
-import { c, radius, space, type } from '@/theme';
+import { usePullRefresh } from '@/hooks/use-pull-refresh';
+import { c, elevation, radius, space, type } from '@/theme';
 
 // The Vault (docs/VISION.md, Phase 1): every pair the customer owns, with its
 // care history and Crep Passport. Pairs appear on their own from orders
@@ -36,6 +37,7 @@ export default function VaultScreen() {
   const { session } = useAuth();
   const { features, loaded } = useFeatureState();
   const { pairs, loading, error, reload, savePair } = useVault();
+  const refresh = usePullRefresh(reload);
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const open = pairs.find((p) => p.id === openId) ?? null;
@@ -52,7 +54,7 @@ export default function VaultScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
       <ScreenHeader title="Vault" subtitle="Every pair you own, and how we've cared for it." />
-      <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.md, paddingBottom: space.xxl }}>
+      <ScrollView refreshControl={session ? refresh : undefined} contentContainerStyle={{ padding: space.lg, gap: space.md, paddingBottom: 140 }}>
         {!session && (
           <SignInPrompt
             title="Sign in to open your Vault"
@@ -177,34 +179,37 @@ function latestGrades(pair: VaultPair) {
 function ConditionCard({ pair }: { pair: VaultPair }) {
   const g = latestGrades(pair);
   if (!g || !(g.before || g.after)) return null;
+  const summary = (g.after ?? g.before)?.summary;
   return (
-    <Card testID="condition-card" style={{ gap: space.sm }}>
-      <Overline>Condition · AI graded</Overline>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-        {g.before && (
-          <View>
-            <Text style={type.caption}>Before</Text>
-            <Text style={[type.priceLg, { color: c.inkMuted }]}>{g.before.score}</Text>
-          </View>
-        )}
-        {g.before && g.after && <Icon name="arrowR" size={20} color={c.inkMuted} />}
-        {g.after && (
-          <View>
-            <Text style={type.caption}>After</Text>
-            <Text style={type.priceLg}>
-              {g.after.score}
-              <Text style={[type.body, { color: c.inkMuted }]}>/10</Text>
-            </Text>
-          </View>
-        )}
+    <View testID="condition-card" style={[{ backgroundColor: c.surface, borderRadius: radius.lg + 4, padding: space.lg, gap: space.sm }, elevation.card]}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Overline>Condition · AI graded</Overline>
         {g.restored !== null && g.restored > 0 && (
-          <View style={{ marginLeft: 'auto', backgroundColor: c.ice, borderRadius: radius.pill, paddingVertical: 6, paddingHorizontal: 12 }}>
-            <Text style={[type.bodyStrong, { color: c.accent }]}>+{g.restored} restored</Text>
+          <View style={{ backgroundColor: c.navy, borderRadius: radius.pill, paddingVertical: 4, paddingHorizontal: 10 }}>
+            <Text style={[type.caption, { color: c.white, fontFamily: type.bodyStrong.fontFamily }]}>+{g.restored} restored</Text>
           </View>
         )}
       </View>
-      {!!(g.after ?? g.before)?.summary && <Text style={type.caption}>{(g.after ?? g.before)!.summary}</Text>}
-    </Card>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.lg }}>
+        {g.before && (
+          <View>
+            <Text style={[type.hero, { color: c.line, fontVariant: ['tabular-nums'] }]}>{g.before.score}</Text>
+            <Text style={type.overline}>Before</Text>
+          </View>
+        )}
+        {g.before && g.after && <Icon name="arrowR" size={22} color={c.inkMuted} />}
+        {g.after && (
+          <View>
+            <Text style={[type.hero, { fontSize: 64, lineHeight: 66, fontVariant: ['tabular-nums'] }]}>
+              {g.after.score}
+              <Text style={[type.title, { color: c.inkMuted }]}>/10</Text>
+            </Text>
+            <Text style={type.overline}>After</Text>
+          </View>
+        )}
+      </View>
+      {!!summary && <Text style={[type.body, { color: c.inkMuted }]}>{summary}</Text>}
+    </View>
   );
 }
 
@@ -228,77 +233,137 @@ function PairDetail({
   const [editing, setEditing] = useState(false);
   const [asking, setAsking] = useState(false);
   const details = [pair.colorway, pair.size && `Size ${pair.size}`].filter(Boolean).join(' · ');
+  const { width } = useWindowDimensions();
+  const done = pair.cleans.filter((o) => o.status === 'completed');
+  const g = latestGrades(pair);
+  const stats = [
+    { label: done.length === 1 ? 'Clean' : 'Cleans', value: String(done.length) },
+    ...(showGrade && g?.after ? [{ label: 'Condition', value: `${g.after.score}/10` }] : []),
+    { label: 'Last clean', value: done.length ? new Date(done[0].created_at).toLocaleDateString('en-JM', { day: 'numeric', month: 'short' }) : '—' },
+  ];
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-      <ScreenHeader
-        title={pairTitle(pair)}
-        subtitle={details || (pair.nickname && pair.nickname !== pairTitle(pair) ? pair.nickname : undefined)}
-        left={
-          <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back to Vault" hitSlop={12}>
-            <Icon name="chevronL" size={20} color={c.navy} />
-          </Pressable>
-        }
-      />
-      <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.lg, paddingBottom: space.xxl }}>
-        {!!pair.cover && <Cover pair={pair} size={220} wide />}
-        {showGrade && <ConditionCard pair={pair} />}
+      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
+        <ScreenHeader
+          title={pairTitle(pair)}
+          subtitle={details || (pair.nickname && pair.nickname !== pairTitle(pair) ? pair.nickname : undefined)}
+          left={
+            <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back to Vault" hitSlop={12}>
+              <Icon name="chevronL" size={20} color={c.navy} />
+            </Pressable>
+          }
+          right={pair.nickname && pair.nickname !== pairTitle(pair) ? <Text style={type.overline}>{pair.nickname}</Text> : undefined}
+        />
+        <View style={{ paddingHorizontal: space.lg, gap: space.xl }}>
+          <Cover pair={pair} size={pair.cover ? Math.min(width, 600) - space.lg * 2 : 200} wide />
 
-        {showPassport && (
-          <View testID="passport-card" style={{ backgroundColor: c.navy, borderRadius: radius.lg, padding: space.lg, gap: space.sm }}>
-            <Text style={[type.overline, { color: c.onNavyMuted }]}>Crep Passport</Text>
-            <Text style={[type.title, { color: c.white, letterSpacing: 4 }]}>{pair.passport_code}</Text>
-            <Text style={[type.caption, { color: c.onNavyMuted }]}>
-              Verified care history by Clean Crep. Share it when you sell, or scan the Crep Tag in the box.
-            </Text>
-            <Button
-              variant="onDark"
-              compact
-              label="Share passport"
-              icon={<Icon name="share" size={16} color={c.white} />}
-              onPress={() => Share.share({ message: `${pairTitle(pair)}: verified care history by Clean Crep ${passportUrl(pair.passport_code)}`, url: passportUrl(pair.passport_code) })}
-            />
-          </View>
-        )}
-
-        <View style={{ gap: space.sm }}>
-          <Overline>Care history</Overline>
-          {pair.cleans.length === 0 && (
-            <Card bordered>
-              <Text style={type.caption}>No cleans yet. Book one and it shows up here.</Text>
-            </Card>
-          )}
-          {pair.cleans.map((o) => (
-            <Card key={o.id} bordered style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: o.status === 'completed' ? c.accent : c.line }} />
-              <View style={{ flex: 1 }}>
-                <Text style={type.bodyStrong}>{o.service?.name ?? 'Clean'}</Text>
-                <Text style={type.caption}>
-                  {day(o.created_at)} · {o.order_number}
-                </Text>
+          {/* The numbers that matter, big and bare */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            {stats.map((st) => (
+              <View key={st.label}>
+                <Text style={[type.title, { fontSize: 30, lineHeight: 34, fontVariant: ['tabular-nums'] }]}>{st.value}</Text>
+                <Text style={type.overline}>{st.label}</Text>
               </View>
-              <StatusTag status={o.status} />
-            </Card>
-          ))}
-        </View>
+            ))}
+          </View>
 
-        {editing ? (
-          <PairForm
-            title="Edit details"
-            initial={pair}
-            onCancel={() => setEditing(false)}
-            onSave={async (f) => {
-              const err = await onSave(f);
-              if (!err) setEditing(false);
-              return err;
+          <PressScale
+            testID="pair-book"
+            onPress={onBook}
+            style={{
+              height: 60,
+              borderRadius: radius.pill,
+              backgroundColor: c.accent,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingLeft: space.lg,
+              paddingRight: 6,
+              boxShadow: '0 14px 30px rgba(26,111,212,0.3), 0 2px 6px rgba(10,31,68,0.16)',
             }}
-          />
-        ) : (
-          <Button variant="secondary" label="Edit details" onPress={() => setEditing(true)} />
-        )}
-        {showCreppie && (
-          <Button variant="secondary" label="Ask Creppie about this pair" icon={<Icon name="help" size={18} color={c.navy} />} onPress={() => setAsking(true)} />
-        )}
-        <Button label="Book a clean" onPress={onBook} />
+          >
+            <Text style={[type.button, { color: c.white }]}>{done.length ? 'Book its next clean' : 'Book its first clean'}</Text>
+            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.white, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="arrowR" size={20} color={c.accent} strokeWidth={2} />
+            </View>
+          </PressScale>
+
+          {showGrade && <ConditionCard pair={pair} />}
+
+          {showPassport && (
+            <View testID="passport-card" style={[{ backgroundColor: c.navy, borderRadius: radius.lg + 4, padding: space.lg, gap: space.sm, overflow: 'hidden' }, elevation.raised]}>
+              <View style={{ position: 'absolute', right: -70, top: -70, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(26,111,212,0.35)' }} />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={[type.overline, { color: c.onNavyMuted }]}>Crep Passport</Text>
+                <Text style={[type.overline, { color: c.onNavyMuted }]}>Verified</Text>
+              </View>
+              <Text style={[type.hero, { color: c.white, fontSize: 34, lineHeight: 40, letterSpacing: 5 }]}>{pair.passport_code}</Text>
+              <Text style={[type.caption, { color: c.onNavyMuted }]}>
+                Care history verified by Clean Crep. Share it when you sell, or scan the Crep Card in your pickup bag.
+              </Text>
+              <Button
+                variant="onDark"
+                compact
+                label="Share passport"
+                icon={<Icon name="share" size={16} color={c.white} />}
+                onPress={() => Share.share({ message: `${pairTitle(pair)}: verified care history by Clean Crep ${passportUrl(pair.passport_code)}`, url: passportUrl(pair.passport_code) })}
+              />
+            </View>
+          )}
+
+          {/* Care history as a timeline */}
+          <View style={{ gap: space.sm }}>
+            <Overline>Care history</Overline>
+            {pair.cleans.length === 0 ? (
+              <Text style={[type.body, { color: c.inkMuted }]}>No cleans yet. Book one and it shows up here.</Text>
+            ) : (
+              <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg + 4, paddingVertical: space.sm, paddingHorizontal: space.md }, elevation.card]}>
+                {pair.cleans.map((o, i) => {
+                  const last = i === pair.cleans.length - 1;
+                  const doneHere = o.status === 'completed';
+                  return (
+                    <View key={o.id} style={{ flexDirection: 'row', gap: space.md }}>
+                      <View style={{ alignItems: 'center', width: 14 }}>
+                        <View style={{ height: space.md + 4, width: 2, backgroundColor: i === 0 ? 'transparent' : c.line }} />
+                        <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: doneHere ? c.navy : c.surface, borderWidth: 2, borderColor: c.navy }} />
+                        <View style={{ flex: 1, width: 2, backgroundColor: last ? 'transparent' : c.line }} />
+                      </View>
+                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: last ? 0 : 1, borderBottomColor: c.line }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={type.bodyStrong}>{o.service?.name ?? 'Clean'}</Text>
+                          <Text style={type.caption}>
+                            {day(o.created_at)} · {o.order_number}
+                          </Text>
+                        </View>
+                        <StatusTag status={o.status} />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+
+          {editing ? (
+            <PairForm
+              title="Edit details"
+              initial={pair}
+              onCancel={() => setEditing(false)}
+              onSave={async (f) => {
+                const err = await onSave(f);
+                if (!err) setEditing(false);
+                return err;
+              }}
+            />
+          ) : (
+            <View style={{ flexDirection: 'row', gap: space.sm }}>
+              {showCreppie && (
+                <Button variant="secondary" label="Ask Creppie" onPress={() => setAsking(true)} style={{ flex: 1 }} />
+              )}
+              <Button variant="secondary" label="Edit details" onPress={() => setEditing(true)} style={{ flex: 1 }} />
+            </View>
+          )}
+        </View>
         {asking && <CreppieChat draft={creppieDraft(pair)} onClose={() => setAsking(false)} />}
       </ScrollView>
     </SafeAreaView>
@@ -350,9 +415,9 @@ function PairForm({
               onPress={() => setF((p) => ({ ...p, category: cat.key }))}
               aria-checked={on}
               accessibilityRole="radio"
-              style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: 1, borderColor: on ? c.accent : c.line, backgroundColor: on ? c.ice : c.surface }}
+              style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: 1, borderColor: on ? c.navy : c.line, backgroundColor: on ? c.navy : c.surface }}
             >
-              <Text style={[type.caption, { color: on ? c.accent : c.ink }]}>{cat.label}</Text>
+              <Text style={[type.caption, { color: on ? c.white : c.ink }]}>{cat.label}</Text>
             </Pressable>
           );
         })}
@@ -396,7 +461,7 @@ function Field({ label, ...input }: { label: string; placeholder: string; value:
         {...input}
         accessibilityLabel={label}
         placeholderTextColor={c.inkMuted}
-        style={{ borderWidth: 1, borderColor: c.line, borderRadius: radius.sm, paddingVertical: 11, paddingHorizontal: 14, ...type.body }}
+        style={{ borderWidth: 1, borderColor: c.line, borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: c.bg, ...type.body }}
       />
     </View>
   );

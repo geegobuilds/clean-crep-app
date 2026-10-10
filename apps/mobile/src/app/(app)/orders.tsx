@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { tapLight } from '@/lib/haptics';
 import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
 import { c, elevation, radius, space, type } from '@/theme';
+import { usePullRefresh } from '@/hooks/use-pull-refresh';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 
@@ -24,6 +25,7 @@ export default function OrdersScreen() {
   const router = useRouter();
   const { session } = useAuth();
   const { orders, loading, error, reload } = useOrders();
+  const refresh = usePullRefresh(reload);
   const [activeId, setActiveId] = useState<string | null>(null);
   const sel = orders.find((o) => o.id === activeId) ?? orders[0];
   const completed = sel?.status === 'completed';
@@ -33,7 +35,7 @@ export default function OrdersScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
       <ScreenHeader title="Orders" subtitle="Track every pair, drop-off to pickup." />
 
-      <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.lg, paddingBottom: space.xxl }}>
+      <ScrollView refreshControl={session ? refresh : undefined} contentContainerStyle={{ padding: space.lg, gap: space.lg, paddingBottom: 140 }}>
         {!session && (
           <SignInPrompt
             title="Sign in to see your orders"

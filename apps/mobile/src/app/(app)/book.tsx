@@ -530,15 +530,17 @@ export default function BookingScreen() {
 
         <Modal visible={signInOpen} animationType="slide" transparent onRequestClose={() => setSignInOpen(false)}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10,31,68,0.55)' }}>
-            <View style={{ paddingBottom: insets.bottom, backgroundColor: c.navy, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }}>
+            <View style={{ paddingBottom: insets.bottom, backgroundColor: c.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32 }}>
               <ScrollView contentContainerStyle={{ padding: space.lg }} keyboardShouldPersistTaps="handled">
+                <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.line, marginBottom: space.md }} />
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.md }}>
-                  <Text style={[type.headline, { color: c.white }]}>One last step</Text>
+                  <Text style={type.headline}>One last step</Text>
                   <Pressable onPress={() => setSignInOpen(false)} hitSlop={12}>
-                    <Text style={[type.bodyStrong, { color: c.onNavyMuted }]}>Cancel</Text>
+                    <Text style={[type.bodyStrong, { color: c.inkMuted }]}>Cancel</Text>
                   </Pressable>
                 </View>
                 <SignInForm
+                  bare
                   subtitle={`Sign in to confirm your ${selected.name}. We'll use this to send you updates on your pair.`}
                   onSuccess={() => {
                     setSignInOpen(false);
@@ -602,8 +604,12 @@ export default function BookingScreen() {
             </View>
           </PressScale>
         ))}
+        {services.length > 0 && (
+          <View style={{ marginTop: space.sm }}>
+            <CreppieButton inline />
+          </View>
+        )}
       </ScrollView>
-      <CreppieButton />
     </SafeAreaView>
   );
 }

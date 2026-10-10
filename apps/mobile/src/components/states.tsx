@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Text, View, type DimensionValue, type ViewStyle } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Easing, Text, View, type DimensionValue, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius } from '@clean-crep/shared';
+import { colors, palette, shadow } from '@clean-crep/shared';
 import { Button } from './ui';
 import { CreppieArt, CreppieState, MOODS } from '@/components/creppie';
 import { track } from '@/lib/analytics';
@@ -9,49 +9,63 @@ import { track } from '@/lib/analytics';
 // Shared loading / empty / error / signed-out states so every data screen
 // tells those cases apart instead of rendering a blank or misleading list.
 
-/** Pulsing placeholder block. Built on core Animated — no extra dependency. */
+/**
+ * Placeholder block with a soft light sweep across it (the shimmer premium apps
+ * use instead of a blink). Built on core Animated — no extra dependency.
+ */
 export function Skeleton({ width = '100%', height = 14, style }: { width?: DimensionValue; height?: number; style?: ViewStyle }) {
-  const opacity = useRef(new Animated.Value(0.5)).current;
+  const [sweep] = useState(() => new Animated.Value(0));
+  const [w, setW] = useState(0);
 
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.5, duration: 700, useNativeDriver: true }),
-      ])
-    );
+    const loop = Animated.loop(Animated.timing(sweep, { toValue: 1, duration: 1200, easing: Easing.inOut(Easing.quad), useNativeDriver: true }));
     loop.start();
     return () => loop.stop();
-  }, [opacity]);
+  }, [sweep]);
 
-  return <Animated.View style={[{ width, height, borderRadius: 6, backgroundColor: colors.ice, opacity }, style]} />;
-}
-
-/** Placeholder shaped like an order / notification card. */
-export function SkeletonCard() {
+  const band = Math.max(60, w * 0.6);
+  const translateX = sweep.interpolate({ inputRange: [0, 1], outputRange: [-band, w + band] });
   return (
-    <View style={{ backgroundColor: colors.white, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, padding: 14, gap: 10 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <View style={{ gap: 6, flex: 1 }}>
-          <Skeleton width="55%" height={13} />
-          <Skeleton width="35%" height={10} />
-        </View>
-        <Skeleton width={64} height={18} />
-      </View>
-      <Skeleton height={4} />
+    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={[{ width, height, borderRadius: 8, backgroundColor: palette.ice, overflow: 'hidden' }, style]}>
+      {w > 0 && (
+        <Animated.View style={{ position: 'absolute', top: 0, bottom: 0, width: band, transform: [{ translateX }], flexDirection: 'row' }}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.25)' }} />
+          <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.6)' }} />
+          <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.25)' }} />
+        </Animated.View>
+      )}
     </View>
   );
 }
 
-/** Placeholder shaped like a Book-screen service card. */
+const card: ViewStyle = { backgroundColor: palette.white, borderRadius: 20, boxShadow: shadow.card };
+
+/** Placeholder shaped like an order / notification card. */
+export function SkeletonCard() {
+  return (
+    <View style={[card, { padding: 16, gap: 12 }]}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View style={{ gap: 8, flex: 1 }}>
+          <Skeleton width="55%" height={14} />
+          <Skeleton width="35%" height={10} />
+        </View>
+        <Skeleton width={64} height={20} style={{ borderRadius: 10 }} />
+      </View>
+      <Skeleton height={6} />
+    </View>
+  );
+}
+
+/** Placeholder shaped like a Book-screen menu card. */
 export function SkeletonServiceCard() {
   return (
-    <View style={{ backgroundColor: colors.white, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, padding: 16, flexDirection: 'row', gap: 12 }}>
-      <Skeleton width={40} height={40} style={{ borderRadius: 10 }} />
-      <View style={{ flex: 1, gap: 8 }}>
-        <Skeleton width="45%" height={15} />
-        <Skeleton width="90%" height={10} />
-        <Skeleton width="30%" height={20} />
+    <View style={[card, { padding: 20, gap: 10 }]}>
+      <Skeleton width={24} height={10} />
+      <Skeleton width="60%" height={24} />
+      <Skeleton width="90%" height={12} />
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+        <Skeleton width="35%" height={28} />
+        <Skeleton width={44} height={44} style={{ borderRadius: 22 }} />
       </View>
     </View>
   );
@@ -60,7 +74,7 @@ export function SkeletonServiceCard() {
 export function SkeletonList({ count = 3, variant = 'card' }: { count?: number; variant?: 'card' | 'service' }) {
   const Item = variant === 'service' ? SkeletonServiceCard : SkeletonCard;
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 14 }}>
       {Array.from({ length: count }, (_, i) => (
         <Item key={i} />
       ))}
