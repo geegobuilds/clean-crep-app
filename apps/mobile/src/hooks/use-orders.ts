@@ -23,6 +23,8 @@ export function useOrders({ onReady }: { onReady?: (order: OrderWithService) => 
   // yet, so a sign-in or account switch shows the loading state, never the
   // previous account's list.
   const [dataFor, setDataFor] = useState<string | null>(null);
+  // Same, readable inside reload: a failed fetch for a new account must not keep the previous account's list.
+  const owner = useRef<string | null>(null);
   // Several screens use this hook at once (Home, Orders, Profile). supabase.channel()
   // returns the existing channel for a repeated name, and adding .on() to an
   // already-subscribed channel throws — so each hook instance needs its own name.
@@ -49,6 +51,10 @@ export function useOrders({ onReady }: { onReady?: (order: OrderWithService) => 
     if (call !== latest.current) return;
     if (queryError) {
       setError(friendlyError(queryError, 'load'));
+      if (owner.current !== session.user.id) {
+        known.current = null;
+        setOrders([]);
+      }
     } else {
       setError(null);
       const next = (data ?? []) as unknown as OrderWithService[];
@@ -61,6 +67,7 @@ export function useOrders({ onReady }: { onReady?: (order: OrderWithService) => 
       }
       known.current = new Map(next.map((o) => [o.id, o.status]));
       setOrders(next);
+      owner.current = session.user.id;
     }
     setDataFor(session.user.id);
   }, [session]);

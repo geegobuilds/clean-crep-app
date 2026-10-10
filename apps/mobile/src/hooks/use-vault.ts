@@ -38,6 +38,7 @@ export function useVault() {
   const [pairs, setPairs] = useState<VaultPair[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dataFor, setDataFor] = useState<string | null>(null);
+  const owner = useRef<string | null>(null);
   const latest = useRef(0);
 
   const reload = useCallback(async () => {
@@ -50,6 +51,7 @@ export function useVault() {
     if (call !== latest.current) return;
     if (qe) {
       setError(friendlyError(qe, 'load'));
+      if (owner.current !== session.user.id) setPairs([]);
       setDataFor(session.user.id);
       return;
     }
@@ -86,6 +88,7 @@ export function useVault() {
     if (call !== latest.current) return;
     setError(null);
     setPairs(rows.map((p) => ({ ...p, cover: covers.get(p.id) ?? null })));
+    owner.current = session.user.id;
     setDataFor(session.user.id);
   }, [session]);
 

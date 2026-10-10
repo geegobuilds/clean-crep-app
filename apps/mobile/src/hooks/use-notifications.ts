@@ -10,6 +10,7 @@ export function useNotifications() {
   const [error, setError] = useState<string | null>(null);
   // Whose notifications are in state (see useOrders).
   const [dataFor, setDataFor] = useState<string | null>(null);
+  const owner = useRef<string | null>(null);
   // Several screens use this hook at once (Home, Orders, Profile). supabase.channel()
   // returns the existing channel for a repeated name, and adding .on() to an
   // already-subscribed channel throws — so each hook instance needs its own name.
@@ -28,9 +29,11 @@ export function useNotifications() {
     if (call !== latest.current) return;
     if (queryError) {
       setError(friendlyError(queryError, 'load'));
+      if (owner.current !== session.user.id) setNotifications([]);
     } else {
       setError(null);
       setNotifications((data ?? []) as Notification[]);
+      owner.current = session.user.id;
     }
     setDataFor(session.user.id);
   }, [session]);

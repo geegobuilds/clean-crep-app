@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MembershipPlan, MyMembership } from '@clean-crep/shared';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -14,12 +14,17 @@ export function useMembership() {
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dataFor, setDataFor] = useState<string | null>(null);
+  // Only the latest request may update state (a slow fetch for a previous account loses).
+  const latest = useRef(0);
 
   const reload = useCallback(async () => {
+    const call = ++latest.current;
     if (!session) return;
     const [m, p] = await Promise.all([supabase.rpc('my_membership'), supabase.from('membership_plans').select('*').order('sort_order')]);
+    if (call !== latest.current) return;
     if (m.error || p.error) setError(friendlyError(m.error ?? p.error, 'load'));
     else setError(null);
+    // On error these are null/empty, so a failed load never shows another account's membership.
     setMembership((m.data as MyMembership | null) ?? null);
     setPlans((p.data ?? []) as MembershipPlan[]);
     setDataFor(session.user.id);

@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions, type TextStyle } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, LinearGradient as SvgGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { formatPrice, orderTotal, pairFitsService, pairTitle, serviceKind, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
@@ -76,7 +76,7 @@ export default function BookingScreen() {
   // one item's history instead of adding a new one). /book?pair=<id> comes
   // from "Book its next clean" on a Vault item.
   const features = useFeatures();
-  const { pairs: vaultPairs } = useVault();
+  const { pairs: vaultPairs, reload: reloadVault } = useVault();
   const vaultOn = features.has('vault');
   const { pair: pairParam } = useLocalSearchParams<{ pair?: string }>();
   const [pairId, setPairId] = useState<string | null>(null);
@@ -86,7 +86,19 @@ export default function BookingScreen() {
     setSeenParam(paramPair.id);
     setPairId(paramPair.id);
     setShoeType(pairTitle(paramPair));
+    // Mid-booking for something else, or on the booked screen: start from the menu for this item.
+    if (step === 2 || (selected && !pairFitsService(paramPair.category, selected.name))) {
+      setSelected(null);
+      setStep(0);
+    }
   }
+  // Book stays mounted as a tab: refresh the Vault list each time it's opened,
+  // so items added or removed since (and the one we were sent for) are current.
+  useFocusEffect(
+    useCallback(() => {
+      reloadVault();
+    }, [reloadVault])
+  );
   const chosenPair = pairId ? (vaultPairs.find((p) => p.id === pairId) ?? null) : null;
   const [submitting, setSubmitting] = useState(false);
   const [useCredit, setUseCredit] = useState(true);
@@ -639,6 +651,8 @@ export default function BookingScreen() {
               onPress={() => {
                 setPairId(null);
                 setShoeType('');
+                router.setParams({ pair: '' });
+                setSeenParam(undefined);
               }}
               hitSlop={10}
               accessibilityRole="button"
