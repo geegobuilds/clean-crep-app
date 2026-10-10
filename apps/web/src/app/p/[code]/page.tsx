@@ -119,7 +119,7 @@ export default async function PassportPage({ params }: { params: Promise<{ code:
         <div style={{ marginTop: 28, background: colors.white, borderRadius: 16, padding: 20, border: `1px solid ${colors.border}` }}>
           <div style={{ fontFamily: display, fontWeight: 800, fontSize: 20 }}>Keep yours fresh too.</div>
           <p style={{ fontSize: 15, color: colors.caption, margin: '6px 0 16px', lineHeight: 1.5 }}>
-            Sneaker and Clarks cleaning in Half Way Tree. Every pair gets its own Crep Passport.
+            Sneaker, Clarks and cap cleaning in Half Way Tree. Everything we clean gets its own Crep Passport.
           </p>
           <Link
             href="/#book"

@@ -30,13 +30,13 @@ export function BeforeAfter({ before, after, itemName, orderNumber }: { before: 
   };
   const pan = Gesture.Pan()
     .onBegin((e) => {
-      pos.value = clamp(e.x);
+      pos.set(clamp(e.x));
     })
     .onUpdate((e) => {
-      pos.value = clamp(e.x);
+      pos.set(clamp(e.x));
     });
   const tap = Gesture.Tap().onEnd((e) => {
-    pos.value = withSpring(clamp(e.x), spring);
+    pos.set(withSpring(clamp(e.x), spring));
   });
 
   const clipStyle = useAnimatedStyle(() => ({ width: pos.value }));

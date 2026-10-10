@@ -60,7 +60,7 @@ export default function InboxScreen() {
         {!session && (
           <SignInPrompt
             title="Sign in to see your updates"
-            body="We'll let you know the moment your pair is cleaned and ready."
+            body="We'll let you know the moment your order is clean and ready."
             where="inbox"
             onSignIn={() => router.push('/sign-in?next=/inbox')}
           />
@@ -70,7 +70,7 @@ export default function InboxScreen() {
         {session && !loading && !error && notifications.length === 0 && (
           <EmptyState
             title="Quiet in here."
-            body="Updates on your pairs land here: received, being cleaned, ready for pickup. Book a clean to get started."
+            body="Updates on your orders land here: received, being cleaned, ready. Book a clean to get started."
             actionLabel="Book a Clean"
             onAction={() => router.push('/book')}
           />

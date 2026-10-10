@@ -54,7 +54,7 @@ export const MOODS: Record<CreppieMood, MoodConfig> = {
   success: {
     art: require('../../../assets/creppie/success.png'), // thumbs up with a clean shoe
     icon: 'check',
-    title: "Locked in. Creppie's got your pair.",
+    title: "Locked in. Creppie's on it.",
     body: '',
   },
   signin: {

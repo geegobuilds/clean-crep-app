@@ -60,7 +60,7 @@ export default function SignInScreen() {
               entering={FadeInDown.delay(80).springify().damping(15)}
               style={[type.hero, { color: c.white, fontSize: 46, lineHeight: 48, marginTop: space.xl, maxWidth: width * 0.62 }]}
             >
-              Your pairs, looked after.
+              Your gear, looked after.
             </Animated.Text>
             <Animated.Text entering={FadeInDown.delay(180).springify().damping(15)} style={[type.body, { color: c.onNavyMuted, marginTop: space.sm, maxWidth: width * 0.55 }]}>
               Clean Crep, for a Clean Step.

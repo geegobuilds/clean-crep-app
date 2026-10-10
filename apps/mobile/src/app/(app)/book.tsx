@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions, type TextStyle } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, LinearGradient as SvgGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { formatPrice, orderTotal, type AddOn, type Service, type Zone } from '@clean-crep/shared';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { formatPrice, orderTotal, pairFitsService, pairTitle, serviceKind, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
 import { useMembership } from '@/hooks/use-membership';
 import { useServices } from '@/hooks/use-services';
+import { useFeatures } from '@/hooks/use-features';
+import { useVault } from '@/hooks/use-vault';
 import { useAddOns } from '@/hooks/use-add-ons';
 import { useZones } from '@/hooks/use-zones';
 import { supabase } from '@/lib/supabase';
@@ -70,6 +72,34 @@ export default function BookingScreen() {
   const [selDay, setSelDay] = useState(0);
   const [notes, setNotes] = useState('');
   const [shoeType, setShoeType] = useState('');
+  // The Vault item this clean is for (sent as pair_id, so repeat cleans build
+  // one item's history instead of adding a new one). /book?pair=<id> comes
+  // from "Book its next clean" on a Vault item.
+  const features = useFeatures();
+  const { pairs: vaultPairs, reload: reloadVault } = useVault();
+  const vaultOn = features.has('vault');
+  const { pair: pairParam } = useLocalSearchParams<{ pair?: string }>();
+  const [pairId, setPairId] = useState<string | null>(null);
+  const [seenParam, setSeenParam] = useState<string | undefined>(undefined);
+  const paramPair = vaultOn && pairParam ? vaultPairs.find((p) => p.id === pairParam) : undefined;
+  if (paramPair && seenParam !== paramPair.id) {
+    setSeenParam(paramPair.id);
+    setPairId(paramPair.id);
+    setShoeType(pairTitle(paramPair));
+    // Mid-booking for something else, or on the booked screen: start from the menu for this item.
+    if (step === 2 || (selected && !pairFitsService(paramPair.category, selected.name))) {
+      setSelected(null);
+      setStep(0);
+    }
+  }
+  // Book stays mounted as a tab: refresh the Vault list each time it's opened,
+  // so items added or removed since (and the one we were sent for) are current.
+  useFocusEffect(
+    useCallback(() => {
+      reloadVault();
+    }, [reloadVault])
+  );
+  const chosenPair = pairId ? (vaultPairs.find((p) => p.id === pairId) ?? null) : null;
   const [submitting, setSubmitting] = useState(false);
   const [useCredit, setUseCredit] = useState(true);
   const { membership, reload: reloadMembership } = useMembership();
@@ -98,7 +128,9 @@ export default function BookingScreen() {
 
   // Extras the customer ticked, plus their CrepRun zone's rate when picking
   // up: the same rule the database applies in price_app_order().
-  const pickable = addOns.filter((a) => a.kind !== 'delivery');
+  // Sole and suede extras only make sense for footwear: a cap gets the rest.
+  const forHeadwear = serviceKind(selected?.name) === 'headwear';
+  const pickable = addOns.filter((a) => a.kind !== 'delivery' && !(forHeadwear && /sole|suede/i.test(`${a.slug} ${a.name}`)));
   const extras = pickable.filter((a) => picked.includes(a.id));
   const zone = zones.find((z) => z.id === zoneId) ?? null;
   const pickupDay = zone ? nextPickup(zone) : null;
@@ -113,6 +145,9 @@ export default function BookingScreen() {
   const fullTotal = selected ? orderTotal(selected.price_cents, charged) : null;
   const total = fullTotal !== null && creditApplied && selected?.price_cents != null ? Math.max(fullTotal - selected.price_cents, 0) : fullTotal;
   const hasKit = extras.some((a) => a.kind === 'kit');
+  const headwear = forHeadwear;
+  // Vault items this service can clean, shown as one-tap choices.
+  const fitting = vaultOn && selected ? vaultPairs.filter((p) => pairFitsService(p.category, selected.name)) : [];
 
   function togglePick(id: string) {
     tapLight();
@@ -162,6 +197,7 @@ export default function BookingScreen() {
       service_id: selected.id,
       location_id: selected.location_id,
       item_name: shoeType || selected.name,
+      pair_id: chosenPair?.id ?? null,
       drop_method: dropoff ? 'dropoff' : 'pickup',
       zone_id: dropoff ? null : zoneId,
       // For pickups the database sets this to the zone's next CrepRun day.
@@ -197,6 +233,10 @@ export default function BookingScreen() {
     setSelected(null);
     setPicked([]);
     setShoeType('');
+    setPairId(null);
+    // Drop ?pair= so the next "Book its next clean" (even for the same item) applies again.
+    router.setParams({ pair: '' });
+    setSeenParam(undefined);
     setNotes('');
     router.push('/');
   }
@@ -224,7 +264,7 @@ export default function BookingScreen() {
               <Ellipse cx={width / 2} cy={BOOKED_HERO_H * 0.66} rx={width * 0.6} ry={BOOKED_HERO_H * 0.4} fill="url(#bspot)" />
             </Svg>
             <Text style={[type.overline, { color: c.onNavyMuted, paddingHorizontal: space.lg }]}>
-              {selected?.name ?? 'Clean Crep'} · {shoeType || 'Your pair'}
+              {selected?.name ?? 'Clean Crep'} · {shoeType || (headwear ? 'Your cap' : 'Your pair')}
             </Text>
             <View style={{ flexDirection: 'row', paddingHorizontal: space.lg - 4, marginTop: space.xxs }} accessible accessibilityLabel="Booked">
               {'BOOKED'.split('').map((ch, i) => (
@@ -270,8 +310,8 @@ export default function BookingScreen() {
 
               <View style={{ padding: space.lg, gap: space.xs }}>
                 {[
-                  ['Shoe Type', shoeType || '—'],
-                  ['Drop-off', dropoff ? 'In-store drop-off' : `CrepRun pickup · ${zone?.name ?? ''}`],
+                  [headwear ? 'Cap' : 'Shoe', shoeType || '—'],
+                  [dropoff ? 'Drop-off' : 'Collection', dropoff ? 'In-store drop-off' : `CrepRun pickup · ${zone?.name ?? ''}`],
                   [selected?.name ?? 'Service', selected ? formatPrice(selected.price_cents) : '—'],
                   ...charged.map((a) => [a.name, a.price_cents === null ? 'On inspection' : `+${formatPrice(a.price_cents)}`]),
                   ...(creditApplied && selected ? [[`Care credit${creditCost > 1 ? `s (${creditCost})` : ''}`, `−${formatPrice(selected.price_cents)}`]] : []),
@@ -287,7 +327,7 @@ export default function BookingScreen() {
                 </View>
                 <Text style={type.caption}>
                   {dropoff ? 'Payment on drop-off.' : "We'll WhatsApp you on collection day."} Cash & transfer accepted.
-                  {hasKit ? ' Kits are paid for and collected at the shop.' : ''}
+                  {hasKit ? (dropoff ? ' Kits are paid for and collected at the shop.' : ' Kits are settled with your order.') : ''}
                 </Text>
               </View>
             </View>
@@ -321,14 +361,45 @@ export default function BookingScreen() {
           />
           <View style={{ paddingHorizontal: space.lg, gap: space.xl }}>
             <View>
-              <Label n={num()}>YOUR PAIR</Label>
-              <TextInput
-                value={shoeType}
-                onChangeText={setShoeType}
-                placeholder="e.g. Nike Air Force 1, Clarks Desert Boot"
-                placeholderTextColor={c.inkMuted}
-                style={inputStyle}
-              />
+              <Label n={num()}>{headwear ? 'YOUR CAP' : 'YOUR PAIR'}</Label>
+              {fitting.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginBottom: space.sm }}>
+                  {fitting.map((p) => {
+                    const on = p.id === chosenPair?.id;
+                    return (
+                      <Pressable
+                        key={p.id}
+                        testID="vault-choice"
+                        onPress={() => {
+                          tapLight();
+                          setPairId(on ? null : p.id);
+                          setShoeType(on ? '' : pairTitle(p));
+                        }}
+                        accessibilityRole="radio"
+                        aria-checked={on}
+                        style={[
+                          { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: space.xs, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: on ? c.navy : c.surface },
+                          on ? null : elevation.card,
+                        ]}
+                      >
+                        {on && <Icon name="check" size={14} color={c.white} strokeWidth={3} />}
+                        <Text style={[type.bodyStrong, { fontSize: 14, color: on ? c.white : c.ink }]}>{pairTitle(p)}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+              {chosenPair ? (
+                <Text style={type.caption}>From your Vault. Tap it again to book something else.</Text>
+              ) : (
+                <TextInput
+                  value={shoeType}
+                  onChangeText={setShoeType}
+                  placeholder={headwear ? 'e.g. New Era 59FIFTY, Nike dad cap' : 'e.g. Nike Air Force 1, Clarks Desert Boot'}
+                  placeholderTextColor={c.inkMuted}
+                  style={inputStyle}
+                />
+              )}
             </View>
 
             <View>
@@ -424,7 +495,11 @@ export default function BookingScreen() {
                   ))}
                 </View>
                 {hasKit && (
-                  <Text style={[type.caption, { marginTop: space.xs }]}>Kits are paid for and collected at the shop. We&apos;ll confirm stock when you drop off.</Text>
+                  <Text style={[type.caption, { marginTop: space.xs }]}>
+                    {dropoff
+                      ? "Kits are paid for and collected at the shop. We'll confirm stock when you drop off."
+                      : "We'll confirm stock before CrepRun collects and settle the kit with your order."}
+                  </Text>
                 )}
               </View>
             )}
@@ -434,7 +509,7 @@ export default function BookingScreen() {
               <TextInput
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Any special instructions for your pair…"
+                placeholder={headwear ? 'Any special instructions for your cap…' : 'Any special instructions for your pair…'}
                 placeholderTextColor={c.inkMuted}
                 multiline
                 numberOfLines={3}
@@ -541,7 +616,7 @@ export default function BookingScreen() {
                 </View>
                 <SignInForm
                   bare
-                  subtitle={`Sign in to confirm your ${selected.name}. We'll use this to send you updates on your pair.`}
+                  subtitle={`Sign in to confirm your ${selected.name}. We'll use this to send you updates on your ${headwear ? 'cap' : 'pair'}.`}
                   onSuccess={() => {
                     setSignInOpen(false);
                     placeBooking();
@@ -555,10 +630,38 @@ export default function BookingScreen() {
     );
   }
 
+  // Footwear first, then caps & hats under their own heading; numbered straight through.
+  // Booking for a Vault item: only the services that can clean it.
+  const offered = chosenPair ? services.filter((x) => pairFitsService(chosenPair.category, x.name)) : services;
+  const ordered = [...offered.filter((x) => serviceKind(x.name) === 'footwear'), ...offered.filter((x) => serviceKind(x.name) === 'headwear')];
+  const menu = ordered.map((svc, i) => ({ svc, i, groupStart: i > 0 && serviceKind(svc.name) === 'headwear' && serviceKind(ordered[i - 1].name) !== 'headwear' }));
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
       <ScreenHeader title="Book" subtitle="Pick a service. We handle the rest." />
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, paddingBottom: 140, gap: space.md }}>
+        {chosenPair && (
+          <View testID="booking-for" style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: c.navy, borderRadius: radius.lg, padding: space.md }}>
+            <Icon name="vault" size={18} color={c.onNavyMuted} />
+            <View style={{ flex: 1 }}>
+              <Text style={[type.overline, { color: c.onNavyMuted }]}>Booking for</Text>
+              <Text style={[type.bodyStrong, { color: c.white }]}>{pairTitle(chosenPair)}</Text>
+            </View>
+            <Pressable
+              onPress={() => {
+                setPairId(null);
+                setShoeType('');
+                router.setParams({ pair: '' });
+                setSeenParam(undefined);
+              }}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Book something else"
+            >
+              <Text style={[type.bodyStrong, { color: c.onNavyMuted }]}>Change</Text>
+            </Pressable>
+          </View>
+        )}
         <Overline style={{ marginBottom: space.xxs }}>AVAILABLE SERVICES</Overline>
         {servicesLoading && services.length === 0 && <SkeletonList count={4} variant="service" />}
         {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
@@ -570,39 +673,46 @@ export default function BookingScreen() {
             onAction={() => Linking.openURL(WHATSAPP_URL)}
           />
         )}
-        {services.map((svc, i) => (
-          <PressScale
-            key={svc.id}
-            testID="service-card"
-            onPress={() => {
-              setSelected(svc);
-              setStep(1);
-              track('booking_started', { service: svc.name, platform: 'app' });
-            }}
-            style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg, gap: space.xs }, elevation.card]}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.xxs }}>
-              <Text style={[type.overline, { fontVariant: ['tabular-nums'] }]}>{String(i + 1).padStart(2, '0')}</Text>
-              {svc.popular && (
-                <View style={{ backgroundColor: c.navy, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.sm }}>
-                  <Text style={[type.overline, { color: c.white, fontSize: 10, letterSpacing: 1.2 }]}>MOST POPULAR</Text>
+        {menu.map(({ svc, i, groupStart }) => (
+          <View key={svc.id} style={{ gap: space.sm }}>
+            {groupStart && <Overline style={{ marginTop: space.md }}>CAPS & HATS</Overline>}
+            <PressScale
+              testID="service-card"
+              onPress={() => {
+                setSelected(svc);
+                if (chosenPair && !pairFitsService(chosenPair.category, svc.name)) {
+                  setPairId(null);
+                  setShoeType('');
+                }
+                setStep(1);
+                track('booking_started', { service: svc.name, platform: 'app' });
+              }}
+              style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg, gap: space.xs }, elevation.card]}
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.xxs }}>
+                <Text style={[type.overline, { fontVariant: ['tabular-nums'] }]}>{String(i + 1).padStart(2, '0')}</Text>
+                {svc.popular && (
+                  <View style={{ backgroundColor: c.navy, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.sm }}>
+                    <Text style={[type.overline, { color: c.white, fontSize: 10, letterSpacing: 1.2 }]}>MOST POPULAR</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={type.title}>{svc.name}</Text>
+              <Text style={[type.body, { color: c.inkMuted }]} numberOfLines={2}>
+                {svc.description}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm }}>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
+                  <Text style={type.priceLg}>{formatPrice(svc.price_cents)}</Text>
+                  <Text style={type.caption}>{svc.note}</Text>
                 </View>
-              )}
-            </View>
-            <Text style={type.title}>{svc.name}</Text>
-            <Text style={[type.body, { color: c.inkMuted }]} numberOfLines={2}>
-              {svc.description}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm }}>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
-                <Text style={type.priceLg}>{formatPrice(svc.price_cents)}</Text>
-                <Text style={type.caption}>{svc.note}</Text>
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="arrowR" size={20} color={c.white} />
+                </View>
               </View>
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="arrowR" size={20} color={c.white} />
-              </View>
-            </View>
-          </PressScale>
+            </PressScale>
+
+          </View>
         ))}
         {services.length > 0 && (
           <View style={{ marginTop: space.sm }}>

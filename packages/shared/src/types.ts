@@ -155,6 +155,12 @@ export interface Notification {
  * "Quote"). Every row is JMD today, so this doesn't branch on `currency`
  * yet — revisit once a second-currency location exists.
  */
+/** Footwear (pairs) or headwear (caps, bucket hats): drives "pair" vs "cap" copy. */
+export type ItemKind = 'footwear' | 'headwear';
+export function serviceKind(name: string | null | undefined): ItemKind {
+  return /\b(caps?|hats?)\b/i.test(name ?? '') ? 'headwear' : 'footwear';
+}
+
 export function formatPrice(priceCents: number | null): string {
   if (priceCents === null) return 'Quote';
   return `$${(priceCents / 100).toLocaleString('en-JM', { maximumFractionDigits: 0 })}`;

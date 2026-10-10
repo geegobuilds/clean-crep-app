@@ -7,8 +7,10 @@ import { friendlyError } from '@/lib/errors';
 export function useNotifications() {
   const { session } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Whose notifications are in state (see useOrders).
+  const [dataFor, setDataFor] = useState<string | null>(null);
+  const owner = useRef<string | null>(null);
   // Several screens use this hook at once (Home, Orders, Profile). supabase.channel()
   // returns the existing channel for a repeated name, and adding .on() to an
   // already-subscribed channel throws — so each hook instance needs its own name.
@@ -18,12 +20,7 @@ export function useNotifications() {
 
   const reload = useCallback(async () => {
     const call = ++latest.current;
-    if (!session) {
-      setNotifications([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+    if (!session) return;
     const { data, error: queryError } = await supabase
       .from('notifications')
       .select('*')
@@ -32,22 +29,21 @@ export function useNotifications() {
     if (call !== latest.current) return;
     if (queryError) {
       setError(friendlyError(queryError, 'load'));
+      if (owner.current !== session.user.id) setNotifications([]);
     } else {
       setError(null);
       setNotifications((data ?? []) as Notification[]);
+      owner.current = session.user.id;
     }
-    setLoading(false);
+    setDataFor(session.user.id);
   }, [session]);
 
-  // A different user (or a sign-in) means the current list is stale: show the
-  // loading state rather than flashing an empty list before the fetch lands.
-  const userId = session?.user.id;
-  useEffect(() => {
-    if (userId) setLoading(true);
-  }, [userId]);
+  const userId = session?.user.id ?? null;
+  const current = !!userId && dataFor === userId;
 
   useEffect(() => {
     // Initial fetch, then subscribe below — the intended fetch-then-subscribe pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async: state is only set after the fetch resolves
     reload();
     if (!session) return;
     const channel = supabase
@@ -74,5 +70,5 @@ export function useNotifications() {
     await supabase.from('notifications').update({ read: true }).eq('customer_id', session.user.id).eq('read', false);
   }, [session]);
 
-  return { notifications, loading, error, reload, markRead, markAllRead };
+  return { notifications: current ? notifications : [], loading: !!userId && !current, error: userId ? error : null, reload, markRead, markAllRead };
 }

@@ -4,10 +4,25 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-09_
+_Last updated: 2026-10-10_
 
 ## Current Status
 
+- **Caps ≠ pairs, pickup ≠ drop-off (2026-10-10, Geego)**: wording is now method- and item-aware.
+  Shared `statusLabel(status, method)` / `trackerSteps(method)` (CrepRun ends "Ready for Delivery" →
+  "Delivered"), `serviceKind(name)` (footwear vs headwear). Book groups CAPS & HATS, cap bookings say
+  "Your cap" and hide sole/suede add-ons; Vault counts pairs and caps apart. Migrations 0025 (order
+  notifications per method; fixed 2 live inbox rows that said "Drop-off confirmed" on pickups) and
+  0026 (cap grammar "is due a clean 🧢"; ready-and-waiting nudge only for drop-off) applied live.
+  Data hooks keep state per account (no previous-account flash); lint is at zero warnings.
+  Vault duplicates fixed (Geego booked his saved cap and got a second one): Book offers the Vault
+  items that fit the service and sends pair_id; "Book its next clean" opens Book for that item
+  (/book?pair=); 0027 matches brand+model/model and sends service-named orders to the owner's only
+  item in that category; 0028 lets customers remove never-cleaned items. Geego's order CC-0061 was
+  moved onto his NY SnapBack; the empty "Premium Cap" duplicate is left for him to remove in-app
+  (the Supabase connector holds DELETEs for approval and times out). e2e: e2e/vault.spec.ts.
+  Phone check without a Mac/KVM: `sim.js` in the scratchpad drives the Expo web build with the
+  iPhone 15 Pro and Pixel 7 profiles through every section (same idea as CI's phone checks).
 - **App redesign (2026-10-09)**: DESIGN.md §8. Home + floating pill tab bar merged (#42). Second
   pass (open PR) gives every tab the same language: one huge title on the page background
   (`ScreenHeader` + `type.hero`), Book as a numbered menu with a blue arrow (the only tap colour),
@@ -19,10 +34,10 @@ _Last updated: 2026-10-09_
   Booking flow (open PR): numbered sections (01 Your pair … 05 Notes), navy selection states, a
   receipt card with a huge total and the pill Confirm button; the booked screen is a navy hero with
   BOOKED dropping in letter by letter, Creppie springing in, and a ticket (date huge, tear line).
-  #44 merged and published to Expo Go (update group 8d402431-0f0a-4db7-89c3-e0bea6cc16b2, 2026-10-10;
+  #44 merged and published to Expo Go (update group 8d402431-…, then 65ef4248-5789-4428-9e07-923a3dd22a81 after #45, 2026-10-10;
   the agent proxy injects the EXPO robot token, so `EXPO_TOKEN=x npm run publish:preview` works from
   a cloud session after writing apps/mobile/.env from eas.json's preview env).
-  Polish pass (open PR): Vault pair detail rebuilt (big stats, pill CTA, condition before → after,
+  Polish pass (#45, merged): Vault pair detail rebuilt (big stats, pill CTA, condition before → after,
   passport wallet card, care-history timeline), pull-to-refresh on Orders/Vault/Inbox/Profile,
   shimmer skeletons shaped like the new cards, Ask Creppie on Book as an inline card (no longer
   floats over the menu). Sign-in rebuilt: navy hero with Creppie waving over a white sheet, filled

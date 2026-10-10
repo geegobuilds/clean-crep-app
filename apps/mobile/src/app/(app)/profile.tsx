@@ -37,7 +37,7 @@ async function openNotificationSettings() {
   if (status === 'unsupported') {
     Alert.alert('Order updates', 'Push notifications work in the Clean Crep app on your phone.');
   } else if (status === 'granted') {
-    Alert.alert('Order updates are on', "We'll ping you when your pair is received, being cleaned, and ready for pickup.");
+    Alert.alert('Order updates are on', "We'll ping you when your order is received, being cleaned, and ready.");
   } else if (status === 'denied') {
     // The app can't re-ask once denied; send them to the OS settings.
     Linking.openSettings();
@@ -167,7 +167,7 @@ export default function ProfileScreen() {
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>
                       <Text style={[type.bodyStrong, { fontVariant: ['tabular-nums'] }]}>{formatPrice(o.price_cents)}</Text>
-                      <StatusTag status="completed" />
+                      <StatusTag status="completed" method={o.drop_method} />
                     </View>
                   </View>
                 ))}

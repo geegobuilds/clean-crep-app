@@ -7,6 +7,7 @@ export interface OrderPhotos {
 }
 
 const BUCKET = 'order-photos';
+const NONE: OrderPhotos = { before: null, after: null };
 
 /**
  * The latest before and after photo on an order, as short-lived signed URLs
@@ -14,14 +15,13 @@ const BUCKET = 'order-photos';
  * Fails quietly: no photos just means no slider.
  */
 export function useOrderPhotos(orderId: string | null, enabled = true) {
-  const [photos, setPhotos] = useState<OrderPhotos>({ before: null, after: null });
-  const [loading, setLoading] = useState(false);
+  // Photos are kept with the order they belong to, so switching orders never
+  // shows the previous order's photos while the new ones load.
+  const [got, setGot] = useState<{ orderId: string; photos: OrderPhotos } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setPhotos({ before: null, after: null });
     if (!orderId || !enabled) return;
-    setLoading(true);
     (async () => {
       const { data, error } = await supabase
         .from('order_photos')
@@ -30,7 +30,7 @@ export function useOrderPhotos(orderId: string | null, enabled = true) {
         .order('created_at', { ascending: false });
       if (cancelled) return;
       if (error || !data?.length) {
-        setLoading(false);
+        setGot({ orderId, photos: NONE });
         return;
       }
       const before = data.find((p) => p.kind === 'before')?.storage_path ?? null;
@@ -39,13 +39,14 @@ export function useOrderPhotos(orderId: string | null, enabled = true) {
       const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrls(paths, 60 * 60);
       if (cancelled) return;
       const url = (path: string | null) => (path ? (signed?.find((s) => s.path === path)?.signedUrl ?? null) : null);
-      setPhotos({ before: url(before), after: url(after) });
-      setLoading(false);
+      setGot({ orderId, photos: { before: url(before), after: url(after) } });
     })();
     return () => {
       cancelled = true;
     };
   }, [orderId, enabled]);
 
-  return { ...photos, loading };
+  const active = !!orderId && enabled;
+  const current = active && got?.orderId === orderId;
+  return { ...(current ? got.photos : NONE), loading: active && !current };
 }

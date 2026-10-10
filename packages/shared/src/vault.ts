@@ -1,4 +1,5 @@
 // The Vault and Crep Passport (migrations 0020/0021, docs/VISION.md).
+import { serviceKind } from './types';
 
 export type PairCategory = 'sneaker' | 'clarks' | 'cap' | 'other';
 
@@ -41,6 +42,13 @@ export function passportUrl(code: string): string {
 export function pairTitle(p: Pick<Pair, 'brand' | 'model' | 'nickname' | 'category'>): string {
   const bm = [p.brand, p.model].filter(Boolean).join(' ').trim();
   return bm || p.nickname || (p.category === 'clarks' ? 'Clarks' : p.category === 'cap' ? 'Cap' : 'Sneakers');
+}
+
+/** Whether a Vault item can be booked for a service: caps for cap/hat cleans, Clarks for Clarks Clean, shoes otherwise. */
+export function pairFitsService(category: PairCategory, serviceName: string): boolean {
+  if (serviceKind(serviceName) === 'headwear') return category === 'cap';
+  if (/clarks/i.test(serviceName)) return category === 'clarks';
+  return category !== 'cap';
 }
 
 /** AI condition grade (Phase 2), stored as pair_events kind 'grade'. */
