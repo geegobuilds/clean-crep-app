@@ -21,3 +21,24 @@
   feature flag "On for everyone" (that's a customer-facing launch) without asking.
 - Show visuals as you build: screenshot every new or changed screen (phone width, and desktop for
   web pages) and send it to Geego as it's built, not just at the end.
+
+## The team (Geego, 2026-10-11)
+
+Claude is the **Builder**: plans, writes the code, ships it (PR → green CI → merge → Expo Go),
+and keeps Geego in the loop. Three teammates are defined in `.claude/agents/` and are called
+by name ("get the Reviewer / QA / the Designer on this"):
+
+- **Reviewer** (`reviewer`): reads the diff and hunts for real bugs. Read-only.
+  **Required** before merging anything that touches booking, money, the database (migrations,
+  RLS, triggers), auth or the data hooks. Fix what it finds before merging.
+- **QA Tester** (`qa-tester`): drives the real app on iPhone 15 Pro + Pixel 7 profiles through
+  every section (`apps/mobile/scripts/sim/`). **Required** after any user-facing change,
+  before publishing to Expo Go.
+- **Designer** (`designer`): holds the premium bar and `DESIGN.md`; critiques screenshots and
+  writes buildable specs. Used when planning a new screen or flow and before a visual change
+  ships.
+
+Run teammates in parallel with the Builder's own checks where they don't depend on each other,
+and say in the update to Geego which teammate checked what and what they caught. Shared kit:
+`supabase/tests/run.sh` (SQL tests against a throwaway Postgres) and
+`apps/mobile/scripts/sim/` (phone walkthrough + contact sheets).
