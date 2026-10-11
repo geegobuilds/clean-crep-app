@@ -68,7 +68,7 @@ export default function ProfileScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
         <ScreenHeader title="Profile" subtitle="Your cleans, points and rewards." />
-        <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs }}>
+        <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, paddingBottom: 160 }}>
           <SignInPrompt
             title="Sign in to see your profile"
             body={`Every clean earns loyalty points. Hit ${LOYALTY_GOAL} and your next clean is free.`}

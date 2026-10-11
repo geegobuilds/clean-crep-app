@@ -18,7 +18,7 @@ const user = {
   role: 'authenticated',
   email: TOUR_EMAIL,
   app_metadata: { provider: 'email' },
-  user_metadata: { name: 'Ana Brown' },
+  user_metadata: { name: 'Kemar Campbell' },
   created_at: ago(400),
 };
 
@@ -100,7 +100,7 @@ function seed(): State {
     est_value_cents: null, passport_public: true, created_at: ago(200), updated_at: ago(1), ...p,
   });
   return {
-    customer: { id: UID, name: 'Ana Brown', email: TOUR_EMAIL, phone: '876-555-0101', loyalty_points: 340, member_since: isoDay(400) },
+    customer: { id: UID, name: 'Kemar Campbell', email: TOUR_EMAIL, phone: '876-555-0101', loyalty_points: 340, member_since: isoDay(400) },
     pairs: [
       pair('p1', { brand: 'Nike', model: 'Air Force 1', colorway: 'Triple White', size: '10', nickname: 'AF1s', passport_code: 'K7Q4M2XR' }),
       pair('p2', { category: 'clarks', brand: 'Clarks', model: 'Wallabee', colorway: 'Sand Suede', size: '9', passport_code: 'W9HN3TQ6' }),
@@ -168,17 +168,20 @@ const fmtDay = (iso: string) => {
 };
 
 function note(o: Row, status: OrderStatus, at: string): Row {
-  const item = o.item_name as string;
-  const cap = serviceKind((svc(o.service_id as string) ?? {}).name) === 'headwear';
+  const service = svc(o.service_id as string)?.name ?? '';
+  const cap = serviceKind(service) === 'headwear';
+  // A booking that didn't name the item is "your pair" / "your cap", never "your Sneaker Clean".
+  const named = !!o.item_name && String(o.item_name).toLowerCase() !== service.toLowerCase();
+  const item = named ? (o.item_name as string) : cap ? 'cap' : 'pair';
   const pickup = o.drop_method === 'pickup';
-  const is = cap ? 'is' : 'are';
+  const is = cap || !named ? 'is' : 'are';
   const base = { id: `n-${o.id}-${status}`, customer_id: UID, order_id: o.id, read: false, created_at: at };
   if (status === 'received') {
     return { ...base, type: 'received', title: 'Order Received', body: pickup ? `We got your ${item} booking. CrepRun collects on ${fmtDay(o.scheduled_date as string)}.` : `We got your ${item} booking. Drop-off on ${fmtDay(o.scheduled_date as string)} at ${SHOP}.` };
   }
   if (status === 'in_progress') return { ...base, type: 'progress', title: 'In Progress', body: `Your ${item} ${is} being cleaned now.` };
   return pickup
-    ? { ...base, type: 'ready', title: 'Ready for Delivery', body: `Your ${item} ${is} clean. CrepRun brings ${cap ? 'it' : 'them'} back on your zone day.` }
+    ? { ...base, type: 'ready', title: 'Ready for Delivery', body: `Your ${item} ${is} clean. CrepRun brings ${cap || !named ? 'it' : 'them'} back on your zone day.` }
     : { ...base, type: 'ready', title: 'Ready for Pickup', body: `Your ${item} ${is} clean and waiting at ${SHOP}.` };
 }
 
@@ -252,7 +255,8 @@ function nextShopDay(pickupDay: string): string {
     d.setDate(d.getDate() + 1);
     if (d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() === pickupDay.toLowerCase()) break;
   }
-  return d.toISOString().slice(0, 10);
+  // Local calendar day (toISOString would be UTC: a day late after 7pm in Jamaica).
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function placeOrder(b: Row): Row {
@@ -313,7 +317,7 @@ export async function tourFetch(input: RequestInfo | URL, init?: RequestInit): P
   const one = (headers.get('Accept') ?? '').includes('vnd.pgrst.object');
   const wantRows = (headers.get('Prefer') ?? '').includes('return=representation');
   const body = (await readBody(init)) as Row | Row[] | null;
-  advance();
+  if (advance()) setTimeout(emitTourChange, 0);
 
   // Auth
   if (path.startsWith('/auth/v1/')) {

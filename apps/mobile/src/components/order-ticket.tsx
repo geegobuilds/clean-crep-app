@@ -66,7 +66,7 @@ export function OrderTicket({ order }: { order: OrderWithService }) {
       {/* Header + route */}
       <View style={{ padding: space.lg, paddingBottom: space.md }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={[type.overline, { color: c.onNavyMuted }]}>Clean Crep · {order.order_number}</Text>
+          <Text style={[type.overline, { color: c.onNavyMuted }]}>Clean Crep</Text>
           <StatusTag status={order.status} method={order.drop_method} onDark />
         </View>
         <Text style={[type.title, { color: c.white, marginTop: space.sm }]} numberOfLines={2}>

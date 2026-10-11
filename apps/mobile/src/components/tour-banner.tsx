@@ -13,26 +13,24 @@ export function TourBanner() {
   if (!active) return null;
   return (
     <View pointerEvents="box-none" style={{ alignItems: 'center', paddingBottom: space.xs }}>
-      <Animated.View
-        entering={FadeInDown.springify().damping(16)}
-        testID="tour-banner"
-        style={[{ flexDirection: 'row', alignItems: 'center', gap: space.xs, backgroundColor: c.navy, borderRadius: radius.pill, paddingLeft: space.sm, paddingRight: 4, paddingVertical: 4 }, elevation.raised]}
-      >
-        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.white }} />
-        <Text style={[type.caption, { color: c.white, fontFamily: type.bodyStrong.fontFamily }]}>Tour · sample data</Text>
+      <Animated.View entering={FadeInDown.springify().damping(16)}>
+        {/* The whole pill is the End button: a 44pt target, not a tiny chip. */}
         <Pressable
-          testID="tour-end"
+          testID="tour-banner"
           accessibilityRole="button"
-          accessibilityLabel="End the tour"
-          hitSlop={8}
+          accessibilityLabel="Tour with sample data. End the tour"
           onPress={async () => {
             tapLight();
             await endTour();
             router.replace('/');
           }}
-          style={{ backgroundColor: c.white, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.sm }}
+          style={[{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space.xs, backgroundColor: c.navy, borderRadius: radius.pill, paddingLeft: space.md, paddingRight: 6 }, elevation.raised]}
         >
-          <Text style={[type.caption, { color: c.accent, fontFamily: type.bodyStrong.fontFamily }]}>End</Text>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.white }} />
+          <Text style={[type.caption, { color: c.white, fontFamily: type.bodyStrong.fontFamily }]}>Tour · sample data</Text>
+          <View testID="tour-end" style={{ backgroundColor: c.white, borderRadius: radius.pill, paddingVertical: 6, paddingHorizontal: space.md, marginLeft: space.xxs }}>
+            <Text style={[type.caption, { color: c.accent, fontFamily: type.bodyStrong.fontFamily }]}>End</Text>
+          </View>
         </Pressable>
       </Animated.View>
     </View>

@@ -6,6 +6,7 @@ import Animated, { LinearTransition } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { Icon, type IconName } from '@/components/icon';
 import { TourBanner } from '@/components/tour-banner';
+import { useTourActive } from '@/lib/tour/state';
 import { tapLight } from '@/lib/haptics';
 import { c, elevation, radius, space, type } from '@/theme';
 
@@ -23,6 +24,8 @@ const FADE = 96;
  */
 export function PillTabBar({ state, descriptors, navigation, tabs }: TabBarProps & { tabs: { name: string; label: string; icon: IconName }[] }) {
   const insets = useSafeAreaInsets();
+  // While touring, the tour pill sits on the bar: the fade grows so content melts away under both.
+  const fade = FADE + (useTourActive() ? 56 : 0);
   const focusedRoute = state.routes[state.index];
   const current = focusedRoute?.name;
   const style = focusedRoute ? (descriptors[focusedRoute.key]?.options.tabBarStyle as { display?: string } | undefined) : undefined;
@@ -30,7 +33,7 @@ export function PillTabBar({ state, descriptors, navigation, tabs }: TabBarProps
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
       {/* Content fades out under the bar instead of stopping at a hard edge. */}
-      <Svg pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }} width="100%" height={FADE + insets.bottom}>
+      <Svg pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }} width="100%" height={fade + insets.bottom}>
         <Defs>
           <LinearGradient id="tabfade" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={c.bg} stopOpacity="0" />
@@ -38,7 +41,7 @@ export function PillTabBar({ state, descriptors, navigation, tabs }: TabBarProps
             <Stop offset="1" stopColor={c.bg} stopOpacity="1" />
           </LinearGradient>
         </Defs>
-        <Rect x="0" y="0" width="100%" height={FADE + insets.bottom} fill="url(#tabfade)" />
+        <Rect x="0" y="0" width="100%" height={fade + insets.bottom} fill="url(#tabfade)" />
       </Svg>
     <View style={{ paddingHorizontal: space.md, paddingTop: space.xs, paddingBottom: Math.max(insets.bottom, space.sm) }}>
       <TourBanner />

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { advance, resetTour } from './backend';
-import { emitTourChange, tour, TOUR_EMAIL } from './state';
+import { emitTourChange, tour, TOUR_EMAIL, TOUR_ENABLED } from './state';
 
 // supabase-js keeps the session under sb-<project ref>-auth-token.
 const REAL_SESSION_KEY = `sb-${(() => {
@@ -22,7 +22,7 @@ function stopTour() {
 
 /** Sign in as the tour's sample customer (on a fresh copy of the sample data). */
 export async function startTour() {
-  if (tour.active) return;
+  if (!TOUR_ENABLED || tour.active) return;
   resetTour();
   tour.set(true);
   // Orders booked on the tour move along on their own; this nudges the screens.

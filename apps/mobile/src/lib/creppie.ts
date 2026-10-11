@@ -32,6 +32,8 @@ function newSessionId(): string {
 
 /** The saved conversation (same session id = Creppie remembers the chat), or a fresh one. */
 export async function loadChat(): Promise<CreppieChatState> {
+  // The tour starts a fresh chat: never the phone's real saved conversation.
+  if (tour.active) return { sessionId: newSessionId(), msgs: [] };
   try {
     const saved = JSON.parse((await AsyncStorage.getItem(STORE_KEY)) ?? 'null');
     if (saved && typeof saved.sessionId === 'string' && Array.isArray(saved.msgs)) return saved;
