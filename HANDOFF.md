@@ -4,10 +4,15 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-10_
+_Last updated: 2026-10-11_
 
 ## Current Status
 
+- **The team (2026-10-11)**: Builder (Claude) + Reviewer, QA Tester and Designer subagents in
+  `.claude/agents/` (rules in CLAUDE.md "The team"). Their kit is in the repo now:
+  `supabase/tests/run.sh` (69 SQL checks in 5 suites, throwaway Postgres, no Docker) and
+  `apps/mobile/scripts/sim/` (mock Supabase + iPhone/Pixel walkthrough + contact sheets).
+  #46 merged and published to Expo Go (group a8c1bde0-da72-426c-b787-bddfbd105267).
 - **Caps ≠ pairs, pickup ≠ drop-off (2026-10-10, Geego)**: wording is now method- and item-aware.
   Shared `statusLabel(status, method)` / `trackerSteps(method)` (CrepRun ends "Ready for Delivery" →
   "Delivered"), `serviceKind(name)` (footwear vs headwear). Book groups CAPS & HATS, cap bookings say
