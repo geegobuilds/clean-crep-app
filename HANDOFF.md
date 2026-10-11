@@ -8,6 +8,21 @@ _Last updated: 2026-10-11_
 
 ## Current Status
 
+- **Tour mode + premium pass (2026-10-11, Geego: "add sample data so I see how everything works",
+  "add sample photos too")**: preview builds (EXPO_PUBLIC_TOUR=1 in eas.json preview/development,
+  never production) show "Take the tour with sample data" on sign-in and guest Profile. The app
+  then runs on an in-memory sample backend (`apps/mobile/src/lib/tour/`): a customer with orders
+  at every stage (drop-off + CrepRun, a cap), a Vault with before/after photos (free-licence
+  Unsplash shots loaded from its CDN; "before" = same shot aged by CDN filters), Club credits and
+  an inbox. Bookings move along by themselves (received → cleaning → ready in ~2 min). Nothing
+  reaches the live DB, PostHog, push or Creppie; the real session is kept and restored on End.
+  `scripts/sim/tour.js` drives it. Designer batch 1 shipped with it (tab bar steps aside at
+  checkout, no blue on status pills, inbox action chips + relative times, staggered entrances,
+  count-up numbers, profile clean-up). Batch 2: Home "Your rotation" rail + Club card (menu and
+  shortcut circles removed; prices live in Book), Club as a navy wallet card with plan chips and
+  a personal saving line, Vault deep links (?pair= / ?add=1). Still to do from the Designer:
+  BOOKED celebrate mood + ticket tear-in. Real Clean Crep before/afters should replace the
+  Unsplash tour photos once Geego sends them.
 - **The team (2026-10-11)**: Builder (Claude) + Reviewer, QA Tester and Designer subagents in
   `.claude/agents/` (rules in CLAUDE.md "The team"). Their kit is in the repo now:
   `supabase/tests/run.sh` (69 SQL checks in 5 suites, throwaway Postgres, no Docker) and
