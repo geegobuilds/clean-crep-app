@@ -23,6 +23,7 @@ _Last updated: 2026-10-11_
   a personal saving line, Vault deep links (?pair= / ?add=1). Still to do from the Designer:
   BOOKED celebrate mood + ticket tear-in. Real Clean Crep before/afters should replace the
   Unsplash tour photos once Geego sends them.
+  #48 merged; published to Expo Go (group 9aac8f92-8531-44a8-b456-55fb629cbf67, tour compiled in).
 - **The team (2026-10-11)**: Builder (Claude) + Reviewer, QA Tester and Designer subagents in
   `.claude/agents/` (rules in CLAUDE.md "The team"). Their kit is in the repo now:
   `supabase/tests/run.sh` (69 SQL checks in 5 suites, throwaway Postgres, no Docker) and
