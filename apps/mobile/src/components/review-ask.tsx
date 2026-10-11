@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, radius } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { track } from '@/lib/analytics';
+import { tour } from '@/lib/tour/state';
 
 // TODO(Geego): replace with the shop's direct "Write a review" link from Google
 // Business Profile (Home → "Ask for reviews" → copy link, e.g. https://g.page/r/XXXX/review).
@@ -22,7 +23,8 @@ export function ReviewAsk({ itemName }: { itemName: string | null }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (!itemName) return;
+    // Not on the tour: sample orders shouldn't ask for a real Google review.
+    if (!itemName || tour.active) return;
     let active = true;
     AsyncStorage.getItem(ASKED_KEY).then((v) => {
       if (!active || v === '1') return;

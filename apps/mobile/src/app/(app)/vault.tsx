@@ -1,46 +1,26 @@
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, Share, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, Share, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { gradesFor, pairTitle, passportUrl, type PairCategory } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
+import { activeClean, cleanedLine, Cover, shortDay, StagePill, stageLabel } from '@/components/pair-cover';
 import { CreppieChat } from '@/components/creppie-chat';
 import { StatusTag } from '@/components/status-tag';
 import { Button, Card, Overline, PressScale, ScreenHeader } from '@/components/ui';
 import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
 import { useFeatureState } from '@/hooks/use-features';
-import { useVault, type VaultClean, type VaultPair } from '@/hooks/use-vault';
+import { useVault, type VaultPair } from '@/hooks/use-vault';
 import { useAuth } from '@/lib/auth';
 import { tapLight } from '@/lib/haptics';
 import { usePullRefresh } from '@/hooks/use-pull-refresh';
+import { useCountUp } from '@/hooks/use-count-up';
 import { c, elevation, radius, space, type } from '@/theme';
 
 // The Vault (docs/VISION.md, Phase 1): every pair the customer owns, with its
 // care history and Crep Passport. Pairs appear on their own from orders
 // (migration 0021); customers can add the rest. Hidden unless `vault` is on.
-
-function day(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-JM', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-function cleanedLine(p: VaultPair): string {
-  const done = p.cleans.filter((o) => o.status === 'completed');
-  if (!p.cleans.length) return 'Not cleaned with us yet';
-  if (!done.length) return 'First clean in progress';
-  return `Cleaned ${done.length}× · last ${day(done[0].created_at)}`;
-}
-
-/** The clean this item is in for right now (booked, cleaning or ready), if any. */
-function activeClean(p: VaultPair): VaultClean | null {
-  return p.cleans.find((o) => o.status !== 'completed') ?? null;
-}
-
-/** Short stage for a Vault item that's in for a clean. */
-function stageLabel(o: VaultClean): string {
-  if (o.status === 'in_progress') return 'Cleaning';
-  if (o.status === 'ready_for_pickup') return o.drop_method === 'pickup' ? 'On its way back' : 'Ready for pickup';
-  return 'Booked in';
-}
 
 export default function VaultScreen() {
   const router = useRouter();
@@ -52,13 +32,22 @@ export default function VaultScreen() {
   const refresh = usePullRefresh(reload);
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  // Deep links from Home: /vault?pair=<id> opens that item, /vault?add=1 the add form.
+  const params = useLocalSearchParams<{ pair?: string; add?: string }>();
+  const [seenParams, setSeenParams] = useState<string | undefined>(undefined);
+  const paramKey = `${params.pair ?? ''}|${params.add ?? ''}`;
+  if (paramKey !== seenParams && !loading) {
+    setSeenParams(paramKey);
+    if (params.pair) setOpenId(params.pair);
+    if (params.add === '1') setAdding(true);
+  }
   const open = pairs.find((p) => p.id === openId) ?? null;
 
   // Deep link to /vault while the feature is hidden: back to Home.
   if (loaded && !features.has('vault')) return <Redirect href="/" />;
 
   if (open) {
-    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => setOpenId(null)} onSave={(f) => savePair(open.id, f)} onRemove={async () => { const err = await removePair(open.id); if (!err) setOpenId(null); return err; }} onBook={() => router.push({ pathname: '/book', params: { pair: open.id } })} onTrack={() => router.push('/orders')} />;
+    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => { setOpenId(null); if (params.pair) router.setParams({ pair: '' }); }} onSave={(f) => savePair(open.id, f)} onRemove={async () => { const err = await removePair(open.id); if (!err) setOpenId(null); return err; }} onBook={() => router.push({ pathname: '/book', params: { pair: open.id } })} onTrack={() => router.push('/orders')} />;
   }
 
   const capCount = pairs.filter((p) => p.category === 'cap').length;
@@ -84,9 +73,9 @@ export default function VaultScreen() {
           <>
             <View style={{ flexDirection: 'row', gap: space.xl }}>
               {/* Caps are counted on their own: a cap is not a pair. */}
-              {shoeCount > 0 && <Stat value={String(shoeCount)} label={shoeCount === 1 ? 'Pair' : 'Pairs'} />}
-              {capCount > 0 && <Stat value={String(capCount)} label={capCount === 1 ? 'Cap' : 'Caps'} />}
-              <Stat value={String(cleans)} label={cleans === 1 ? 'Clean' : 'Cleans'} />
+              {shoeCount > 0 && <Stat value={shoeCount} label={shoeCount === 1 ? 'Pair' : 'Pairs'} />}
+              {capCount > 0 && <Stat value={capCount} label={capCount === 1 ? 'Cap' : 'Caps'} />}
+              <Stat value={cleans} label={cleans === 1 ? 'Clean' : 'Cleans'} />
             </View>
 
             {pairs.length === 0 && !adding && (
@@ -99,42 +88,42 @@ export default function VaultScreen() {
             )}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.md }}>
-              {pairs.map((p) => {
+              {pairs.map((p, i) => {
                 const n = p.cleans.filter((o) => o.status === 'completed').length;
                 const active = activeClean(p);
                 return (
-                  <PressScale
-                    key={p.id}
-                    testID="vault-pair"
-                    onPress={() => {
-                      tapLight();
-                      setOpenId(p.id);
-                    }}
-                    style={{ width: tile, gap: space.xs }}
-                  >
-                    <View>
-                      <Cover pair={p} size={tile} />
-                      {active && (
-                        <View testID="vault-stage" style={{ position: 'absolute', left: space.sm, bottom: space.sm, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
-                          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.accent }} />
-                          <Text style={[type.caption, { color: c.ink, fontFamily: type.bodyStrong.fontFamily }]}>{stageLabel(active)}</Text>
-                        </View>
-                      )}
-                      {n > 0 && (
-                        <View style={{ position: 'absolute', top: space.sm, right: space.sm, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
-                          <Text style={[type.caption, { color: c.ink, fontVariant: ['tabular-nums'] }]}>{n}× clean</Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={{ paddingHorizontal: 2 }}>
-                      <Text style={type.bodyStrong} numberOfLines={1}>
-                        {pairTitle(p)}
-                      </Text>
-                      <Text style={type.caption} numberOfLines={1}>
-                        {p.colorway || cleanedLine(p)}
-                      </Text>
-                    </View>
-                  </PressScale>
+                  <Animated.View key={p.id} entering={FadeInDown.delay(i * 40).springify().damping(18)}>
+                    <PressScale
+                      testID="vault-pair"
+                      onPress={() => {
+                        tapLight();
+                        setOpenId(p.id);
+                      }}
+                      style={{ width: tile, gap: space.xs }}
+                    >
+                      <View>
+                        <Cover pair={p} size={tile} />
+                        {active && (
+                          <View style={{ position: 'absolute', left: space.sm, bottom: space.sm }}>
+                            <StagePill clean={active} />
+                          </View>
+                        )}
+                        {n > 0 && (
+                          <View style={{ position: 'absolute', top: space.sm, right: space.sm, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
+                            <Text style={[type.caption, { color: c.ink, fontVariant: ['tabular-nums'] }]}>{n}× clean</Text>
+                          </View>
+                        )}
+                      </View>
+                      <View style={{ paddingHorizontal: 2 }}>
+                        <Text style={type.bodyStrong} numberOfLines={1}>
+                          {pairTitle(p)}
+                        </Text>
+                        <Text style={type.caption} numberOfLines={1}>
+                          {p.colorway || cleanedLine(p)}
+                        </Text>
+                      </View>
+                    </PressScale>
+                  </Animated.View>
                 );
               })}
             </View>
@@ -142,7 +131,10 @@ export default function VaultScreen() {
             {adding ? (
               <PairForm
                 title="Add to your Vault"
-                onCancel={() => setAdding(false)}
+                onCancel={() => {
+                  setAdding(false);
+                  if (params.add) router.setParams({ add: '' });
+                }}
                 onSave={async (f) => {
                   const err = await savePair(null, f);
                   if (!err) setAdding(false);
@@ -159,22 +151,12 @@ export default function VaultScreen() {
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
+function Stat({ value, label }: { value: number; label: string }) {
+  const shown = useCountUp(value);
   return (
     <View>
-      <Text style={[type.hero, { fontSize: 56, lineHeight: 58, fontVariant: ['tabular-nums'] }]}>{value}</Text>
+      <Text style={[type.hero, { fontSize: 56, lineHeight: 58, fontVariant: ['tabular-nums'] }]}>{shown}</Text>
       <Text style={type.overline}>{label}</Text>
-    </View>
-  );
-}
-
-/** Latest after-photo, else a navy tile with the pair's initial. */
-function Cover({ pair, size, wide }: { pair: VaultPair; size: number; wide?: boolean }) {
-  const style = { width: wide ? '100%' : size, height: size, borderRadius: radius.lg } as const;
-  if (pair.cover) return <Image source={{ uri: pair.cover }} style={style} resizeMode="cover" accessibilityIgnoresInvertColors />;
-  return (
-    <View style={[style, { backgroundColor: c.navy, alignItems: 'center', justifyContent: 'center' }]}>
-      <Text style={[type.hero, { color: c.white, fontSize: Math.round(size * 0.42), lineHeight: Math.round(size * 0.46) }]}>{pairTitle(pair).charAt(0).toUpperCase()}</Text>
     </View>
   );
 }
@@ -185,7 +167,7 @@ function creppieDraft(pair: VaultPair): string {
   const done = pair.cleans.filter((o) => o.status === 'completed');
   const g = latestGrades(pair);
   const history = [
-    done.length ? `cleaned ${done.length}× by you, last ${day(done[0].created_at)}` : 'not cleaned by you yet',
+    done.length ? `cleaned ${done.length}× by you, last ${shortDay(done[0].created_at)}` : 'not cleaned by you yet',
     g?.after ? `condition ${g.after.score}/10` : null,
   ]
     .filter(Boolean)
@@ -376,7 +358,7 @@ function PairDetail({
                         <View style={{ flex: 1 }}>
                           <Text style={type.bodyStrong}>{o.service?.name ?? 'Clean'}</Text>
                           <Text style={type.caption}>
-                            {day(o.created_at)} · {o.order_number}
+                            {shortDay(o.created_at)} · {o.order_number}
                           </Text>
                         </View>
                         <StatusTag status={o.status} method={o.drop_method} />

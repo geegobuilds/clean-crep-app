@@ -6,6 +6,8 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { useCallback } from 'react';
 import { SignInForm } from '@/components/sign-in-form';
+import { TOUR_ENABLED } from '@/lib/tour/state';
+import { startTour } from '@/lib/tour/control';
 import { c, space, type } from '@/theme';
 
 const logo = require('../../../assets/brand/logo.png');
@@ -92,6 +94,19 @@ export default function SignInScreen() {
             <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} style={{ marginTop: space.sm, alignItems: 'center', paddingVertical: space.xs }}>
               <Text style={[type.caption, { color: c.inkMuted }]}>Just browsing? Continue without an account</Text>
             </Pressable>
+            {TOUR_ENABLED && (
+              <Pressable
+                testID="tour-start"
+                accessibilityRole="button"
+                onPress={async () => {
+                  await startTour();
+                  router.replace('/');
+                }}
+                style={{ marginTop: space.xs, alignItems: 'center', paddingVertical: space.xs }}
+              >
+                <Text style={[type.bodyStrong, { color: c.accent }]}>Take the tour with sample data</Text>
+              </Pressable>
+            )}
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>

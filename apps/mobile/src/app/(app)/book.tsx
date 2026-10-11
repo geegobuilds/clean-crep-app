@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions, type TextStyle } from 'react-native';
-import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming, ZoomIn } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, LinearGradient as SvgGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { formatPrice, orderTotal, pairFitsService, pairTitle, serviceKind, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
@@ -24,7 +24,7 @@ import { CreppieArt, MOODS } from '@/components/creppie';
 import { track } from '@/lib/analytics';
 import { Button, Overline, PressScale, ScreenHeader } from '@/components/ui';
 import { success, tapLight } from '@/lib/haptics';
-import { c, elevation, radius, space, type } from '@/theme';
+import { c, elevation, radius, space, spring, type } from '@/theme';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 const BOOKED_HERO_H = 400;
@@ -114,6 +114,14 @@ export default function BookingScreen() {
     setStatusBarStyle(step === 2 ? 'light' : 'dark');
     return () => setStatusBarStyle('dark');
   }, [step]);
+
+  // Step 1 is checkout: the floating tab bar steps aside so nothing competes
+  // with Confirm Booking (and nothing covers the last fields).
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({ tabBarStyle: step === 1 ? { display: 'none' } : undefined });
+    return () => navigation.setOptions({ tabBarStyle: undefined });
+  }, [navigation, step]);
 
   // Drop-off: the next 7 shop days (closed Sundays).
   const days: Day[] = useMemo(() => {
@@ -277,13 +285,15 @@ export default function BookingScreen() {
                 </Animated.Text>
               ))}
             </View>
-            <Animated.View entering={ZoomIn.delay(380).springify().damping(12)} style={{ position: 'absolute', left: 0, right: 0, bottom: 34, alignItems: 'center' }}>
-              <CreppieArt mood="success" size={220} />
+            <Animated.View entering={ZoomIn.delay(300).springify().damping(10)} style={{ position: 'absolute', left: 0, right: 0, bottom: 34, alignItems: 'center' }}>
+              <Celebrate>
+                <CreppieArt mood="success" size={220} />
+              </Celebrate>
             </Animated.View>
           </View>
 
           {/* The ticket, straddling the hero edge */}
-          <Animated.View entering={FadeInUp.delay(520).springify().damping(16)} style={{ paddingHorizontal: space.lg, marginTop: -44 }}>
+          <Animated.View entering={FadeInUp.delay(450).springify().damping(16)} style={{ paddingHorizontal: space.lg, marginTop: -44 }}>
             <View testID="booked-ticket" style={[{ backgroundColor: c.surface, borderRadius: radius.lg + 4, overflow: 'hidden' }, elevation.raised]}>
               <View style={{ padding: space.lg, gap: space.xs }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
@@ -306,6 +316,8 @@ export default function BookingScreen() {
                 </Text>
               </View>
 
+              {/* The stub tears in a beat after the ticket lands. */}
+              <Animated.View entering={tearIn}>
               <Perforation />
 
               <View style={{ padding: space.lg, gap: space.xs }}>
@@ -330,6 +342,7 @@ export default function BookingScreen() {
                   {hasKit ? (dropoff ? ' Kits are paid for and collected at the shop.' : ' Kits are settled with your order.') : ''}
                 </Text>
               </View>
+              </Animated.View>
             </View>
           </Animated.View>
 
@@ -348,7 +361,7 @@ export default function BookingScreen() {
     const num = () => String(++n).padStart(2, '0');
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 140 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xl }} keyboardShouldPersistTaps="handled">
           <ScreenHeader
             title="Booking Details"
             subtitle={`${selected.name} · ${formatPrice(selected.price_cents)}${selected.price_cents === null ? ' on inspection' : ''}`}
@@ -674,7 +687,7 @@ export default function BookingScreen() {
           />
         )}
         {menu.map(({ svc, i, groupStart }) => (
-          <View key={svc.id} style={{ gap: space.sm }}>
+          <Animated.View key={svc.id} entering={FadeInDown.delay(i * 40).springify().damping(18)} style={{ gap: space.sm }}>
             {groupStart && <Overline style={{ marginTop: space.md }}>CAPS & HATS</Overline>}
             <PressScale
               testID="service-card"
@@ -711,8 +724,7 @@ export default function BookingScreen() {
                 </View>
               </View>
             </PressScale>
-
-          </View>
+          </Animated.View>
         ))}
         {services.length > 0 && (
           <View style={{ marginTop: space.sm }}>
@@ -815,3 +827,27 @@ const inputStyle: TextStyle = {
   color: c.navy,
   backgroundColor: c.surface,
 };
+
+/** BOOKED: Creppie gives one happy wiggle once he lands (skipped with Reduce Motion). */
+function Celebrate({ children }: { children: ReactNode }) {
+  const reduce = useReducedMotion();
+  const tilt = useSharedValue(0);
+  useEffect(() => {
+    if (reduce) return;
+    tilt.set(withDelay(650, withSequence(withSpring(6, spring), withSpring(-4, spring), withSpring(0, spring))));
+  }, [reduce, tilt]);
+  const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${tilt.value}deg` }] }));
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
+
+/** The ticket stub tearing in: drops a little and straightens out. */
+function tearIn() {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ translateY: 18 }, { rotate: '1.5deg' }] },
+    animations: {
+      opacity: withDelay(650, withTiming(1, { duration: 180 })),
+      transform: [{ translateY: withDelay(650, withSpring(0, spring)) }, { rotate: withDelay(650, withSpring('0deg', spring)) }],
+    },
+  };
+}

@@ -66,7 +66,7 @@ export function OrderTicket({ order }: { order: OrderWithService }) {
       {/* Header + route */}
       <View style={{ padding: space.lg, paddingBottom: space.md }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={[type.overline, { color: c.onNavyMuted }]}>Clean Crep · {order.order_number}</Text>
+          <Text style={[type.overline, { color: c.onNavyMuted }]}>Clean Crep</Text>
           <StatusTag status={order.status} method={order.drop_method} onDark />
         </View>
         <Text style={[type.title, { color: c.white, marginTop: space.sm }]} numberOfLines={2}>
@@ -77,8 +77,8 @@ export function OrderTicket({ order }: { order: OrderWithService }) {
           <RouteEnd label={pickup ? 'CrepRun pickup' : 'Drop-off'} code={from} />
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.sm }}>
             <View style={{ flex: 1, height: 1, backgroundColor: c.onNavyLine }} />
-            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center', marginHorizontal: space.xs }}>
-              <Icon name="arrowR" size={16} color={c.white} strokeWidth={2.25} />
+            <View style={{ width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: c.onNavyLine, alignItems: 'center', justifyContent: 'center', marginHorizontal: space.xs }}>
+              <Icon name="arrowR" size={16} color={c.white} strokeWidth={2} />
             </View>
             <View style={{ flex: 1, height: 1, backgroundColor: c.onNavyLine }} />
           </View>
@@ -94,7 +94,7 @@ export function OrderTicket({ order }: { order: OrderWithService }) {
           <StubField label="Order" value={order.order_number} />
           <StubField label="Service" value={order.service?.name ?? order.item_name} flex={2} />
         </View>
-        <StubField label="Add-ons" value={extras.length ? extras.join(' · ') : 'None'} />
+        {extras.length > 0 && <StubField label="Add-ons" value={extras.join(' · ')} />}
         <StatusTimeline status={order.status} method={order.drop_method} events={order.events ?? []} />
       </View>
     </View>

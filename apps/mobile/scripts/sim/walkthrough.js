@@ -52,7 +52,7 @@ async function run(devName, signedIn, flow) {
 const signedInFlow = async ({ p, vis, snap, scroll, go }) => {
   await go('/'); await snap('home');
   await scroll(500); await snap('home-scrolled');
-  await go('/'); await vis('Creppie').click(); await snap('creppie-chat'); await p.getByLabel('Close chat').click();
+  await go('/'); await vis('Ask Creppie').click(); await snap('creppie-chat'); await p.getByLabel('Close chat').click();
   await go('/book'); await snap('book');
   await scroll(1400); await snap('book-caps');
   await vis('Premium Cap Clean').click(); await snap('book-cap-details');

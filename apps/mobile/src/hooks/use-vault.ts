@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DropMethod, OrderStatus, Pair } from '@clean-crep/shared';
 import { supabase } from '@/lib/supabase';
+import { onTourChange, tour } from '@/lib/tour/state';
+import { photoUrl } from '@/lib/tour/photos';
 import { useAuth } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
 
@@ -80,7 +82,7 @@ export function useVault() {
       if (pathByPair.size) {
         const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrls([...pathByPair.values()], 60 * 60);
         for (const [pairId, path] of pathByPair) {
-          const url = signed?.find((s) => s.path === path)?.signedUrl;
+          const url = photoUrl(signed?.find((s) => s.path === path)?.signedUrl);
           if (url) covers.set(pairId, url);
         }
       }
@@ -96,6 +98,8 @@ export function useVault() {
     // One-shot load per account.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async: state is only set after the fetch resolves
     reload();
+    // On the tour, reload when its sample data changes (a booking, an order moving along).
+    return tour.active ? onTourChange(() => reload()) : undefined;
   }, [reload]);
 
   const savePair = useCallback(

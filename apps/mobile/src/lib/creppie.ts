@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
+import { tour } from '@/lib/tour/state';
 
 // Ask Creppie in the app talks to the website's relay (apps/web /api/creppie),
 // which forwards to the same n8n Creppie that answers Instagram and the site.
@@ -31,6 +32,8 @@ function newSessionId(): string {
 
 /** The saved conversation (same session id = Creppie remembers the chat), or a fresh one. */
 export async function loadChat(): Promise<CreppieChatState> {
+  // The tour starts a fresh chat: never the phone's real saved conversation.
+  if (tour.active) return { sessionId: newSessionId(), msgs: [] };
   try {
     const saved = JSON.parse((await AsyncStorage.getItem(STORE_KEY)) ?? 'null');
     if (saved && typeof saved.sessionId === 'string' && Array.isArray(saved.msgs)) return saved;
@@ -41,10 +44,19 @@ export async function loadChat(): Promise<CreppieChatState> {
 }
 
 export function saveChat(state: CreppieChatState) {
+  if (tour.active) return;
   AsyncStorage.setItem(STORE_KEY, JSON.stringify({ sessionId: state.sessionId, msgs: state.msgs.slice(-60) })).catch(() => {});
 }
 
 export async function askCreppie(sessionId: string, message: string): Promise<{ reply: string; needsSignIn: boolean }> {
+  // On the tour, Creppie answers locally: the real one books real orders.
+  if (tour.active) {
+    await new Promise((r) => setTimeout(r, 700));
+    return {
+      reply: "Wah gwaan! I'm Creppie. On the real app I answer questions and book your clean right here in the chat. This is the tour, so tap Book to try a booking with sample data.",
+      needsSignIn: false,
+    };
+  }
   try {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;

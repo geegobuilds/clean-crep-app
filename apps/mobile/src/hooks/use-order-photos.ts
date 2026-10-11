@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { photoUrl } from '@/lib/tour/photos';
 
 export interface OrderPhotos {
   before: string | null; // signed URL
@@ -38,7 +39,7 @@ export function useOrderPhotos(orderId: string | null, enabled = true) {
       const paths = [before, after].filter((p): p is string => !!p);
       const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrls(paths, 60 * 60);
       if (cancelled) return;
-      const url = (path: string | null) => (path ? (signed?.find((s) => s.path === path)?.signedUrl ?? null) : null);
+      const url = (path: string | null) => (path ? (photoUrl(signed?.find((s) => s.path === path)?.signedUrl) ?? null) : null);
       setGot({ orderId, photos: { before: url(before), after: url(after) } });
     })();
     return () => {

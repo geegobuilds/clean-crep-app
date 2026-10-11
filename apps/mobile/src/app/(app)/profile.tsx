@@ -10,9 +10,14 @@ import { useFeatures } from '@/hooks/use-features';
 import { enablePush, pushStatus } from '@/lib/push';
 import { openPrivacy, openTerms } from '@/lib/legal';
 import { EmptyState, ErrorState, SignInPrompt, Skeleton, SkeletonCard } from '@/components/states';
-import { Overline, ScreenHeader } from '@/components/ui';
+import { Button, Overline, ScreenHeader } from '@/components/ui';
 import { c, elevation, radius, space, type } from '@/theme';
 import { usePullRefresh } from '@/hooks/use-pull-refresh';
+import { useCountUp } from '@/hooks/use-count-up';
+import { TOUR_ENABLED, useTourActive } from '@/lib/tour/state';
+import { startTour } from '@/lib/tour/control';
+
+const WHATSAPP_URL = 'https://wa.me/18765072163';
 
 const LOYALTY_GOAL = 500;
 
@@ -55,19 +60,22 @@ export default function ProfileScreen() {
   const pastOrders = orders.filter((o) => o.status === 'completed');
   const points = customer?.loyalty_points ?? 0;
   const pctToGoal = Math.min(100, Math.round((points / LOYALTY_GOAL) * 100));
+  const shownPoints = useCountUp(points);
+  const touring = useTourActive();
   const since = memberSince(customer?.member_since);
 
   if (!session) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
         <ScreenHeader title="Profile" subtitle="Your cleans, points and rewards." />
-        <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs }}>
+        <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, paddingBottom: 160 }}>
           <SignInPrompt
             title="Sign in to see your profile"
             body={`Every clean earns loyalty points. Hit ${LOYALTY_GOAL} and your next clean is free.`}
             where="profile"
             onSignIn={() => router.push('/sign-in?next=/profile')}
           />
+          {TOUR_ENABLED && <Button variant="secondary" label="Take the tour with sample data" onPress={() => startTour()} style={{ marginTop: space.md }} />}
           <Legal />
         </ScrollView>
       </SafeAreaView>
@@ -107,13 +115,12 @@ export default function ProfileScreen() {
         <View style={{ paddingHorizontal: space.lg, gap: space.lg }}>
           {/* Loyalty, as a wallet card. */}
           <View testID="loyalty-card" style={[{ backgroundColor: c.navy, borderRadius: radius.lg + 4, padding: space.lg, gap: space.sm, overflow: 'hidden' }, elevation.raised]}>
-            <View style={{ position: 'absolute', right: -60, top: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(26,111,212,0.35)' }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={[type.overline, { color: c.onNavyMuted }]}>Loyalty points</Text>
               <Icon name="star" size={18} color={c.onNavyMuted} />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-              <Text style={[type.hero, { color: c.white, fontSize: 56, lineHeight: 58, fontVariant: ['tabular-nums'] }]}>{points}</Text>
+              <Text style={[type.hero, { color: c.white, fontSize: 56, lineHeight: 58, fontVariant: ['tabular-nums'] }]}>{shownPoints}</Text>
               <Text style={[type.body, { color: c.onNavyMuted }]}>/ {LOYALTY_GOAL} pts</Text>
             </View>
             <View style={{ height: 6, backgroundColor: c.onNavyLine, borderRadius: radius.pill, overflow: 'hidden' }}>
@@ -123,9 +130,11 @@ export default function ProfileScreen() {
               <Text style={[type.caption, { color: c.onNavyMuted }]}>
                 {Math.max(0, LOYALTY_GOAL - points)} points to a <Text style={{ color: c.white }}>free clean</Text>.
               </Text>
-              <Text style={[type.caption, { color: c.onNavyMuted, fontVariant: ['tabular-nums'] }]}>
-                {pastOrders.length} clean{pastOrders.length === 1 ? '' : 's'}
-              </Text>
+              {pastOrders.length > 0 && (
+                <Text style={[type.caption, { color: c.onNavyMuted, fontVariant: ['tabular-nums'] }]}>
+                  {pastOrders.length} clean{pastOrders.length === 1 ? '' : 's'}
+                </Text>
+              )}
             </View>
           </View>
 
@@ -183,10 +192,8 @@ export default function ProfileScreen() {
                 [
                   ...(features.has('membership') ? [{ icon: 'star', label: 'Clean Crep Club', onPress: () => router.push('/club' as Href) }] : []),
                   { icon: 'bell', label: 'Notifications', onPress: openNotificationSettings },
-                  { icon: 'help', label: 'Help & Support' },
-                  { icon: 'check', label: 'Privacy Policy', onPress: openPrivacy },
-                  { icon: 'book', label: 'Terms of Service', onPress: openTerms },
-                  { icon: 'settings', label: 'Account Settings' },
+                  { icon: 'wa', label: 'Help & Support', onPress: () => Linking.openURL(WHATSAPP_URL) },
+                  ...(TOUR_ENABLED && !touring ? [{ icon: 'star', label: 'Take the tour (sample data)', onPress: () => startTour() }] : []),
                 ] as { icon: IconName; label: string; onPress?: () => void }[]
               ).map((item, i, arr) => (
                 <Pressable
@@ -219,8 +226,8 @@ export default function ProfileScreen() {
               onPress={signOut}
               style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingVertical: space.md, borderRadius: radius.lg, backgroundColor: pressed ? c.surface : 'transparent' }]}
             >
-              <Icon name="logout" size={17} color={c.danger} />
-              <Text style={[type.bodyStrong, { color: c.danger }]}>Sign Out</Text>
+              <Icon name="logout" size={17} color={c.inkMuted} />
+              <Text style={[type.bodyStrong, { color: c.inkMuted }]}>Sign Out</Text>
             </Pressable>
           </View>
           <Legal />

@@ -16,6 +16,8 @@ import {
   Share2,
   ArrowRight,
   Footprints,
+  Coins,
+  MapPin,
   type LucideIcon,
 } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -39,7 +41,9 @@ export type IconName =
   | 'logout'
   | 'share'
   | 'arrowR'
-  | 'vault';
+  | 'vault'
+  | 'coins'
+  | 'pin';
 
 const LUCIDE: Partial<Record<IconName, LucideIcon>> = {
   home: Home,
@@ -60,6 +64,8 @@ const LUCIDE: Partial<Record<IconName, LucideIcon>> = {
   share: Share2,
   arrowR: ArrowRight,
   vault: Footprints,
+  coins: Coins,
+  pin: MapPin,
 };
 
 interface IconProps {

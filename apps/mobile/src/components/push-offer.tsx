@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { colors, radius } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { dismissPushOffer, enablePush, shouldOfferPush } from '@/lib/push';
+import { tour } from '@/lib/tour/state';
 
 /**
  * In-app explainer shown right after a booking, before the OS permission
@@ -13,6 +14,8 @@ export function PushOffer() {
   const [state, setState] = useState<'hidden' | 'offer' | 'on'>('hidden');
 
   useEffect(() => {
+    // Not on the tour: it would ask for the phone's real notification permission.
+    if (tour.active) return;
     let active = true;
     shouldOfferPush().then((offer) => active && offer && setState('offer'));
     return () => {

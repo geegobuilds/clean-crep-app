@@ -19,13 +19,14 @@ async function fillBookingDetails(page: Page, service: string, shoe: string) {
 
 test('guest sees services and prices without signing in', async ({ page }) => {
   await page.goto('/');
-  await expect(text(page, 'Sneaker Clean', false)).toBeVisible();
-  await expect(text(page, '$2,000', false)).toBeVisible();
   await expect(text(page, 'Track your cleans here', false)).toBeVisible();
   await shot(page, '01-home-guest');
 
+  // Prices live in Book (Home is about the customer's own gear).
   await tab(page, 'Book');
   await expect(text(page, 'AVAILABLE SERVICES', false)).toBeVisible();
+  await expect(text(page, 'Sneaker Clean', false)).toBeVisible();
+  await expect(text(page, '$2,000', false)).toBeVisible();
   await expect(text(page, 'Clarks Clean', false)).toBeVisible();
   await shot(page, '02-book-guest');
 });
