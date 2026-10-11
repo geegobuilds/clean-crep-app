@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, Share, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter } from 'expo-router';
 import { gradesFor, pairTitle, passportUrl, type PairCategory } from '@clean-crep/shared';
@@ -13,6 +14,7 @@ import { useVault, type VaultClean, type VaultPair } from '@/hooks/use-vault';
 import { useAuth } from '@/lib/auth';
 import { tapLight } from '@/lib/haptics';
 import { usePullRefresh } from '@/hooks/use-pull-refresh';
+import { useCountUp } from '@/hooks/use-count-up';
 import { c, elevation, radius, space, type } from '@/theme';
 
 // The Vault (docs/VISION.md, Phase 1): every pair the customer owns, with its
@@ -84,9 +86,9 @@ export default function VaultScreen() {
           <>
             <View style={{ flexDirection: 'row', gap: space.xl }}>
               {/* Caps are counted on their own: a cap is not a pair. */}
-              {shoeCount > 0 && <Stat value={String(shoeCount)} label={shoeCount === 1 ? 'Pair' : 'Pairs'} />}
-              {capCount > 0 && <Stat value={String(capCount)} label={capCount === 1 ? 'Cap' : 'Caps'} />}
-              <Stat value={String(cleans)} label={cleans === 1 ? 'Clean' : 'Cleans'} />
+              {shoeCount > 0 && <Stat value={shoeCount} label={shoeCount === 1 ? 'Pair' : 'Pairs'} />}
+              {capCount > 0 && <Stat value={capCount} label={capCount === 1 ? 'Cap' : 'Caps'} />}
+              <Stat value={cleans} label={cleans === 1 ? 'Clean' : 'Cleans'} />
             </View>
 
             {pairs.length === 0 && !adding && (
@@ -99,42 +101,43 @@ export default function VaultScreen() {
             )}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.md }}>
-              {pairs.map((p) => {
+              {pairs.map((p, i) => {
                 const n = p.cleans.filter((o) => o.status === 'completed').length;
                 const active = activeClean(p);
                 return (
-                  <PressScale
-                    key={p.id}
-                    testID="vault-pair"
-                    onPress={() => {
-                      tapLight();
-                      setOpenId(p.id);
-                    }}
-                    style={{ width: tile, gap: space.xs }}
-                  >
-                    <View>
-                      <Cover pair={p} size={tile} />
-                      {active && (
-                        <View testID="vault-stage" style={{ position: 'absolute', left: space.sm, bottom: space.sm, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
-                          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.accent }} />
-                          <Text style={[type.caption, { color: c.ink, fontFamily: type.bodyStrong.fontFamily }]}>{stageLabel(active)}</Text>
-                        </View>
-                      )}
-                      {n > 0 && (
-                        <View style={{ position: 'absolute', top: space.sm, right: space.sm, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
-                          <Text style={[type.caption, { color: c.ink, fontVariant: ['tabular-nums'] }]}>{n}× clean</Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={{ paddingHorizontal: 2 }}>
-                      <Text style={type.bodyStrong} numberOfLines={1}>
-                        {pairTitle(p)}
-                      </Text>
-                      <Text style={type.caption} numberOfLines={1}>
-                        {p.colorway || cleanedLine(p)}
-                      </Text>
-                    </View>
-                  </PressScale>
+                  <Animated.View key={p.id} entering={FadeInDown.delay(i * 40).springify().damping(18)}>
+                    <PressScale
+                      testID="vault-pair"
+                      onPress={() => {
+                        tapLight();
+                        setOpenId(p.id);
+                      }}
+                      style={{ width: tile, gap: space.xs }}
+                    >
+                      <View>
+                        <Cover pair={p} size={tile} />
+                        {active && (
+                          <View testID="vault-stage" style={{ position: 'absolute', left: space.sm, bottom: space.sm, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
+                            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.navy }} />
+                            <Text style={[type.caption, { color: c.ink, fontFamily: type.bodyStrong.fontFamily }]}>{stageLabel(active)}</Text>
+                          </View>
+                        )}
+                        {n > 0 && (
+                          <View style={{ position: 'absolute', top: space.sm, right: space.sm, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
+                            <Text style={[type.caption, { color: c.ink, fontVariant: ['tabular-nums'] }]}>{n}× clean</Text>
+                          </View>
+                        )}
+                      </View>
+                      <View style={{ paddingHorizontal: 2 }}>
+                        <Text style={type.bodyStrong} numberOfLines={1}>
+                          {pairTitle(p)}
+                        </Text>
+                        <Text style={type.caption} numberOfLines={1}>
+                          {p.colorway || cleanedLine(p)}
+                        </Text>
+                      </View>
+                    </PressScale>
+                  </Animated.View>
                 );
               })}
             </View>
@@ -159,10 +162,11 @@ export default function VaultScreen() {
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
+function Stat({ value, label }: { value: number; label: string }) {
+  const shown = useCountUp(value);
   return (
     <View>
-      <Text style={[type.hero, { fontSize: 56, lineHeight: 58, fontVariant: ['tabular-nums'] }]}>{value}</Text>
+      <Text style={[type.hero, { fontSize: 56, lineHeight: 58, fontVariant: ['tabular-nums'] }]}>{shown}</Text>
       <Text style={type.overline}>{label}</Text>
     </View>
   );

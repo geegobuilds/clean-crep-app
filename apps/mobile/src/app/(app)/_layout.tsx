@@ -36,7 +36,7 @@ export default function AppGroupLayout() {
       <Tabs.Screen name="book" options={{ title: 'Book' }} />
       <Tabs.Screen name="orders" options={{ title: 'Orders' }} />
       <Tabs.Screen name="vault" options={{ title: 'Vault', href: features.has('vault') ? undefined : null }} />
-      <Tabs.Screen name="club" options={{ href: null }} />
+      <Tabs.Screen name="club" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="inbox" options={{ title: 'Inbox' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>

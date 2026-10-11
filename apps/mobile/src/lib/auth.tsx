@@ -4,6 +4,8 @@ import type { Customer } from '@clean-crep/shared';
 import { supabase } from './supabase';
 import { syncPushTokenIfAllowed, unregisterPush } from './push';
 import { identify, resetAnalytics } from './analytics';
+import { tour } from './tour/state';
+import { endTour } from './tour/control';
 
 interface AuthContextValue {
   session: Session | null;
@@ -67,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Push tokens can rotate; refresh ours whenever a session starts/restores.
       // Deferred: supabase-js advises against calling Supabase from inside this
       // callback synchronously (it can deadlock the auth lock).
-      if (newSession && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+      if (newSession && !tour.active && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
         setTimeout(() => syncPushTokenIfAllowed(), 0);
       }
       else setCustomer(null);
@@ -81,6 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session, loadCustomer]);
 
   const signOut = useCallback(async () => {
+    // Signing out of the tour just ends it (the phone's push token isn't the tour's).
+    if (tour.active) return endTour();
     // Detach this phone first (needs the session) so the next person to sign
     // in here doesn't receive this customer's order updates.
     await unregisterPush();

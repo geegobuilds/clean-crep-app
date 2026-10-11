@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { usePathname } from 'expo-router';
 import PostHog, { PostHogProvider } from 'posthog-react-native';
+import { tour } from '@/lib/tour/state';
 
 // Product analytics (PostHog). Event names and properties are shared with the
 // website (apps/web/src/lib/analytics.ts) so one funnel covers both.
@@ -39,16 +40,20 @@ export type AnalyticsEvent =
 
 type Props = Record<string, string | number | boolean | null>;
 
+// Tour mode (sample data) never reaches the funnels.
 export function track(event: AnalyticsEvent, props?: Props) {
+  if (tour.active) return;
   posthog?.capture(event, props);
 }
 
 /** Link this device's events to the customer. User id only, no traits. */
 export function identify(userId: string) {
+  if (tour.active) return;
   if (posthog && posthog.getDistinctId() !== userId) posthog.identify(userId);
 }
 
 export function resetAnalytics() {
+  if (tour.active) return;
   posthog?.reset();
   posthog?.register({ platform: 'app' });
 }
@@ -57,7 +62,7 @@ export function resetAnalytics() {
 function ScreenTracker() {
   const pathname = usePathname();
   useEffect(() => {
-    if (pathname) posthog?.screen(pathname);
+    if (pathname && !tour.active) posthog?.screen(pathname);
   }, [pathname]);
   return null;
 }

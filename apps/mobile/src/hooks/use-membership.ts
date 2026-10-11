@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MembershipPlan, MyMembership } from '@clean-crep/shared';
 import { supabase } from '@/lib/supabase';
+import { onTourChange, tour } from '@/lib/tour/state';
 import { useAuth } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
 
@@ -36,6 +37,8 @@ export function useMembership() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async: state is only set after the fetch resolves
     reload();
+    // On the tour, reload when its sample data changes (a booking, an order moving along).
+    return tour.active ? onTourChange(() => reload()) : undefined;
   }, [reload]);
 
   const join = useCallback(

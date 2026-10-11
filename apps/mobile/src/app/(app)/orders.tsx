@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Icon } from '@/components/icon';
@@ -74,39 +75,41 @@ export default function OrdersScreen() {
         {session && !loading && orders.length > 1 && (
           <View style={{ gap: space.sm }}>
             <Overline>ALL ORDERS</Overline>
-            {orders.map((o) => {
+            {orders.map((o, i) => {
               const isActive = o.id === sel?.id;
               return (
-                <Pressable
-                  key={o.id}
-                  onPress={() => {
-                    tapLight();
-                    setActiveId(o.id);
-                  }}
-                  aria-selected={isActive}
-                  style={[
-                    {
-                      backgroundColor: c.surface,
-                      borderRadius: radius.md,
-                      padding: space.md,
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: space.sm,
-                    },
-                    isActive ? { borderWidth: 1.5, borderColor: c.navy } : elevation.card,
-                  ]}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={type.bodyStrong} numberOfLines={1}>
-                      {o.item_name}
-                    </Text>
-                    <Text style={type.caption}>
-                      {o.order_number} · {o.service?.name ?? '—'} · {o.drop_method === 'pickup' ? 'Back' : 'Ready'} {shortDay(readyBy(o))}
-                    </Text>
-                  </View>
-                  <StatusTag status={o.status} method={o.drop_method} />
-                </Pressable>
+                <Animated.View key={o.id} entering={FadeInDown.delay(i * 40).springify().damping(18)}>
+                  <Pressable
+                    onPress={() => {
+                      tapLight();
+                      setActiveId(o.id);
+                    }}
+                    aria-selected={isActive}
+                    style={[
+                      {
+                        backgroundColor: c.surface,
+                        borderRadius: radius.md,
+                        padding: space.md,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: space.sm,
+                      },
+                      isActive ? elevation.raised : elevation.card,
+                    ]}
+                  >
+                    {isActive && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.navy }} />}
+                    <View style={{ flex: 1 }}>
+                      <Text style={type.bodyStrong} numberOfLines={1}>
+                        {o.item_name}
+                      </Text>
+                      <Text style={type.caption}>
+                        {o.order_number} · {o.service?.name ?? '—'} · {o.drop_method === 'pickup' ? 'Back' : 'Ready'} {shortDay(readyBy(o))}
+                      </Text>
+                    </View>
+                    <StatusTag status={o.status} method={o.drop_method} />
+                  </Pressable>
+                </Animated.View>
               );
             })}
           </View>

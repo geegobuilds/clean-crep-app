@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { Notification } from '@clean-crep/shared';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
+import { onTourChange, tour } from '@/lib/tour/state';
 import { friendlyError } from '@/lib/errors';
 
 export function useNotifications() {
@@ -46,6 +47,8 @@ export function useNotifications() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async: state is only set after the fetch resolves
     reload();
     if (!session) return;
+    // The tour (sample data) has no realtime: its backend says when data changed.
+    if (tour.active) return onTourChange(() => reload());
     const channel = supabase
       .channel(`notifications-${session.user.id}-${instanceId}`)
       .on(

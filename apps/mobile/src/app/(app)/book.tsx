@@ -4,7 +4,7 @@ import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated'
 import Svg, { Defs, Ellipse, LinearGradient as SvgGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { formatPrice, orderTotal, pairFitsService, pairTitle, serviceKind, type AddOn, type Service, type Zone } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { useAuth } from '@/lib/auth';
@@ -114,6 +114,14 @@ export default function BookingScreen() {
     setStatusBarStyle(step === 2 ? 'light' : 'dark');
     return () => setStatusBarStyle('dark');
   }, [step]);
+
+  // Step 1 is checkout: the floating tab bar steps aside so nothing competes
+  // with Confirm Booking (and nothing covers the last fields).
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({ tabBarStyle: step === 1 ? { display: 'none' } : undefined });
+    return () => navigation.setOptions({ tabBarStyle: undefined });
+  }, [navigation, step]);
 
   // Drop-off: the next 7 shop days (closed Sundays).
   const days: Day[] = useMemo(() => {
@@ -348,7 +356,7 @@ export default function BookingScreen() {
     const num = () => String(++n).padStart(2, '0');
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 140 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xl }} keyboardShouldPersistTaps="handled">
           <ScreenHeader
             title="Booking Details"
             subtitle={`${selected.name} · ${formatPrice(selected.price_cents)}${selected.price_cents === null ? ' on inspection' : ''}`}
@@ -674,7 +682,7 @@ export default function BookingScreen() {
           />
         )}
         {menu.map(({ svc, i, groupStart }) => (
-          <View key={svc.id} style={{ gap: space.sm }}>
+          <Animated.View key={svc.id} entering={FadeInDown.delay(i * 40).springify().damping(18)} style={{ gap: space.sm }}>
             {groupStart && <Overline style={{ marginTop: space.md }}>CAPS & HATS</Overline>}
             <PressScale
               testID="service-card"
@@ -711,8 +719,7 @@ export default function BookingScreen() {
                 </View>
               </View>
             </PressScale>
-
-          </View>
+          </Animated.View>
         ))}
         {services.length > 0 && (
           <View style={{ marginTop: space.sm }}>
