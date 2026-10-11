@@ -22,7 +22,7 @@ test('guest asks Creppie to book, is asked to sign in, and the booking goes ahea
 
   await page.goto('/');
   // Home opens Creppie from its quick actions.
-  await text(page, 'Creppie').click();
+  await text(page, 'Ask Creppie').click();
   await expect(text(page, /Wah gwaan! I'm Creppie/)).toBeVisible();
   await shot(page, '20-creppie-open');
 

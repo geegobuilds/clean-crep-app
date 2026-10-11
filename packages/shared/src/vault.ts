@@ -70,3 +70,16 @@ export function gradesFor(events: { kind: string; order_id?: string | null; data
   const after = grades.find((g) => g.stage === 'after') ?? null;
   return { before, after, restored: before && after ? after.score - before.score : null };
 }
+
+/** Days after its last clean that a Vault item counts as due another (Home rail, reminders). */
+export const DUE_AFTER_DAYS = 30;
+
+/** Due a clean: nothing in for a clean now, and the last finished clean is at least DUE_AFTER_DAYS old. */
+export function isDue(cleans: { status: string; created_at: string }[], now: number = Date.now()): boolean {
+  if (cleans.some((o) => o.status !== 'completed')) return false;
+  const last = cleans
+    .filter((o) => o.status === 'completed')
+    .map((o) => Date.parse(o.created_at))
+    .sort((a, b) => b - a)[0];
+  return last !== undefined && now - last >= DUE_AFTER_DAYS * 864e5;
+}

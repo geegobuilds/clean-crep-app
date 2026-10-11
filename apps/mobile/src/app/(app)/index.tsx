@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Image, Linking, Pressable, Text, View, useWindowDimensions } from 'react-native';
-import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -14,16 +14,18 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { formatPrice, trackerSteps, stepFromStatus, type DropMethod, type OrderStatus } from '@clean-crep/shared';
-import { Icon, type IconName } from '@/components/icon';
+import { trackerSteps, stepFromStatus, type DropMethod, type OrderStatus } from '@clean-crep/shared';
+import { Icon } from '@/components/icon';
 import { readyBy } from '@/components/order-ticket';
-import { PressScale } from '@/components/ui';
+import { Button, PressScale } from '@/components/ui';
+import { RotationRail } from '@/components/rotation-rail';
+import { ClubCard } from '@/components/club-card';
+import { useVault } from '@/hooks/use-vault';
 import { useAuth } from '@/lib/auth';
 import { success, tapLight } from '@/lib/haptics';
-import { useServices } from '@/hooks/use-services';
 import { useOrders } from '@/hooks/use-orders';
 import { useFeatures } from '@/hooks/use-features';
-import { ErrorState, SignInPrompt, Skeleton } from '@/components/states';
+import { ErrorState, SignInPrompt } from '@/components/states';
 import { ReviewAsk } from '@/components/review-ask';
 import { CreppieChat } from '@/components/creppie-chat';
 import { c, elevation, radius, space, spring, type } from '@/theme';
@@ -58,7 +60,7 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const { session, customer } = useAuth();
   const features = useFeatures();
-  const { services, loading: servicesLoading, error: servicesError, reload: reloadServices } = useServices();
+  const { pairs, loading: vaultLoading, error: vaultError, reload: reloadVault } = useVault();
   // Home is always mounted, so it owns the "your pair is ready" success haptic.
   const { orders, loading: ordersLoading, error: ordersError, reload: reloadOrders } = useOrders({ onReady: () => success() });
   const activeOrders = orders.filter((o) => o.status !== 'completed');
@@ -98,14 +100,6 @@ export default function HomeScreen() {
     opacity: interpolate(scrollY.value, [HERO_H - 300, HERO_H - 230], [0, 1], Extrapolation.CLAMP),
     transform: [{ translateY: interpolate(scrollY.value, [HERO_H - 300, HERO_H - 230], [-8, 0], Extrapolation.CLAMP) }],
   }));
-
-  // Book and Orders live in the tab bar; these are the shortcuts that don't.
-  const actions: { icon: IconName; label: string; onPress: () => void }[] = [
-    ...(features.has('vault') ? [{ icon: 'vault' as IconName, label: 'Vault', onPress: () => router.push('/vault') }] : []),
-    ...(features.has('membership') ? [{ icon: 'star' as IconName, label: 'Club', onPress: () => router.push('/club' as Href) }] : []),
-    { icon: 'help', label: 'Creppie', onPress: () => setChatOpen(true) },
-    { icon: 'wa', label: 'WhatsApp', onPress: () => Linking.openURL(WHATSAPP_URL) },
-  ];
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -222,56 +216,20 @@ export default function HomeScreen() {
             <SignInPrompt title="Track your cleans here" body="Sign in to see live updates on your pairs." where="home" onSignIn={() => router.push('/sign-in?next=/')} />
           )}
 
-          <View style={{ flexDirection: 'row', justifyContent: actions.length < 4 ? 'space-around' : 'space-between' }}>
-            {actions.map((a, i) => (
-              <Animated.View key={a.label} entering={FadeInDown.delay(420 + i * 60).springify().damping(16)}>
-                <PressScale onPress={a.onPress} accessibilityLabel={a.label} style={{ alignItems: 'center', gap: 6, width: 72 }}>
-                  <View style={[{ width: 56, height: 56, borderRadius: 28, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }, elevation.card]}>
-                    <Icon name={a.icon} size={22} color={c.navy} />
-                  </View>
-                  <Text style={[type.caption, { color: c.ink }]}>{a.label}</Text>
-                </PressScale>
-              </Animated.View>
-            ))}
-          </View>
+          {session && features.has('vault') && (
+            <View style={{ marginHorizontal: -space.lg }}>
+              <RotationRail pairs={pairs} loading={vaultLoading} error={vaultError} onRetry={reloadVault} />
+            </View>
+          )}
+
+          {session && features.has('membership') && <ClubCard />}
 
           {session && !ordersLoading && <ReviewAsk itemName={lastCompleted?.item_name ?? null} />}
 
-          {/* Menu: quiet list, prices in ink */}
-          <View>
-            <Text style={[type.overline, { marginBottom: space.xs }]}>Menu</Text>
-            {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
-            <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, overflow: 'hidden' }, elevation.card]}>
-              {servicesLoading &&
-                services.length === 0 &&
-                [0, 1, 2].map((i) => (
-                  <View key={i} style={{ padding: space.md }}>
-                    <Skeleton width="60%" height={14} />
-                  </View>
-                ))}
-              {services.map((s, i) => (
-                <Pressable
-                  key={s.id}
-                  onPress={() => router.push('/book')}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: 14,
-                    paddingHorizontal: space.md,
-                    borderTopWidth: i === 0 ? 0 : 1,
-                    borderTopColor: c.line,
-                    gap: space.sm,
-                    backgroundColor: pressed ? c.bg : c.surface,
-                  })}
-                >
-                  <Text style={[type.bodyStrong, { flex: 1 }]} numberOfLines={1}>
-                    {s.name}
-                  </Text>
-                  <Text style={[type.body, { color: c.inkMuted, fontVariant: ['tabular-nums'] }]}>{formatPrice(s.price_cents)}</Text>
-                  <Icon name="chevronR" size={16} color={c.inkMuted} />
-                </Pressable>
-              ))}
-            </View>
+          {/* Creppie and WhatsApp: the human ways in. */}
+          <View style={{ flexDirection: 'row', gap: space.sm }}>
+            <Button variant="secondary" compact label="Ask Creppie" icon={<Icon name="help" size={18} color={c.navy} />} onPress={() => setChatOpen(true)} style={{ flex: 1 }} />
+            <Button variant="secondary" compact label="WhatsApp us" icon={<Icon name="wa" size={18} color={c.navy} />} onPress={() => Linking.openURL(WHATSAPP_URL)} style={{ flex: 1 }} />
           </View>
 
           <Text style={[type.caption, { textAlign: 'center' }]}>Shop 19, Pristine Plaza, Half Way Tree</Text>
