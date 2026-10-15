@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DropMethod, OrderStatus, Pair } from '@clean-crep/shared';
 import { supabase } from '@/lib/supabase';
 import { onTourChange, tour } from '@/lib/tour/state';
-import { photoUrl } from '@/lib/tour/photos';
+import { photoUrl, sampleCover } from '@/lib/tour/photos';
 import { useAuth } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
 
@@ -25,8 +25,10 @@ export interface VaultEvent {
 export interface VaultPair extends Pair {
   cleans: VaultClean[];
   events: VaultEvent[];
-  /** Latest "after" photo across the pair's cleans (signed URL), if any. */
+  /** The pair's cover: its product shot (cutout), else its latest "after" photo, else a sample. */
   cover: string | null;
+  /** 'cutout' = transparent product shot (0030), 'photo' = an after photo, 'sample' = stock, tagged Sample. */
+  coverKind: 'cutout' | 'photo' | 'sample' | null;
 }
 
 const BUCKET = 'order-photos';
@@ -63,33 +65,43 @@ export function useVault() {
       events: p.events ?? [],
     }));
 
-    // One query for every pair's latest "after" photo, one call to sign them.
+    // One query for every pair's photos, one call to sign the covers: the latest
+    // product shot (cutout) wins, else the latest after photo.
     const orderToPair = new Map<string, string>();
     rows.forEach((p) => p.cleans.forEach((o) => orderToPair.set(o.id, p.id)));
-    const covers = new Map<string, string>();
+    const covers = new Map<string, { url: string; kind: 'cutout' | 'photo' }>();
     if (orderToPair.size) {
       const { data: photos } = await supabase
         .from('order_photos')
-        .select('order_id, storage_path, created_at')
-        .eq('kind', 'after')
+        .select('order_id, kind, storage_path, created_at')
+        .in('kind', ['after', 'cutout'])
         .in('order_id', [...orderToPair.keys()])
         .order('created_at', { ascending: false });
-      const pathByPair = new Map<string, string>();
+      const pick = new Map<string, { path: string; kind: 'cutout' | 'photo' }>();
       for (const ph of photos ?? []) {
         const pairId = orderToPair.get(ph.order_id);
-        if (pairId && !pathByPair.has(pairId)) pathByPair.set(pairId, ph.storage_path);
+        if (!pairId) continue;
+        const kind = ph.kind === 'cutout' ? 'cutout' : 'photo';
+        const had = pick.get(pairId);
+        if (!had || (had.kind === 'photo' && kind === 'cutout')) pick.set(pairId, { path: ph.storage_path, kind });
       }
-      if (pathByPair.size) {
-        const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrls([...pathByPair.values()], 60 * 60);
-        for (const [pairId, path] of pathByPair) {
+      if (pick.size) {
+        const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrls([...pick.values()].map((x) => x.path), 60 * 60);
+        for (const [pairId, { path, kind }] of pick) {
           const url = photoUrl(signed?.find((s) => s.path === path)?.signedUrl);
-          if (url) covers.set(pairId, url);
+          if (url) covers.set(pairId, { url, kind });
         }
       }
     }
     if (call !== latest.current) return;
     setError(null);
-    setPairs(rows.map((p) => ({ ...p, cover: covers.get(p.id) ?? null })));
+    setPairs(
+      rows.map((p) => {
+        const own = covers.get(p.id);
+        const sample = own ? null : sampleCover(p.category);
+        return { ...p, cover: own?.url ?? sample, coverKind: own?.kind ?? (sample ? 'sample' : null) };
+      })
+    );
     owner.current = session.user.id;
     setDataFor(session.user.id);
   }, [session]);

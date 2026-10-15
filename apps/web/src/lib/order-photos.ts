@@ -3,7 +3,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const ORDER_PHOTOS_BUCKET = 'order-photos';
-export type PhotoKind = 'before' | 'after';
+export type PhotoKind = 'before' | 'after' | 'cutout';
 
 export interface OrderPhoto {
   id: string;
@@ -58,6 +58,19 @@ export async function uploadOrderPhoto(supabase: SupabaseClient, orderId: string
     .upload(path, blob, { contentType: jpeg ? 'image/jpeg' : file.type || 'image/jpeg', upsert: false });
   if (upErr) throw upErr;
   const { error: rowErr } = await supabase.from('order_photos').insert({ order_id: orderId, kind, storage_path: path });
+  if (rowErr) {
+    await supabase.storage.from(ORDER_PHOTOS_BUCKET).remove([path]);
+    throw rowErr;
+  }
+  return path;
+}
+
+/** Upload a ready-made product-shot PNG (from makeCutout) as the order's 'cutout'. */
+export async function uploadCutout(supabase: SupabaseClient, orderId: string, png: Blob) {
+  const path = `${orderId}/cutout-${Date.now()}.png`;
+  const { error: upErr } = await supabase.storage.from(ORDER_PHOTOS_BUCKET).upload(path, png, { contentType: 'image/png', upsert: false });
+  if (upErr) throw upErr;
+  const { error: rowErr } = await supabase.from('order_photos').insert({ order_id: orderId, kind: 'cutout', storage_path: path });
   if (rowErr) {
     await supabase.storage.from(ORDER_PHOTOS_BUCKET).remove([path]);
     throw rowErr;

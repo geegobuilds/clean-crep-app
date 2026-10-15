@@ -584,3 +584,6 @@ nav:not(.site-nav) {
 /* Staff order page: upload spinner */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.9s linear infinite; }
+
+/* Sample photos (lib/work.ts SAMPLE_PHOTOS): always labelled. */
+.sample-tag { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 4px 12px; border-radius: 999px; background: rgba(10, 31, 68, 0.72); color: #fff; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; pointer-events: none; z-index: 2; }

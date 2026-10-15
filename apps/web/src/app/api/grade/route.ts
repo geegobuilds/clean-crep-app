@@ -39,6 +39,8 @@ export async function POST(req: Request) {
     .maybeSingle();
   const order = (photo?.order ?? null) as { id: string; item_name: string; pair_id: string | null } | null;
   if (!photo || !order) return Response.json({ error: 'not_found' }, { status: 404 });
+  // Only before/after photos are graded (cutouts are product shots, 0030).
+  if (photo.kind !== 'before' && photo.kind !== 'after') return Response.json({ error: 'not_gradable' }, { status: 400 });
   if (!order.pair_id) return Response.json({ error: 'no_pair' }, { status: 409 });
 
   const { data: file, error: dlErr } = await supabase.storage.from('order-photos').download(photo.storage_path);

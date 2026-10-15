@@ -21,7 +21,8 @@ import {
 } from '@clean-crep/shared';
 import { StatusTag } from '@/components/status-tag';
 import { createClient } from '@/lib/supabase/client';
-import { listOrderPhotos, uploadOrderPhoto, type OrderPhoto, type PhotoKind } from '@/lib/order-photos';
+import { listOrderPhotos, uploadCutout, uploadOrderPhoto, type OrderPhoto, type PhotoKind } from '@/lib/order-photos';
+import { makeCutout } from '@/lib/cutout';
 
 // Staff order page, built for a phone held at the counter: shoot a "before" at
 // drop-off and an "after" when it's clean. The file input opens the camera
@@ -47,6 +48,7 @@ export default function StaffOrderPage() {
   const [events, setEvents] = useState<{ kind: string; order_id: string | null; data: unknown; created_at: string }[]>([]);
   const [grading, setGrading] = useState<PhotoKind | null>(null);
   const [gradeNote, setGradeNote] = useState<string | null>(null);
+  const [cutting, setCutting] = useState<'working' | 'failed' | null>(null);
 
   const reload = useCallback(async () => {
     const [{ data }, list, ev] = await Promise.all([
@@ -99,11 +101,34 @@ export default function StaffOrderPage() {
       const list = await reload();
       const added = list.find((p) => p.storage_path === path);
       if (added) void grade(kind, added.id);
+      if (kind === 'after') void productShot(file);
     } catch (e) {
       console.error('[order photo]', e);
       setMessage({ tone: 'error', text: "Couldn't save that photo. Check the connection and try again." });
     } finally {
       setBusy(null);
+    }
+  }
+
+  // Product shot (0030): the after photo with its background removed, in this
+  // browser. Runs after each after-photo upload, or from the button. Slow
+  // the first time (the model downloads), quick after that.
+  async function productShot(source?: Blob) {
+    setCutting('working');
+    try {
+      let blob = source;
+      if (!blob) {
+        const after = latest('after');
+        if (!after?.url) throw new Error('no after photo');
+        blob = await (await fetch(after.url)).blob();
+      }
+      const png = await makeCutout(blob);
+      await uploadCutout(supabase, id, png);
+      await reload();
+      setCutting(null);
+    } catch (e) {
+      console.error('[product shot]', e);
+      setCutting('failed');
     }
   }
 
@@ -192,9 +217,15 @@ export default function StaffOrderPage() {
                   {message.text}
                 </p>
               )}
+              <ProductShot
+                photo={latest('cutout')}
+                state={cutting}
+                canMake={!!latest('after') && cutting !== 'working' && busy === null}
+                onMake={() => void productShot()}
+              />
               <p style={{ fontSize: 13, color: palette.inkMuted, margin: '12px 0 0' }}>
                 The customer sees the latest before + after on their order in the app once it&apos;s Completed.
-                {photos.length > 2 ? ` ${photos.length} photos on this order.` : ''}
+                {photos.length > 2 ? ` ${photos.length} photos on this order.` : ''} The product shot is their Vault cover.
               </p>
             </section>
 
@@ -392,6 +423,53 @@ function PhotoSlot({
       >
         {busy ? <Loader2 size={18} className="spin" /> : <Camera size={18} />}
         {busy ? 'Saving…' : label}
+      </button>
+    </div>
+  );
+}
+
+function ProductShot({ photo, state, canMake, onMake }: { photo: OrderPhoto | null; state: 'working' | 'failed' | null; canMake: boolean; onMake: () => void }) {
+  return (
+    <div data-testid="product-shot" style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, padding: 12, borderRadius: radius.md, border: `1px solid ${palette.line}` }}>
+      <div
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: radius.sm,
+          flexShrink: 0,
+          // Checkerboard so the transparent background reads as removed.
+          background: 'repeating-conic-gradient(#EEF2F7 0% 25%, #FFFFFF 0% 50%) 50% / 12px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        {state === 'working' ? (
+          <Loader2 size={20} className="spin" aria-label="Making product shot" />
+        ) : photo?.url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL, shown small
+          <img src={photo.url} alt="Product shot" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        ) : null}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 15, fontWeight: 500 }}>Product shot</div>
+        <div style={{ fontSize: 13, color: state === 'failed' ? palette.danger : palette.inkMuted }}>
+          {state === 'working'
+            ? 'Removing the background… (first time takes a minute)'
+            : state === 'failed'
+              ? "Couldn't cut this one out. Try again, or on a computer."
+              : photo
+                ? 'Background removed. This is the Vault cover.'
+                : 'Background removed from the after photo, for the Vault cover.'}
+        </div>
+      </div>
+      <button
+        onClick={onMake}
+        disabled={!canMake}
+        style={{ minHeight: 40, padding: '0 14px', borderRadius: radius.sm, border: `1px solid ${palette.line}`, background: palette.white, color: palette.navy, fontSize: 13, fontWeight: 500, cursor: canMake ? 'pointer' : 'default', opacity: canMake ? 1 : 0.5 }}
+      >
+        {photo ? 'Redo' : 'Make'}
       </button>
     </div>
   );

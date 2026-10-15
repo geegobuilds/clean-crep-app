@@ -28,10 +28,32 @@ export function stageLabel(o: VaultClean): string {
   return 'Booked in';
 }
 
-/** Latest after-photo, else a navy tile with the item's initial. */
+/**
+ * The item's product shot (cutout, on white like a store listing), else its
+ * latest after photo, else a stock sample tagged "Sample", else a navy tile
+ * with its initial.
+ */
 export function Cover({ pair, size, wide }: { pair: VaultPair; size: number; wide?: boolean }) {
   const style = { width: wide ? '100%' : size, height: size, borderRadius: radius.lg } as const;
-  if (pair.cover) return <Image source={{ uri: pair.cover }} style={style} resizeMode="cover" accessibilityIgnoresInvertColors />;
+  if (pair.cover && pair.coverKind === 'cutout') {
+    return (
+      <View style={[style, { backgroundColor: c.surface, padding: Math.round(size * 0.08) }]}>
+        <Image source={{ uri: pair.cover }} style={{ width: '100%', height: '100%' }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      </View>
+    );
+  }
+  if (pair.cover) {
+    return (
+      <View>
+        <Image source={{ uri: pair.cover }} style={style} resizeMode="cover" accessibilityIgnoresInvertColors />
+        {pair.coverKind === 'sample' && (
+          <View testID="cover-sample" style={{ position: 'absolute', right: 8, bottom: 8, backgroundColor: 'rgba(10,31,68,0.72)', borderRadius: radius.pill, paddingVertical: 2, paddingHorizontal: 7 }}>
+            <Text style={[type.caption, { fontSize: 11, lineHeight: 14, color: c.white }]}>Sample</Text>
+          </View>
+        )}
+      </View>
+    );
+  }
   return (
     <View style={[style, { backgroundColor: c.navy, alignItems: 'center', justifyContent: 'center' }]}>
       <Text style={[type.hero, { color: c.white, fontSize: Math.round(size * 0.42), lineHeight: Math.round(size * 0.46) }]}>{pairTitle(pair).charAt(0).toUpperCase()}</Text>

@@ -2,7 +2,7 @@
 
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import Image from 'next/image';
-import { afterSrc, beforeSrc, type WorkPair } from '@/lib/work';
+import { afterSrc, beforeSrc, SAMPLE_PHOTOS, type WorkPair } from '@/lib/work';
 
 // "The Difference": drag the line (or use the arrow keys) to compare a pair
 // before and after. Arrows / dots cycle through the pairs in lib/work.ts.
@@ -83,6 +83,7 @@ export function BeforeAfter({ pairs }: { pairs: WorkPair[] }) {
         <span className="ba-tag ba-tag-after" aria-hidden="true">
           After
         </span>
+        {SAMPLE_PHOTOS && !pair.afterUrl && <span className="sample-tag">Sample</span>}
         <div
           className="ba-handle"
           style={{ left: `${pos}%` }}
