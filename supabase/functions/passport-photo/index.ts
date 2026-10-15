@@ -11,13 +11,23 @@
 // and kept privately at passport-wm/v1/<original path>; the original is never
 // touched. If stamping fails (e.g. a HEIC upload), the original is served.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
-import { BADGE_PNG_BASE64 } from './badge.ts';
 
 const CODE = /^[2-9A-Za-z]{8}$/;
 
 const BUCKET = 'order-photos';
 const WM_PREFIX = 'passport-wm/v1/';
-const badge = Uint8Array.from(atob(BADGE_PNG_BASE64), (c) => c.charCodeAt(0));
+// The badge (logo + cleancrep.com on a navy pill) lives on the website:
+// apps/web/public/assets/watermark-badge.png. Fetched once per instance.
+const BADGE_URL = 'https://www.cleancrep.com/assets/watermark-badge.png';
+let badge: Promise<Uint8Array> | null = null;
+function loadBadge(): Promise<Uint8Array> {
+  badge ??= fetch(BADGE_URL).then(async (r) => {
+    if (!r.ok) throw new Error(`badge ${r.status}`);
+    return new Uint8Array(await r.arrayBuffer());
+  });
+  badge.catch(() => (badge = null)); // try again next time
+  return badge;
+}
 
 function redirect(to: string) {
   // Cached well inside the hour the signed URL lives.
@@ -36,7 +46,7 @@ async function stamped(db: SupabaseClient, path: string): Promise<string | null>
     const { data: file } = await db.storage.from(BUCKET).download(path);
     if (!file) return null;
     const { watermark } = await import('./watermark.ts');
-    const jpeg = await watermark(new Uint8Array(await file.arrayBuffer()), badge);
+    const jpeg = await watermark(new Uint8Array(await file.arrayBuffer()), await loadBadge());
     const { error } = await db.storage.from(BUCKET).upload(copy, jpeg, { contentType: 'image/jpeg', upsert: true });
     if (error) return null;
     const made = await db.storage.from(BUCKET).createSignedUrl(copy, 60 * 60);
