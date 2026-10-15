@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { colors, pairTitle, type ConditionGrade, type Passport } from '@clean-crep/shared';
+import { BeforeAfter } from '@/components/before-after';
 
-// Crep Passport: the public page behind the QR on a Crep Tag
-// (docs/VISION.md). passport() returns null until the `passport` flag is on,
+// Crep Passport: the public page behind the QR on a Crep Tag and the link we
+// WhatsApp with a finished order (docs/VISION.md). Leads with the latest
+// before/after (0029), then the care history. passport() returns null until the `passport` flag is on,
 // so this 404s while the feature is hidden. No owner details, ever.
 
 export const revalidate = 60;
@@ -17,11 +19,21 @@ function anon() {
   });
 }
 
-async function load(code: string): Promise<Passport | null> {
+type Photos = { before: string | null; after: string } | null;
+
+/** The showcased photos come through the passport-photo Edge Function (the bucket stays private). */
+function photoUrl(code: string, kind: 'before' | 'after'): string {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/passport-photo?code=${encodeURIComponent(code)}&kind=${kind}`;
+}
+
+async function load(code: string): Promise<(Passport & { photos: Photos }) | null> {
   if (!/^[2-9A-Za-z]{8}$/.test(code)) return null;
   const { data, error } = await anon().rpc('passport', { p_code: code });
   if (error || !data) return null;
-  return data as Passport;
+  const p = data as Passport;
+  const sc = p.showcase;
+  const photos: Photos = sc?.after ? { after: photoUrl(p.code, 'after'), before: sc.before ? photoUrl(p.code, 'before') : null } : null;
+  return { ...p, photos };
 }
 
 function title(p: Passport): string {
@@ -36,10 +48,28 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const p = await load((await params).code);
   if (!p) return { title: 'Crep Passport · Clean Crep Jamaica', robots: { index: false } };
   const done = p.cleans.filter((c) => c.completed).length;
+  const description = p.photos
+    ? `Before and after: ${title(p)}, cleaned by Clean Crep Jamaica. ${done}× in our care since ${day(p.since)}.`
+    : `Verified care history by Clean Crep Jamaica: cleaned ${done}× since ${day(p.since)}.`;
   return {
     title: `${title(p)} · Crep Passport`,
-    description: `Verified care history by Clean Crep Jamaica: cleaned ${done}× since ${day(p.since)}.`,
+    description,
     robots: { index: false },
+    // The after photo is the link preview in WhatsApp / Instagram DMs.
+    // Next merges metadata shallowly, so the shared OG fields are repeated here.
+    ...(p.photos
+      ? {
+          openGraph: {
+            type: 'website',
+            siteName: 'Clean Crep Jamaica',
+            locale: 'en_JM',
+            title: `${title(p)}, fresh again`,
+            description,
+            images: [{ url: p.photos.after, alt: `${title(p)} after a Clean Crep clean` }],
+          },
+          twitter: { card: 'summary_large_image', title: `${title(p)}, fresh again`, description, images: [p.photos.after] },
+        }
+      : {}),
   };
 }
 
@@ -85,6 +115,29 @@ export default async function PassportPage({ params }: { params: Promise<{ code:
       </section>
 
       <section style={{ maxWidth: 640, margin: '-20px auto 0', padding: '0 20px 48px' }}>
+        {p.photos && p.showcase && (
+          <div data-testid="passport-showcase" style={{ marginBottom: 20 }}>
+            {p.photos.before ? (
+              <BeforeAfter pairs={[{ n: 1, beforeUrl: p.photos.before, afterUrl: p.photos.after, label: title(p) }]} />
+            ) : (
+              <div style={{ position: 'relative', aspectRatio: '4 / 3', borderRadius: 20, overflow: 'hidden', boxShadow: '0 12px 28px rgba(10,31,68,0.18)' }}>
+                <Image src={p.photos.after} alt={`${title(p)} after cleaning`} fill unoptimized style={{ objectFit: 'cover' }} />
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 12 }}>
+              <div style={{ fontSize: 14, color: colors.caption }}>
+                {p.showcase.service} · {day(p.showcase.date)}
+              </div>
+              <Link
+                href="/#book"
+                data-testid="passport-book"
+                style={{ background: colors.blue, color: colors.white, textDecoration: 'none', fontWeight: 700, fontSize: 15, padding: '12px 18px', borderRadius: 999, whiteSpace: 'nowrap' }}
+              >
+                Book your clean
+              </Link>
+            </div>
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
           {[
             [String(done.length), done.length === 1 ? 'Clean' : 'Cleans'],
