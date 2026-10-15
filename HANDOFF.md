@@ -4,10 +4,20 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-11_
+_Last updated: 2026-10-15_
 
 ## Current Status
 
+- **Crep Passport is live (2026-10-15, Geego said yes)**: `passport` flag ON for everyone.
+  /p/<code> leads with the latest finished clean's before/after slider + "Book your clean", and
+  the after photo is the WhatsApp/IG link preview. Photos stay in the PRIVATE order-photos bucket;
+  the only public way in is the `passport-photo` Edge Function (supabase/functions, deployed with
+  verify_jwt off): code → passport() as service role → 1-hour signed URL for that one file. (The
+  first draft opened the bucket to listing; the Reviewer caught it before it went live.) Migration
+  0029 applied live; #49 merged. No live item has finished photos yet, so passports show care
+  history until staff upload before/afters. Next: staff "Send on WhatsApp" button with the
+  passport link, the Ready notification linking it, and (optional) a Clean Crep watermark on the
+  shared after photo, rendered in the Edge Function.
 - **Tour mode + premium pass (2026-10-11, Geego: "add sample data so I see how everything works",
   "add sample photos too")**: preview builds (EXPO_PUBLIC_TOUR=1 in eas.json preview/development,
   never production) show "Take the tour with sample data" on sign-in and guest Profile. The app
