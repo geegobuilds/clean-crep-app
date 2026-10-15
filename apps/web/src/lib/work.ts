@@ -17,6 +17,9 @@ export const PHOTOS_READY = true;
 
 export interface WorkPair {
   n: number;
+  /** Photo URLs (e.g. signed Storage URLs on a Passport) instead of the files in public/assets/work. */
+  beforeUrl?: string | null;
+  afterUrl?: string;
   /** Optional caption under the slider, e.g. "White AF1s · Sneaker Clean + Sole Refresh". */
   caption?: string;
 }

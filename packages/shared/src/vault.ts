@@ -28,6 +28,8 @@ export interface Passport {
   model: string | null;
   colorway: string | null;
   since: string; // ISO date
+  /** The latest finished clean's photos (storage paths in order-photos), for the before/after (0029). */
+  showcase?: { date: string; service: string; before: string | null; after: string } | null;
   cleans: { date: string; service: string; completed: boolean; photos: number }[];
   events: { kind: 'tag_attached' | 'grade' | 'authenticity_check'; date: string; data: Record<string, unknown> }[];
 }

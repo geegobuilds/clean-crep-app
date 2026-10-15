@@ -61,6 +61,7 @@ const pairs = [
   pair('p5', { category: 'cap', brand: 'New Era', model: '59FIFTY', colorway: 'Yankees Navy', size: '7 3/8', passport_code: 'C4PN7E2R', cleans: [clean(158, 3, 'completed', 'Premium Cap Clean')] }),
 ];
 const passport = { code: 'K7Q4M2XR', category: 'sneaker', brand: 'Nike', model: 'Air Force 1', colorway: 'Triple White', since: ago(110).slice(0, 10),
+  showcase: { date: ago(6).slice(0, 10), service: 'Sneaker Clean', before: 'o141/before-1.jpg', after: 'o141/after-1.jpg' },
   cleans: [{ date: ago(110).slice(0, 10), service: 'Sneaker Clean', completed: true, photos: 2 }, { date: ago(48).slice(0, 10), service: 'Sneaker Clean', completed: true, photos: 2 }, { date: ago(6).slice(0, 10), service: 'Deep Clean', completed: true, photos: 4 }], events: events.map((e) => ({ kind: e.kind, date: e.created_at.slice(0, 10), data: e.data })) };
 const testers = [{ flag_key: 'vault', user_id: 'c1' }, { flag_key: 'passport', user_id: 'c1' }];
 const people = [{ id: 'c1', name: 'Ana Brown', email: 'ana@example.com' }];
