@@ -5,9 +5,56 @@
 // else null) and redirects to a signed URL that lives an hour. No listing, no
 // guessing paths, nothing while the flag is off. Deployed with verify_jwt off
 // (WhatsApp's link preview and website visitors have no token).
-import { createClient } from 'npm:@supabase/supabase-js@2';
+//
+// After-photos go out with the Clean Crep badge stamped in the corner (every
+// forward and link preview advertises the shop). The stamped copy is made once
+// and kept privately at passport-wm/v1/<original path>; the original is never
+// touched. If stamping fails (e.g. a HEIC upload), the original is served.
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 const CODE = /^[2-9A-Za-z]{8}$/;
+
+const BUCKET = 'order-photos';
+const WM_PREFIX = 'passport-wm/v1/';
+// The badge (logo + cleancrep.com on a navy pill) lives on the website:
+// apps/web/public/assets/watermark-badge.png. Fetched once per instance.
+const BADGE_URL = 'https://www.cleancrep.com/assets/watermark-badge.png';
+let badge: Promise<Uint8Array> | null = null;
+function loadBadge(): Promise<Uint8Array> {
+  badge ??= fetch(BADGE_URL).then(async (r) => {
+    if (!r.ok) throw new Error(`badge ${r.status}`);
+    return new Uint8Array(await r.arrayBuffer());
+  });
+  badge.catch(() => (badge = null)); // try again next time
+  return badge;
+}
+
+function redirect(to: string) {
+  // Cached well inside the hour the signed URL lives.
+  return new Response(null, { status: 302, headers: { Location: to, 'Cache-Control': 'public, max-age=600' } });
+}
+
+/** A signed URL for the stamped copy of an after-photo, making it the first time. Null on any failure. */
+async function stamped(db: SupabaseClient, path: string): Promise<string | null> {
+  // Only formats the stamper reads; HEIC/WebP uploads go out as they are (no
+  // pointless download + retry on every request).
+  if (!/\.(jpe?g|png)$/i.test(path)) return null;
+  const copy = WM_PREFIX + path.replace(/\.[a-z0-9]+$/i, '') + '.jpg';
+  const existing = await db.storage.from(BUCKET).createSignedUrl(copy, 60 * 60);
+  if (existing.data?.signedUrl) return existing.data.signedUrl;
+  try {
+    const { data: file } = await db.storage.from(BUCKET).download(path);
+    if (!file) return null;
+    const { watermark } = await import('./watermark.ts');
+    const jpeg = await watermark(new Uint8Array(await file.arrayBuffer()), await loadBadge());
+    const { error } = await db.storage.from(BUCKET).upload(copy, jpeg, { contentType: 'image/jpeg', upsert: true });
+    if (error) return null;
+    const made = await db.storage.from(BUCKET).createSignedUrl(copy, 60 * 60);
+    return made.data?.signedUrl ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function notFound() {
   return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'public, max-age=60' } });
@@ -27,8 +74,11 @@ Deno.serve(async (req) => {
   const path: unknown = !error && data ? (data as { showcase?: Record<string, unknown> | null }).showcase?.[kind] : null;
   if (typeof path !== 'string' || !path) return notFound();
 
-  const { data: signed } = await db.storage.from('order-photos').createSignedUrl(path, 60 * 60);
+  if (kind === 'after') {
+    const url = await stamped(db, path);
+    if (url) return redirect(url);
+  }
+  const { data: signed } = await db.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
   if (!signed?.signedUrl) return notFound();
-  // Cached well inside the hour the signed URL lives.
-  return new Response(null, { status: 302, headers: { Location: signed.signedUrl, 'Cache-Control': 'public, max-age=600' } });
+  return redirect(signed.signedUrl);
 });
