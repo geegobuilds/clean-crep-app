@@ -22,6 +22,8 @@ export interface WorkPair {
   afterUrl?: string;
   /** What the photos show, for alt text ("Nike Air Force 1"); caps aren't pairs. */
   label?: string;
+  /** Stock sample photos: always shown with a "Sample" tag. */
+  sample?: boolean;
   /** Optional caption under the slider, e.g. "White AF1s · Sneaker Clean + Sole Refresh". */
   caption?: string;
 }
@@ -54,3 +56,12 @@ export const afterSrc = (n: number) => (SAMPLE_PHOTOS ? sample(n, false) : `/ass
 
 /** Social share image: the best after-photo (pair 1). */
 export const OG_IMAGE = { url: afterSrc(1), width: 1600, height: 1200, alt: SAMPLE_PHOTOS ? 'Fresh white sneakers' : 'A pair after a Clean Crep clean' };
+
+/**
+ * A tagged sample before/after for a Passport whose item has no photos yet
+ * (Geego, 2026-10-15). Sneakers and caps only; Clarks have no sample shot.
+ */
+export function sampleFor(category: string): { before: string; after: string } | null {
+  const n = category === 'sneaker' ? 1 : category === 'cap' ? 3 : 0;
+  return n ? { before: sample(n, true), after: sample(n, false) } : null;
+}

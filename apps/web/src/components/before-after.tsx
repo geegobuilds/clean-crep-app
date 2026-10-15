@@ -83,7 +83,7 @@ export function BeforeAfter({ pairs }: { pairs: WorkPair[] }) {
         <span className="ba-tag ba-tag-after" aria-hidden="true">
           After
         </span>
-        {SAMPLE_PHOTOS && !pair.afterUrl && <span className="sample-tag">Sample</span>}
+        {(pair.sample || (SAMPLE_PHOTOS && !pair.afterUrl)) && <span className="sample-tag">Sample</span>}
         <div
           className="ba-handle"
           style={{ left: `${pos}%` }}

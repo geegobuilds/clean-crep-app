@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { colors, pairTitle, type ConditionGrade, type Passport } from '@clean-crep/shared';
 import { BeforeAfter } from '@/components/before-after';
+import { sampleFor } from '@/lib/work';
 
 // Crep Passport: the public page behind the QR on a Crep Tag and the link we
 // WhatsApp with a finished order (docs/VISION.md). Leads with the latest
@@ -77,6 +78,8 @@ export default async function PassportPage({ params }: { params: Promise<{ code:
   const p = await load((await params).code);
   if (!p) notFound();
   const done = p.cleans.filter((c) => c.completed);
+  // No photos yet: a tagged sample so the page never looks empty (never the link preview).
+  const sample = p.photos ? null : sampleFor(p.category);
   const photos = done.reduce((n, c) => n + c.photos, 0);
   // Condition (Phase 2) shows only once condition_grade is launched.
   const { data: gradeOn } = await anon().rpc('feature_enabled', { p_key: 'condition_grade' });
@@ -115,6 +118,20 @@ export default async function PassportPage({ params }: { params: Promise<{ code:
       </section>
 
       <section style={{ maxWidth: 640, margin: '-20px auto 0', padding: '0 20px 48px' }}>
+        {sample && (
+          <div data-testid="passport-sample" style={{ marginBottom: 20 }}>
+            <BeforeAfter pairs={[{ n: 1, beforeUrl: sample.before, afterUrl: sample.after, label: title(p), sample: true }]} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 12 }}>
+              <div style={{ fontSize: 14, color: colors.caption }}>Sample photos · this item&apos;s own before/after shows here after its next clean</div>
+              <Link
+                href="/#book"
+                style={{ background: colors.blue, color: colors.white, textDecoration: 'none', fontWeight: 700, fontSize: 15, padding: '12px 18px', borderRadius: 999, whiteSpace: 'nowrap' }}
+              >
+                Book a clean
+              </Link>
+            </div>
+          </div>
+        )}
         {p.photos && p.showcase && (
           <div data-testid="passport-showcase" style={{ marginBottom: 20 }}>
             {p.photos.before ? (
