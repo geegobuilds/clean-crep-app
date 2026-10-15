@@ -1,6 +1,8 @@
-// Stamps the Clean Crep badge in the bottom-right corner of a photo. Plain
-// imagescript (no Deno APIs) so the same code is checked in Node.
-import { decode, Image } from 'npm:imagescript@1.3.0';
+// Stamps the Clean Crep badge in the bottom-right corner of a photo. The Deno
+// build of imagescript (pure wasm; the npm build needs a native Node addon the
+// Edge Runtime can't load). index.ts imports this lazily, so if it ever fails to
+// load the original photo is served instead.
+import { decode, Image } from 'https://deno.land/x/imagescript@1.3.0/mod.ts';
 
 /** Photo bytes (JPEG/PNG) + badge PNG bytes → a JPEG, at most 1600px on the long side. */
 export async function watermark(photo: Uint8Array, badgePng: Uint8Array): Promise<Uint8Array> {

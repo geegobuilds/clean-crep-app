@@ -12,7 +12,6 @@
 // touched. If stamping fails (e.g. a HEIC upload), the original is served.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { BADGE_PNG_BASE64 } from './badge.ts';
-import { watermark } from './watermark.ts';
 
 const CODE = /^[2-9A-Za-z]{8}$/;
 
@@ -27,12 +26,16 @@ function redirect(to: string) {
 
 /** A signed URL for the stamped copy of an after-photo, making it the first time. Null on any failure. */
 async function stamped(db: SupabaseClient, path: string): Promise<string | null> {
+  // Only formats the stamper reads; HEIC/WebP uploads go out as they are (no
+  // pointless download + retry on every request).
+  if (!/\.(jpe?g|png)$/i.test(path)) return null;
   const copy = WM_PREFIX + path.replace(/\.[a-z0-9]+$/i, '') + '.jpg';
   const existing = await db.storage.from(BUCKET).createSignedUrl(copy, 60 * 60);
   if (existing.data?.signedUrl) return existing.data.signedUrl;
   try {
     const { data: file } = await db.storage.from(BUCKET).download(path);
     if (!file) return null;
+    const { watermark } = await import('./watermark.ts');
     const jpeg = await watermark(new Uint8Array(await file.arrayBuffer()), badge);
     const { error } = await db.storage.from(BUCKET).upload(copy, jpeg, { contentType: 'image/jpeg', upsert: true });
     if (error) return null;
