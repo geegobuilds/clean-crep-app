@@ -21,23 +21,18 @@ function anon() {
 
 type Photos = { before: string | null; after: string } | null;
 
+/** The showcased photos come through the passport-photo Edge Function (the bucket stays private). */
+function photoUrl(code: string, kind: 'before' | 'after'): string {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/passport-photo?code=${encodeURIComponent(code)}&kind=${kind}`;
+}
+
 async function load(code: string): Promise<(Passport & { photos: Photos }) | null> {
   if (!/^[2-9A-Za-z]{8}$/.test(code)) return null;
-  const client = anon();
-  const { data, error } = await client.rpc('passport', { p_code: code });
+  const { data, error } = await anon().rpc('passport', { p_code: code });
   if (error || !data) return null;
   const p = data as Passport;
-  // The showcased before/after (0029 lets anyone read exactly these files).
-  // A week-long link: WhatsApp caches the preview image, the page itself revalidates every minute.
-  let photos: Photos = null;
   const sc = p.showcase;
-  if (sc?.after) {
-    const paths = [sc.after, ...(sc.before ? [sc.before] : [])];
-    const { data: signed } = await client.storage.from('order-photos').createSignedUrls(paths, 60 * 60 * 24 * 7);
-    const url = (path: string) => signed?.find((x) => x.path === path)?.signedUrl ?? null;
-    const after = url(sc.after);
-    if (after) photos = { after, before: sc.before ? url(sc.before) : null };
-  }
+  const photos: Photos = sc?.after ? { after: photoUrl(p.code, 'after'), before: sc.before ? photoUrl(p.code, 'before') : null } : null;
   return { ...p, photos };
 }
 
@@ -61,7 +56,20 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     description,
     robots: { index: false },
     // The after photo is the link preview in WhatsApp / Instagram DMs.
-    openGraph: p.photos ? { title: `${title(p)}, fresh again`, description, images: [{ url: p.photos.after, alt: `${title(p)} after a Clean Crep clean` }] } : undefined,
+    // Next merges metadata shallowly, so the shared OG fields are repeated here.
+    ...(p.photos
+      ? {
+          openGraph: {
+            type: 'website',
+            siteName: 'Clean Crep Jamaica',
+            locale: 'en_JM',
+            title: `${title(p)}, fresh again`,
+            description,
+            images: [{ url: p.photos.after, alt: `${title(p)} after a Clean Crep clean` }],
+          },
+          twitter: { card: 'summary_large_image', title: `${title(p)}, fresh again`, description, images: [p.photos.after] },
+        }
+      : {}),
   };
 }
 
@@ -110,7 +118,7 @@ export default async function PassportPage({ params }: { params: Promise<{ code:
         {p.photos && p.showcase && (
           <div data-testid="passport-showcase" style={{ marginBottom: 20 }}>
             {p.photos.before ? (
-              <BeforeAfter pairs={[{ n: 1, beforeUrl: p.photos.before, afterUrl: p.photos.after }]} />
+              <BeforeAfter pairs={[{ n: 1, beforeUrl: p.photos.before, afterUrl: p.photos.after, label: title(p) }]} />
             ) : (
               <div style={{ position: 'relative', aspectRatio: '4 / 3', borderRadius: 20, overflow: 'hidden', boxShadow: '0 12px 28px rgba(10,31,68,0.18)' }}>
                 <Image src={p.photos.after} alt={`${title(p)} after cleaning`} fill unoptimized style={{ objectFit: 'cover' }} />

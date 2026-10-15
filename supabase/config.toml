@@ -34,3 +34,7 @@ enable_confirmations = false
 
 [realtime]
 enabled = true
+
+# Public: serves only the photo a Crep Passport showcases (see the function).
+[functions.passport-photo]
+verify_jwt = false

@@ -78,6 +78,7 @@ http.createServer((req, res) => {
     });
     return;
   }
+  if (p === '/functions/v1/passport-photo') { const k = new URL(req.url, 'http://x').searchParams.get('kind'); res.writeHead(302, { ...h, Location: `/storage/v1/object/img/${k}` }); return res.end(); }
   if (p.startsWith('/storage/v1/object/sign/')) {
     let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => {
       const paths = JSON.parse(b || '{}').paths || [];

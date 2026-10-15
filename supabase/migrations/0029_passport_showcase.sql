@@ -3,12 +3,14 @@
 -- The Passport (/p/<code>, behind the QR on a Crep Tag and the link we WhatsApp
 -- with a finished order) used to list care history and a photo count. Now
 -- passport() also returns the storage paths of the latest finished clean's
--- before and after photos, and anyone may read exactly those files, so the
--- page can show the before/after slider without signing in.
+-- before and after photos.
 --
--- Still no owner details, and still nothing unless the `passport` flag is on and
--- the item is public (pairs.passport_public). Only photos of COMPLETED orders on
--- public items are readable, and only while the flag is on.
+-- The photo bucket stays PRIVATE: no new storage policy. The files are served by
+-- the `passport-photo` Edge Function (supabase/functions/passport-photo), which
+-- takes a passport code, calls passport() with the service role and redirects to
+-- a short-lived signed URL for that one showcased file. So nobody can list or
+-- fetch photos without a valid code, and nothing at all while the flag is off or
+-- the item is private (pairs.passport_public). Still no owner details.
 
 create or replace function passport(p_code text)
 returns jsonb language plpgsql stable security definer set search_path = public as $$
@@ -65,23 +67,6 @@ begin
 end;
 $$;
 
--- Is this stored photo one a Passport may show? (security definer: the caller
--- can't read orders/pairs, and shouldn't need to.)
-create or replace function passport_photo_public(p_path text)
-returns boolean language sql stable security definer set search_path = public as $$
-  select feature_enabled('passport') and exists (
-    select 1
-      from order_photos ph
-      join orders o on o.id = ph.order_id
-      join pairs pr on pr.id = o.pair_id
-     where ph.storage_path = p_path
-       and o.status = 'completed'
-       and pr.passport_public
-  );
-$$;
-revoke all on function passport_photo_public(text) from public;
-grant execute on function passport_photo_public(text) to anon, authenticated;
-
-create policy "order_photos_files_read_passport" on storage.objects
-  for select to anon, authenticated
-  using (bucket_id = 'order-photos' and public.passport_photo_public(name));
+-- The Edge Function calls passport() with the service role (auth.uid() is null
+-- there, so feature_enabled() is true only once the flag is on for everyone).
+grant execute on function passport(text) to service_role;
