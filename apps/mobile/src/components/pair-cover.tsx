@@ -28,12 +28,21 @@ export function stageLabel(o: VaultClean): string {
   return 'Booked in';
 }
 
+// `sampleCorner`: where the "Sample" chip sits, so it clears a tile's own badges
+// (the stage pill is bottom-left on every tile).
+type Corner = 'top-left' | 'top-right' | 'bottom-right';
+const CORNERS: Record<Corner, { top?: number; bottom?: number; left?: number; right?: number }> = {
+  'top-left': { top: 8, left: 8 },
+  'top-right': { top: 8, right: 8 },
+  'bottom-right': { bottom: 8, right: 8 },
+};
+
 /**
  * The item's product shot (cutout, on white like a store listing), else its
  * latest after photo, else a stock sample tagged "Sample", else a navy tile
  * with its initial.
  */
-export function Cover({ pair, size, wide }: { pair: VaultPair; size: number; wide?: boolean }) {
+export function Cover({ pair, size, wide, sampleCorner = 'bottom-right' }: { pair: VaultPair; size: number; wide?: boolean; sampleCorner?: Corner }) {
   const style = { width: wide ? '100%' : size, height: size, borderRadius: radius.lg } as const;
   if (pair.cover && pair.coverKind === 'cutout') {
     return (
@@ -47,7 +56,7 @@ export function Cover({ pair, size, wide }: { pair: VaultPair; size: number; wid
       <View>
         <Image source={{ uri: pair.cover }} style={style} resizeMode="cover" accessibilityIgnoresInvertColors />
         {pair.coverKind === 'sample' && (
-          <View testID="cover-sample" style={{ position: 'absolute', right: 8, bottom: 8, backgroundColor: 'rgba(10,31,68,0.72)', borderRadius: radius.pill, paddingVertical: 2, paddingHorizontal: 7 }}>
+          <View testID="cover-sample" style={{ position: 'absolute', ...CORNERS[sampleCorner], backgroundColor: 'rgba(10,31,68,0.72)', borderRadius: radius.pill, paddingVertical: 2, paddingHorizontal: 7 }}>
             <Text style={[type.caption, { fontSize: 11, lineHeight: 14, color: c.white }]}>Sample</Text>
           </View>
         )}

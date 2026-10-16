@@ -17,8 +17,16 @@ let segmenter: Promise<Segmenter> | null = null;
 function loadSegmenter(): Promise<Segmenter> {
   segmenter ??= (async () => {
     const tf = await import(/* webpackIgnore: true */ /* turbopackIgnore: true */ TRANSFORMERS_URL);
-    const webgpu = typeof navigator !== 'undefined' && 'gpu' in navigator;
-    return (await tf.pipeline('background-removal', MODEL, { device: webgpu ? 'webgpu' : 'wasm', dtype: webgpu ? 'fp16' : 'fp32' })) as Segmenter;
+    // Some browsers advertise WebGPU but can't run it (no adapter, no fp16), so
+    // fall back to WebAssembly whenever the WebGPU pipeline won't load.
+    if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
+      try {
+        return (await tf.pipeline('background-removal', MODEL, { device: 'webgpu', dtype: 'fp16' })) as Segmenter;
+      } catch (e) {
+        console.warn('[cutout] WebGPU unavailable, using WebAssembly', e);
+      }
+    }
+    return (await tf.pipeline('background-removal', MODEL, { device: 'wasm', dtype: 'fp32' })) as Segmenter;
   })();
   segmenter.catch(() => (segmenter = null)); // try again next time
   return segmenter;

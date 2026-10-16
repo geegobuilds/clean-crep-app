@@ -16,3 +16,6 @@ end $$;
 update orders set status = 'completed' where id = '00000000-0000-0000-0000-0000000000c1';
 update feature_flags set enabled_for_all = true where key = 'passport';
 select pg_temp.ok(passport((select passport_code from pairs limit 1))->'showcase' = 'null'::jsonb, 'a cutout alone is never a Passport showcase');
+insert into order_photos(order_id, kind, storage_path) values ('00000000-0000-0000-0000-0000000000c1','after','c1/after-1.jpg');
+update orders set pair_id = (select id from pairs limit 1) where id = '00000000-0000-0000-0000-0000000000c1';
+select pg_temp.ok((passport((select passport_code from pairs limit 1))->'cleans'->0->>'photos')::int = 1, 'cutouts are not counted as Passport photos');

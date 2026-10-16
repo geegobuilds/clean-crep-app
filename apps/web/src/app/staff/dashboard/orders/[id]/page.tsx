@@ -49,6 +49,7 @@ export default function StaffOrderPage() {
   const [grading, setGrading] = useState<PhotoKind | null>(null);
   const [gradeNote, setGradeNote] = useState<string | null>(null);
   const [cutting, setCutting] = useState<'working' | 'failed' | null>(null);
+  const cutRun = useRef(0);
 
   const reload = useCallback(async () => {
     const [{ data }, list, ev] = await Promise.all([
@@ -96,12 +97,12 @@ export default function StaffOrderPage() {
     setBusy(kind);
     setMessage(null);
     try {
-      const path = await uploadOrderPhoto(supabase, id, kind, file);
+      const { path, blob } = await uploadOrderPhoto(supabase, id, kind, file);
       setMessage({ tone: 'ok', text: `${kind === 'before' ? 'Before' : 'After'} photo saved.` });
       const list = await reload();
       const added = list.find((p) => p.storage_path === path);
       if (added) void grade(kind, added.id);
-      if (kind === 'after') void productShot(file);
+      if (kind === 'after') void productShot(blob); // the shrunk JPEG: decodes even when the original (HEIC) can't
     } catch (e) {
       console.error('[order photo]', e);
       setMessage({ tone: 'error', text: "Couldn't save that photo. Check the connection and try again." });
@@ -113,7 +114,10 @@ export default function StaffOrderPage() {
   // Product shot (0030): the after photo with its background removed, in this
   // browser. Runs after each after-photo upload, or from the button. Slow
   // the first time (the model downloads), quick after that.
+  // Only the newest run may save or change the card: a retaken after photo
+  // starts a new run while the old one may still be going.
   async function productShot(source?: Blob) {
+    const run = ++cutRun.current;
     setCutting('working');
     try {
       let blob = source;
@@ -123,12 +127,13 @@ export default function StaffOrderPage() {
         blob = await (await fetch(after.url)).blob();
       }
       const png = await makeCutout(blob);
+      if (run !== cutRun.current) return;
       await uploadCutout(supabase, id, png);
       await reload();
-      setCutting(null);
+      if (run === cutRun.current) setCutting(null);
     } catch (e) {
       console.error('[product shot]', e);
-      setCutting('failed');
+      if (run === cutRun.current) setCutting('failed');
     }
   }
 
@@ -138,6 +143,7 @@ export default function StaffOrderPage() {
   }
 
   const latest = (kind: PhotoKind) => photos.find((p) => p.kind === kind) ?? null;
+  const shots = photos.filter((p) => p.kind !== 'cutout').length;
   const name = order?.customer?.name ?? order?.guest_name ?? 'Guest';
 
   return (
@@ -225,7 +231,7 @@ export default function StaffOrderPage() {
               />
               <p style={{ fontSize: 13, color: palette.inkMuted, margin: '12px 0 0' }}>
                 The customer sees the latest before + after on their order in the app once it&apos;s Completed.
-                {photos.length > 2 ? ` ${photos.length} photos on this order.` : ''} The product shot is their Vault cover.
+                {shots > 2 ? ` ${shots} photos on this order.` : ''} The product shot is their Vault cover.
               </p>
             </section>
 

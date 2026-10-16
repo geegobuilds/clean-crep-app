@@ -62,7 +62,7 @@ export async function uploadOrderPhoto(supabase: SupabaseClient, orderId: string
     await supabase.storage.from(ORDER_PHOTOS_BUCKET).remove([path]);
     throw rowErr;
   }
-  return path;
+  return { path, blob };
 }
 
 /** Upload a ready-made product-shot PNG (from makeCutout) as the order's 'cutout'. */

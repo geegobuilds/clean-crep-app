@@ -101,7 +101,7 @@ export function RotationRail({ pairs, loading, error, onRetry }: { pairs: VaultP
                       style={{ width: TILE, gap: space.xs }}
                     >
                       <View>
-                        <Cover pair={p} size={TILE} />
+                        <Cover pair={p} size={TILE} sampleCorner="top-right" />
                         {due && (
                           <View style={{ position: 'absolute', top: space.sm, left: space.sm, backgroundColor: c.navy, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: 8 }}>
                             <Text style={[type.caption, { color: c.white, fontFamily: type.bodyStrong.fontFamily }]}>Due a clean</Text>

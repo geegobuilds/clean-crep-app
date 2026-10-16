@@ -71,10 +71,10 @@ export function BeforeAfter({ pairs }: { pairs: WorkPair[] }) {
         onPointerUp={stopDrag}
         onPointerCancel={stopDrag}
       >
-        <Image key={`a${pair.n}`} src={pair.afterUrl ?? afterSrc(pair.n)} unoptimized={!!pair.afterUrl} alt={`${pair.label ?? `Pair ${pair.n}`} after cleaning`} fill sizes={SIZES} className="ba-img" draggable={false} />
+        <Image key={`a${pair.n}`} src={pair.afterUrl ?? afterSrc(pair.n)} unoptimized={!!pair.afterUrl} alt={pair.sample ? 'Sample photo: after cleaning' : `${pair.label ?? `Pair ${pair.n}`} after cleaning`} fill sizes={SIZES} className="ba-img" draggable={false} />
         {pair.beforeUrl !== null && (
           <div className="ba-before" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
-            <Image key={`b${pair.n}`} src={pair.beforeUrl ?? beforeSrc(pair.n)} unoptimized={!!pair.beforeUrl} alt={`${pair.label ?? `Pair ${pair.n}`} before cleaning`} fill sizes={SIZES} className="ba-img" draggable={false} />
+            <Image key={`b${pair.n}`} src={pair.beforeUrl ?? beforeSrc(pair.n)} unoptimized={!!pair.beforeUrl} alt={pair.sample ? 'Sample photo: before cleaning' : `${pair.label ?? `Pair ${pair.n}`} before cleaning`} fill sizes={SIZES} className="ba-img" draggable={false} />
           </div>
         )}
         <span className="ba-tag ba-tag-before" aria-hidden="true">

@@ -102,7 +102,7 @@ export default function VaultScreen() {
                       style={{ width: tile, gap: space.xs }}
                     >
                       <View>
-                        <Cover pair={p} size={tile} />
+                        <Cover pair={p} size={tile} sampleCorner="top-left" />
                         {active && (
                           <View style={{ position: 'absolute', left: space.sm, bottom: space.sm }}>
                             <StagePill clean={active} />
