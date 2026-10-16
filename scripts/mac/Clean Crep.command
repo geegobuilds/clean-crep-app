@@ -25,6 +25,10 @@ if ! command -v npm >/dev/null 2>&1; then
   export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 fi
 
+# Metro can bind to ::1 (IPv6) while the Simulator's Expo Go dials 127.0.0.1, which shows
+# "Could not connect to the server". Prefer IPv4 so Metro listens on 127.0.0.1:8081.
+export NODE_OPTIONS="--dns-result-order=ipv4first ${NODE_OPTIONS:-}"
+
 echo ""
 echo "  Starting Clean Crep…  (press Ctrl+C to stop)"
 echo ""

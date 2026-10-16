@@ -83,6 +83,11 @@ Expo Go runs everything except remote push notifications (needs a development bu
 physical phone). Save a file and the simulator hot-reloads; `Shift+i` in the terminal picks a
 different iPhone model.
 
+Run `npx expo login` once on the Mac: until you do, Expo waits at a "log in?" question in
+Terminal on every reload and the Simulator shows "The request timed out". The launcher also sets
+`NODE_OPTIONS=--dns-result-order=ipv4first` so Metro listens on `127.0.0.1` (Expo Go dials IPv4;
+without it Metro can bind to `::1` and the app can't connect).
+
 `npm run ios` serves the app on `localhost` (the Simulator shares the Mac's network), so it keeps
 working when the Mac's Wi‑Fi address changes. If the Simulator shows "Could not connect to the
 server", the dev server isn't running: start it again (double-click the launcher) and keep that

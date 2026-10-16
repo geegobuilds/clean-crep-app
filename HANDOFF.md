@@ -8,6 +8,11 @@ _Last updated: 2026-10-16_
 
 ## Current Status
 
+- **Mac launcher fixed (2026-10-16, Cowork on the Mac)**: "Could not connect to the server" was
+  Metro on `::1` while Expo Go dials `127.0.0.1` → the launcher now exports
+  `NODE_OPTIONS=--dns-result-order=ipv4first`. "The request timed out" was Expo waiting at its
+  login question → run `npx expo login` once (README). Expo 57.0.30 is out: upgrade in its own
+  session. expo-notifications warnings in Expo Go are expected (push needs a dev build).
 - **Ready notification → before & after (2026-10-16, 0031 applied live)**: Ready/Completed
   notifications for an order that cleaned a Vault item say "Tap to see the before & after" (only
   once an after photo is on the order) and the push opens /vault?pair=<id>; the inbox chip says
