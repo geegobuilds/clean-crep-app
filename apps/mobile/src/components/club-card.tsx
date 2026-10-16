@@ -24,7 +24,7 @@ export function ClubCard() {
     const status =
       membership.status === 'pending' ? 'One step left · send your reference' : membership.status === 'paused' ? 'Paused · renew to use your credits' : null;
     return (
-      <PressScale testID="home-club" onPress={go} accessibilityLabel="Clean Crep Club" style={[{ backgroundColor: c.navy, borderRadius: radius.lg, padding: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.md }, elevation.card]}>
+      <PressScale testID="home-club" onPress={go} accessibilityLabel="Clean Crep Club" style={[{ backgroundColor: c.navy, borderRadius: radius.lg, padding: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.md }, elevation.float]}>
         <View style={{ flex: 1 }}>
           <Text style={[type.overline, { color: c.onNavyMuted }]}>Club · {membership.plan.name}</Text>
           {status ? (

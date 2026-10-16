@@ -12,7 +12,7 @@ async function expectNoRawErrors(page: Page) {
 async function fillBookingDetails(page: Page, service: string, shoe: string) {
   await tab(page, 'Book');
   await text(page, service).click();
-  await expect(text(page, 'Booking Details', false)).toBeVisible();
+  await expect(text(page, 'Your booking', false)).toBeVisible();
   await placeholder(page, 'e.g. Nike Air Force 1, Clarks Desert Boot').fill(shoe);
   await placeholder(page, 'Any special instructions for your pair…').fill('e2e run');
 }
@@ -24,7 +24,7 @@ test('guest sees services and prices without signing in', async ({ page }) => {
 
   // Prices live in Book (Home is about the customer's own gear).
   await tab(page, 'Book');
-  await expect(text(page, 'AVAILABLE SERVICES', false)).toBeVisible();
+  await expect(text(page, 'Available services', false)).toBeVisible();
   await expect(text(page, 'Sneaker Clean', false)).toBeVisible();
   await expect(text(page, '$2,000', false)).toBeVisible();
   await expect(text(page, 'Clarks Clean', false)).toBeVisible();

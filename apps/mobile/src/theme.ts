@@ -7,8 +7,11 @@ import { fontFamily, palette, radius, shadow, spacing } from '@clean-crep/shared
 export const c = {
   ...palette,
   ink: palette.navy,
-  bg: palette.offWhite,
+  /** Page background: white paper (DESIGN.md §1). */
+  bg: palette.white,
   surface: palette.white,
+  /** Image plates, inputs, pressed rows, icon tiles. */
+  fill: palette.offWhite,
   accent: palette.blue,
 } as const;
 
@@ -30,14 +33,22 @@ export const type = {
   bodyStrong: t({ fontFamily: fontFamily.medium, fontSize: 15, lineHeight: 22, color: c.ink }),
   button: t({ fontFamily: fontFamily.bold, fontSize: 16, lineHeight: 20 }),
   caption: t({ fontFamily: fontFamily.regular, fontSize: 13, lineHeight: 18, color: c.inkMuted }),
+  /** Section headers: sentence case, quiet weight contrast (DESIGN.md §2). */
+  section: t({ fontFamily: fontFamily.displayBold, fontSize: 20, lineHeight: 26, letterSpacing: -0.2, color: c.ink }),
+  /** Only on navy surfaces (ticket stub, Club card). */
   overline: t({ fontFamily: fontFamily.medium, fontSize: 12, lineHeight: 16, letterSpacing: 1.6, color: c.inkMuted, textTransform: 'uppercase' }),
 } as const;
 
 const v = (s: ViewStyle): ViewStyle => s;
 
-/** A surface has a shadow OR a border, never both (DESIGN.md §5). */
+/**
+ * A surface has a shadow OR a border, never both (DESIGN.md §5). Resting
+ * content on white paper gets a hairline (`card`); only things that float
+ * over other content get a shadow (`float` over navy/photos, `raised`).
+ */
 export const elevation = {
-  card: v({ boxShadow: shadow.card }),
+  card: v({ borderWidth: 1, borderColor: c.line }),
+  float: v({ boxShadow: shadow.card }),
   raised: v({ boxShadow: shadow.raised }),
   bordered: v({ borderWidth: 1, borderColor: c.line }),
 } as const;

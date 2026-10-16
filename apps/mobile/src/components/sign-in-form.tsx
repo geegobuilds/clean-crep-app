@@ -184,7 +184,7 @@ const Field = forwardRef<TextInput, FieldProps>(function Field({ label, accessor
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: focused ? c.surface : c.bg,
+          backgroundColor: focused ? c.surface : c.fill,
           borderWidth: 1.5,
           borderColor: focused ? c.navy : 'transparent',
           borderRadius: radius.md,

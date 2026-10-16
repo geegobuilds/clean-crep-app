@@ -67,7 +67,7 @@ export default function ProfileScreen() {
   if (!session) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-        <ScreenHeader title="Profile" subtitle="Your cleans, points and rewards." />
+        <ScreenHeader title="Profile" />
         <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, paddingBottom: 160 }}>
           <SignInPrompt
             title="Sign in to see your profile"
@@ -140,7 +140,7 @@ export default function ProfileScreen() {
 
           {/* Past orders */}
           <View style={{ gap: space.sm }}>
-            <Overline>PAST ORDERS</Overline>
+            <Overline>Past orders</Overline>
             {loading && <SkeletonCard />}
             {!loading && error && <ErrorState message={error} onRetry={reload} />}
             {!loading && !error && pastOrders.length === 0 && (
@@ -186,7 +186,7 @@ export default function ProfileScreen() {
 
           {/* Settings */}
           <View style={{ gap: space.sm }}>
-            <Overline>SETTINGS</Overline>
+            <Overline>Settings</Overline>
             <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, overflow: 'hidden' }, elevation.card]}>
               {(
                 [
@@ -207,12 +207,12 @@ export default function ProfileScreen() {
                     gap: space.sm,
                     paddingVertical: space.sm + 2,
                     paddingHorizontal: space.md,
-                    backgroundColor: pressed ? c.bg : c.surface,
+                    backgroundColor: pressed ? c.fill : c.surface,
                     borderBottomWidth: i < arr.length - 1 ? 1 : 0,
                     borderBottomColor: c.line,
                   })}
                 >
-                  <View style={{ width: 34, height: 34, borderRadius: radius.sm + 2, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 34, height: 34, borderRadius: radius.sm + 2, backgroundColor: c.fill, alignItems: 'center', justifyContent: 'center' }}>
                     <Icon name={item.icon} size={17} color={c.navy} />
                   </View>
                   <Text style={[type.body, { flex: 1 }]}>{item.label}</Text>

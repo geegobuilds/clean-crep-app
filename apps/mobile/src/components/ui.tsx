@@ -13,14 +13,14 @@ export function ScreenHeader({ title, subtitle, left, right }: { title: string; 
       {!!(left || right) && (
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, marginBottom: space.sm }}>
           {left ? (
-            <View style={[{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }, elevation.card]}>{left}</View>
+            <View style={[{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }, elevation.float]}>{left}</View>
           ) : (
             <View />
           )}
           {right}
         </View>
       )}
-      <Text style={type.hero} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7} accessibilityRole="header">
+      <Text style={type.display} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7} accessibilityRole="header">
         {title}
       </Text>
       {!!subtitle && <Text style={[type.body, { color: c.inkMuted, marginTop: space.xs }]}>{subtitle}</Text>}
@@ -28,11 +28,13 @@ export function ScreenHeader({ title, subtitle, left, right }: { title: string; 
   );
 }
 
-/** Small uppercase section label ("ALL ORDERS"). */
+/** Section header in sentence case ("All orders"). The caps overline is for navy surfaces only. */
 export function Overline({ children, style }: { children: string; style?: StyleProp<ViewStyle> }) {
   return (
     <View style={style}>
-      <Text style={type.overline}>{children}</Text>
+      <Text style={type.section} accessibilityRole="header">
+        {children}
+      </Text>
     </View>
   );
 }

@@ -56,7 +56,7 @@ export default function VaultScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-      <ScreenHeader title="Vault" subtitle="Your sneakers, Clarks and caps, and how we've cared for them." />
+      <ScreenHeader title="Vault" />
       <ScrollView refreshControl={session ? refresh : undefined} contentContainerStyle={{ padding: space.lg, gap: space.md, paddingBottom: 140 }}>
         {!session && (
           <SignInPrompt
@@ -518,7 +518,7 @@ function Field({ label, ...input }: { label: string; placeholder: string; value:
         {...input}
         accessibilityLabel={label}
         placeholderTextColor={c.inkMuted}
-        style={{ borderWidth: 1, borderColor: c.line, borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: c.bg, ...type.body }}
+        style={{ borderWidth: 1, borderColor: c.line, borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: c.fill, ...type.body }}
       />
     </View>
   );

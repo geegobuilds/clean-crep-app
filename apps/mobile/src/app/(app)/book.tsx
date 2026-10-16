@@ -363,7 +363,7 @@ export default function BookingScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xl }} keyboardShouldPersistTaps="handled">
           <ScreenHeader
-            title="Booking Details"
+            title="Your booking"
             subtitle={`${selected.name} · ${formatPrice(selected.price_cents)}${selected.price_cents === null ? ' on inspection' : ''}`}
             left={
               <Pressable onPress={() => setStep(0)} accessibilityRole="button" accessibilityLabel="Back" hitSlop={12}>
@@ -374,7 +374,7 @@ export default function BookingScreen() {
           />
           <View style={{ paddingHorizontal: space.lg, gap: space.xl }}>
             <View>
-              <Label n={num()}>{headwear ? 'YOUR CAP' : 'YOUR PAIR'}</Label>
+              <Label n={num()}>{headwear ? 'Your cap' : 'Your pair'}</Label>
               {fitting.length > 0 && (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginBottom: space.sm }}>
                   {fitting.map((p) => {
@@ -416,7 +416,7 @@ export default function BookingScreen() {
             </View>
 
             <View>
-              <Label n={num()}>HOW THEY GET TO US</Label>
+              <Label n={num()}>How it gets to us</Label>
               <View style={[{ flexDirection: 'row', backgroundColor: c.surface, borderRadius: radius.pill, padding: 4 }, elevation.card]}>
                 {[
                   { label: 'Drop Off', val: true, icon: 'pkg' as const },
@@ -447,7 +447,7 @@ export default function BookingScreen() {
 
             {!dropoff && (
               <View>
-                <Label n={num()}>YOUR AREA · CREPRUN</Label>
+                <Label n={num()}>Your area · CrepRun</Label>
                 {zones.length === 0 ? (
                   <Text style={[type.body, { color: c.inkMuted }]}>Couldn&apos;t load pickup areas. Message us on WhatsApp to arrange pickup.</Text>
                 ) : (
@@ -474,7 +474,7 @@ export default function BookingScreen() {
 
             {dropoff && (
               <View>
-                <Label n={num()}>WHEN</Label>
+                <Label n={num()}>When</Label>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.lg }} contentContainerStyle={{ gap: space.xs, paddingHorizontal: space.lg, paddingVertical: space.xs }}>
                   {days.map((d, i) => {
                     const on = selDay === i;
@@ -501,7 +501,7 @@ export default function BookingScreen() {
 
             {pickable.length > 0 && (
               <View>
-                <Label n={num()}>LEVEL IT UP</Label>
+                <Label n={num()}>Level it up</Label>
                 <View style={{ gap: space.xs }}>
                   {pickable.map((a) => (
                     <AddOnRow key={a.id} addOn={a} on={picked.includes(a.id)} onPress={() => togglePick(a.id)} />
@@ -518,7 +518,7 @@ export default function BookingScreen() {
             )}
 
             <View>
-              <Label n={num()}>NOTES (OPTIONAL)</Label>
+              <Label n={num()}>Notes (optional)</Label>
               <TextInput
                 value={notes}
                 onChangeText={setNotes}
@@ -651,7 +651,7 @@ export default function BookingScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-      <ScreenHeader title="Book" subtitle="Pick a service. We handle the rest." />
+      <ScreenHeader title="Book" />
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingTop: space.xs, paddingBottom: 140, gap: space.md }}>
         {chosenPair && (
           <View testID="booking-for" style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: c.navy, borderRadius: radius.lg, padding: space.md }}>
@@ -675,7 +675,7 @@ export default function BookingScreen() {
             </Pressable>
           </View>
         )}
-        <Overline style={{ marginBottom: space.xxs }}>AVAILABLE SERVICES</Overline>
+        <Overline style={{ marginBottom: space.xxs }}>Available services</Overline>
         {servicesLoading && services.length === 0 && <SkeletonList count={4} variant="service" />}
         {servicesError && !servicesLoading && <ErrorState message={servicesError} onRetry={reloadServices} />}
         {!servicesLoading && !servicesError && services.length === 0 && (
@@ -688,7 +688,7 @@ export default function BookingScreen() {
         )}
         {menu.map(({ svc, i, groupStart }) => (
           <Animated.View key={svc.id} entering={FadeInDown.delay(i * 40).springify().damping(18)} style={{ gap: space.sm }}>
-            {groupStart && <Overline style={{ marginTop: space.md }}>CAPS & HATS</Overline>}
+            {groupStart && <Overline style={{ marginTop: space.md }}>Caps & hats</Overline>}
             <PressScale
               testID="service-card"
               onPress={() => {
@@ -804,22 +804,16 @@ function AddOnRow({ addOn, on, onPress }: { addOn: AddOn; on: boolean; onPress: 
   );
 }
 
-/** Numbered section label: "01  YOUR PAIR". */
+/** Section header for a booking step ("Your pair"). `n` is kept for step order, not shown. */
 function Label({ n, children }: { n: string; children: string }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.sm, marginBottom: space.sm }}>
-      <Text style={[type.overline, { color: c.ink, fontVariant: ['tabular-nums'] }]}>{n}</Text>
-      <Overline>{children}</Overline>
-    </View>
-  );
+  return <Overline style={{ marginTop: space.sm, marginBottom: space.sm }}>{children}</Overline>;
 }
 
 const inputStyle: TextStyle = {
   borderWidth: 1.5,
-  borderColor: 'transparent',
+  borderColor: c.line,
   borderRadius: radius.lg,
   minHeight: 56,
-  boxShadow: elevation.card.boxShadow as string,
   paddingVertical: space.sm,
   paddingHorizontal: space.md,
   fontFamily: type.body.fontFamily,
