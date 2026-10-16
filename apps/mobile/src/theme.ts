@@ -35,6 +35,8 @@ export const type = {
   caption: t({ fontFamily: fontFamily.regular, fontSize: 13, lineHeight: 18, color: c.inkMuted }),
   /** Section headers: sentence case, quiet weight contrast (DESIGN.md §2). */
   section: t({ fontFamily: fontFamily.displayBold, fontSize: 20, lineHeight: 26, letterSpacing: -0.2, color: c.ink }),
+  /** Small sentence-case label on white (field labels, stat labels, "Your rotation"). */
+  label: t({ fontFamily: fontFamily.medium, fontSize: 13, lineHeight: 18, color: c.inkMuted }),
   /** Only on navy surfaces (ticket stub, Club card). */
   overline: t({ fontFamily: fontFamily.medium, fontSize: 12, lineHeight: 16, letterSpacing: 1.6, color: c.inkMuted, textTransform: 'uppercase' }),
 } as const;

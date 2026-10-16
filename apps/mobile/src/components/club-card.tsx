@@ -46,7 +46,7 @@ export function ClubCard() {
   return (
     <PressScale testID="home-club" onPress={go} accessibilityLabel="Clean Crep Club" style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.md }, elevation.card]}>
       <View style={{ flex: 1, gap: space.xxs }}>
-        <Text style={type.overline}>Clean Crep Club</Text>
+        <Text style={type.label}>Clean Crep Club</Text>
         <Text style={type.body}>
           Cleans every month from {formatPrice(cheapest.price_cents)}. Unused ones roll over.
         </Text>

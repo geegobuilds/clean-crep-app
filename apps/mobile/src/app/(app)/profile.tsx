@@ -90,7 +90,7 @@ export default function ProfileScreen() {
         {/* Big name, avatar on the right. */}
         <View style={{ paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.md, flexDirection: 'row', alignItems: 'flex-end', gap: space.md }}>
           <View style={{ flex: 1 }}>
-            <Text style={type.overline}>{since ? `Member since ${since}` : 'Clean Crep'}</Text>
+            <Text style={type.label}>{since ? `Member since ${since}` : 'Clean Crep'}</Text>
             {customer ? (
               <>
                 <Text style={[type.hero, { marginTop: space.xxs }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} accessibilityRole="header">
@@ -224,7 +224,7 @@ export default function ProfileScreen() {
               accessibilityRole="button"
               accessibilityLabel="Sign Out"
               onPress={signOut}
-              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingVertical: space.md, borderRadius: radius.lg, backgroundColor: pressed ? c.surface : 'transparent' }]}
+              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingVertical: space.md, borderRadius: radius.lg, backgroundColor: pressed ? c.fill : 'transparent' }]}
             >
               <Icon name="logout" size={17} color={c.inkMuted} />
               <Text style={[type.bodyStrong, { color: c.inkMuted }]}>Sign Out</Text>

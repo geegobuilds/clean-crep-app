@@ -43,7 +43,7 @@ export function RotationRail({ pairs, loading, error, onRetry }: { pairs: VaultP
   return (
     <View style={{ gap: space.sm }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: space.lg }}>
-        <Text style={type.overline}>Your rotation</Text>
+        <Text style={type.label}>Your rotation</Text>
         {pairs.length > 0 && (
           <Text onPress={() => router.push('/vault')} accessibilityRole="link" style={[type.bodyStrong, { color: c.accent, fontSize: 14 }]}>
             See all

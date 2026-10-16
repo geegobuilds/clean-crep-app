@@ -103,7 +103,17 @@ export default function BookingScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [useCredit, setUseCredit] = useState(true);
   const { membership, reload: reloadMembership } = useMembership();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setRawError] = useState<string | null>(null);
+  // An error belongs to the choices it was about: changing method, area or add-ons clears it.
+  const choiceKey = `${dropoff}|${zoneId}|${picked.join(',')}`;
+  const [errorFor, setErrorFor] = useState('');
+  const setError = (msg: string | null) => {
+    setRawError(msg);
+    setErrorFor(choiceKey);
+  };
+  const shownError = error && errorFor === choiceKey ? error : null;
+  // The sticky bar's real height, so the page always scrolls clear of it.
+  const [barH, setBarH] = useState(120);
   // Guests fill in the whole booking, then sign in here at the last step.
   // This is a sheet over the Book screen (not a route change), so every
   // selection above stays in state through sign-in.
@@ -361,7 +371,7 @@ export default function BookingScreen() {
     const num = () => String(++n).padStart(2, '0');
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 140 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ paddingBottom: barH + space.lg }} keyboardShouldPersistTaps="handled">
           <ScreenHeader
             title="Your booking"
             subtitle={`${selected.name} · ${formatPrice(selected.price_cents)}${selected.price_cents === null ? ' on inspection' : ''}`}
@@ -370,7 +380,7 @@ export default function BookingScreen() {
                 <Icon name="chevronL" size={20} color={c.navy} />
               </Pressable>
             }
-            right={<Text style={type.overline}>Step 1 of 2</Text>}
+            right={<Text style={type.label}>Step 1 of 2</Text>}
           />
           <View style={{ paddingHorizontal: space.lg, gap: space.xl }}>
             <View>
@@ -392,7 +402,7 @@ export default function BookingScreen() {
                         aria-checked={on}
                         style={[
                           { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: space.xs, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: on ? c.navy : c.surface },
-                          on ? null : elevation.card,
+                          on ? { borderWidth: 1, borderColor: c.navy } : elevation.card,
                         ]}
                       >
                         {on && <Icon name="check" size={14} color={c.white} strokeWidth={3} />}
@@ -579,15 +589,16 @@ export default function BookingScreen() {
         {/* Sticky action bar: total on the left, the one primary action on the right (DESIGN.md §7) */}
         <View
           testID="booking-bar"
+          onLayout={(e) => setBarH(e.nativeEvent.layout.height)}
           style={[
             { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: c.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line },
             { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: insets.bottom + space.md },
             elevation.raised,
           ]}
         >
-          {error && (
+          {shownError && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginBottom: space.sm }}>
-              <Text style={[type.body, { color: c.danger }]}>{error}</Text>
+              <Text style={[type.body, { color: c.danger }]}>{shownError}</Text>
               <Pressable onPress={() => Linking.openURL(WHATSAPP_URL)}>
                 <Text style={[type.bodyStrong, { color: c.accent }]}>Message us on WhatsApp</Text>
               </Pressable>
@@ -763,7 +774,7 @@ function ZoneRow({ zone, on, onPress }: { zone: Zone; on: boolean; onPress: () =
       aria-checked={on}
       style={[
         { backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md, flexDirection: 'row', gap: space.sm, alignItems: 'center', borderWidth: 1.5, borderColor: on ? c.navy : 'transparent' },
-        on ? null : elevation.card,
+        on ? null : { borderColor: c.line },
       ]}
     >
       <Tick on={on} />
@@ -786,7 +797,7 @@ function AddOnRow({ addOn, on, onPress }: { addOn: AddOn; on: boolean; onPress: 
       aria-checked={on}
       style={[
         { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md, borderWidth: 1.5, borderColor: on ? c.navy : 'transparent' },
-        on ? null : elevation.card,
+        on ? null : { borderColor: c.line },
       ]}
     >
       <Tick on={on} />

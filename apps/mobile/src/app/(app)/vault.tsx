@@ -47,7 +47,7 @@ export default function VaultScreen() {
   if (loaded && !features.has('vault')) return <Redirect href="/" />;
 
   if (open) {
-    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => { setOpenId(null); if (params.pair) router.setParams({ pair: '' }); }} onSave={(f) => savePair(open.id, f)} onRemove={async () => { const err = await removePair(open.id); if (!err) setOpenId(null); return err; }} onBook={() => router.push({ pathname: '/book', params: { pair: open.id } })} onTrack={() => router.push('/orders')} />;
+    return <PairDetail pair={open} showPassport={features.has('passport')} showGrade={features.has('condition_grade')} showCreppie={features.has('smart_nudges')} onBack={() => { setOpenId(null); if (params.pair) router.setParams({ pair: '' }); }} onSave={(f) => savePair(open.id, f)} onRemove={async () => { const err = await removePair(open.id); if (!err) setOpenId(null); return err; }} onBook={() => { setOpenId(null); router.push({ pathname: '/book', params: { pair: open.id } }); }} onTrack={() => { setOpenId(null); router.push('/orders'); }} />;
   }
 
   const capCount = pairs.filter((p) => p.category === 'cap').length;
@@ -156,7 +156,7 @@ function Stat({ value, label }: { value: number; label: string }) {
   return (
     <View>
       <Text style={[type.hero, { fontSize: 56, lineHeight: 58, fontVariant: ['tabular-nums'] }]}>{shown}</Text>
-      <Text style={type.overline}>{label}</Text>
+      <Text style={type.label}>{label}</Text>
     </View>
   );
 }
@@ -199,7 +199,7 @@ function ConditionCard({ pair }: { pair: VaultPair }) {
         {g.before && (
           <View>
             <Text style={[type.hero, { color: c.line, fontVariant: ['tabular-nums'] }]}>{g.before.score}</Text>
-            <Text style={type.overline}>Before</Text>
+            <Text style={type.label}>Before</Text>
           </View>
         )}
         {g.before && g.after && <Icon name="arrowR" size={22} color={c.inkMuted} />}
@@ -209,7 +209,7 @@ function ConditionCard({ pair }: { pair: VaultPair }) {
               {g.after.score}
               <Text style={[type.title, { color: c.inkMuted }]}>/10</Text>
             </Text>
-            <Text style={type.overline}>After</Text>
+            <Text style={type.label}>After</Text>
           </View>
         )}
       </View>
@@ -536,7 +536,7 @@ function PairForm({
 function Field({ label, ...input }: { label: string; placeholder: string; value: string; onChangeText: (v: string) => void }) {
   return (
     <View style={{ gap: 4 }}>
-      <Text style={type.overline}>{label}</Text>
+      <Text style={type.label}>{label}</Text>
       <TextInput
         {...input}
         accessibilityLabel={label}

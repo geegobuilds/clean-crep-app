@@ -179,7 +179,7 @@ const Field = forwardRef<TextInput, FieldProps>(function Field({ label, accessor
   const [focused, setFocused] = useState(false);
   return (
     <View style={{ marginBottom: space.md }}>
-      <Text style={[type.overline, { marginBottom: space.xs }]}>{label}</Text>
+      <Text style={[type.label, { marginBottom: space.xs }]}>{label}</Text>
       <View
         style={{
           flexDirection: 'row',

@@ -202,7 +202,7 @@ export default function HomeScreen() {
           {session && !ordersLoading && lead && (
             <PressScale testID="home-order" onPress={() => router.push('/orders')} style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md, gap: space.sm }, elevation.card]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <Text style={type.overline}>Your order</Text>
+                <Text style={type.label}>Your order</Text>
                 <Text style={type.caption}>
                   {lead.drop_method === 'pickup' ? 'Back' : 'Ready'} {formatEta(readyBy(lead))}
                   {activeOrders.length > 1 ? ` · +${activeOrders.length - 1} more` : ''}
