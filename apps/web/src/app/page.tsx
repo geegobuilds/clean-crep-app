@@ -10,7 +10,7 @@ import { ServiceTiles } from '@/components/service-tiles';
 import { SiteNav } from '@/components/site-nav';
 import { RevealOnScroll } from '@/components/reveal-on-scroll';
 import { BeforeAfter } from '@/components/before-after';
-import { PHOTOS_READY, SAMPLE_PHOTOS, WORK_PAIRS, afterSrc, beforeSrc } from '@/lib/work';
+import { PHOTOS_READY, SAMPLE_PHOTOS, WORK_PAIRS, afterSrc, beforeSrc, sampleFor } from '@/lib/work';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 // Every "Book" button goes to the Quick Book card in the hero.
@@ -114,7 +114,9 @@ export default async function LandingPage() {
           </section>
         )}
 
-        <section className={PHOTOS_READY ? 'band band-navy' : 'band band-navy band-seam'} id="services">
+        <PassportBand />
+
+        <section className="band band-navy band-seam" id="services">
           <div className="band-inner">
             <header className="band-head" data-reveal>
               <p className="eyebrow">Services &amp; Pricing</p>
@@ -357,5 +359,87 @@ function WhatsAppGlyph() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
     </svg>
+  );
+}
+
+/**
+ * "Every pair gets a Crep Passport": what customers get with every clean
+ * (before/after, care history, the QR Crep Card), with a sample Passport card.
+ */
+function PassportBand() {
+  const shot = sampleFor('sneaker');
+  return (
+    <section className="band band-navy" id="passport">
+      <div className="band-inner passport-grid">
+        <div data-reveal>
+          <p className="eyebrow">Crep Passport</p>
+          <h2 className="band-title">Every pair leaves with a Passport.</h2>
+          <p className="band-body">
+            Everything we clean gets its own Crep Passport: the before and after, every clean on record, and a QR Crep Card in your pickup bag. Share
+            it when you sell, and the buyer sees a pair that&apos;s been looked after.
+          </p>
+          <ul className="perks">
+            {[
+              ['Before & after, every clean', 'Shot at the counter the day it comes in and the day it goes out.'],
+              ['Verified care history', 'Every service and date, recorded by Clean Crep. Nobody can edit it but us.'],
+              ['Scan the Crep Card', 'The QR card in your bag opens the Passport. Send the link on WhatsApp in a tap.'],
+            ].map(([text, sub]) => (
+              <li key={text}>
+                <strong>{text}</strong>
+                <span>{sub}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="actions">
+            <a href={BOOK_NOW_URL} className="btn-primary">
+              Book a Clean
+            </a>
+          </div>
+        </div>
+
+        <div data-reveal aria-hidden="true">
+          <div className="pp-card" data-testid="passport-band-card">
+            <div className="pp-head">
+              <span className="pp-over">Crep Passport</span>
+              <span className="pp-verified">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                Verified
+              </span>
+            </div>
+            <div className="pp-title">Nike Air Force 1</div>
+            <div className="pp-code">K7Q4 M2XR</div>
+            {shot && (
+              <div className="pp-shots">
+                {[
+                  ['Before', shot.before],
+                  ['After', shot.after],
+                ].map(([label, src]) => (
+                  <figure key={label}>
+                    <Image src={src} alt="" fill sizes="(max-width: 899px) 45vw, 220px" unoptimized />
+                    <figcaption>{label}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            )}
+            <ol className="pp-history">
+              {[
+                ['Deep Clean', '10 Oct'],
+                ['Sneaker Clean', '29 Aug'],
+                ['Sneaker Clean', '28 Jun'],
+              ].map(([service, date]) => (
+                <li key={service + date}>
+                  <span>{service}</span>
+                  <span>{date}</span>
+                </li>
+              ))}
+            </ol>
+            <span className="pp-sample">Sample</span>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

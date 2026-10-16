@@ -8,6 +8,18 @@ _Last updated: 2026-10-16_
 
 ## Current Status
 
+- **Ready notification → before & after (2026-10-16, 0031 applied live)**: Ready/Completed
+  notifications for an order that cleaned a Vault item say "Tap to see the before & after" (only
+  once an after photo is on the order) and the push opens /vault?pair=<id>; the inbox chip says
+  "See before & after" / "View in Vault". Gated on BOTH `vault` and `passport` (the Vault screen
+  bounces people without `vault`), and `vault` is still OFF for customers, so this is dark until
+  Geego switches the Vault on. If staff upload the after photo after marking Ready, the Ready
+  message skips the before & after line (the push still opens the Vault). Backlog from QA: back
+  from a Vault item opened from the inbox goes Home, and the before/after card sits below the
+  fold on the item page (Designer call).
+- **Homepage Crep Passport band (2026-10-16)**: navy band after "Same pair. Second life.":
+  what every Passport holds + a tilted sample Passport card (tagged Sample). Services now sits on
+  a seam right after it.
 - **WhatsApp passport button + glass (2026-10-16)**: staff order page has "Tell the customer":
   a status-aware message (ready for pickup / CrepRun on its way / thanks) with the item's Crep
   Passport link, and "Send on WhatsApp" opens staff's own WhatsApp with it typed in (wa.me, no
