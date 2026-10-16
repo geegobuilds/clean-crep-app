@@ -153,4 +153,4 @@ navy pill with its label, the rest are icons. Shortcuts on Home never duplicate 
 - Resting content on white has **no shadow**: a 1px `line` hairline (`elevation.card`). Shadows only on things that float: content over navy or photos (`elevation.float`), tab bar, sticky footers, sheets (`elevation.raised`).
 - Section headers are **sentence case** (`type.section`, Archivo 700 20/26). The caps `overline` is for navy surfaces only (ticket stub, Club card). No "01–05" step numbers.
 - Screen titles use `display` 34. The one huge thing on a screen is content (hero word, total, balance), not the screen name. Subtitles only when they carry data ("2 unread").
-- Coming next: sticky action bar (price + primary action) on detail/flow screens with the tab bar hidden; photo-first cards; hairline list rows instead of cards.
+- Sticky action bar on detail/flow screens (booking details, Vault item): total or status on the left, the one primary action on the right, tab bar hidden. Coming next: hairline list rows instead of cards, photo-first service cards once real photos exist.

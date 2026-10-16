@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, Share, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Redirect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { gradesFor, pairTitle, passportUrl, type PairCategory } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
 import { activeClean, cleanedLine, Cover, shortDay, pillEdge, StagePill, stageLabel } from '@/components/pair-cover';
@@ -245,6 +245,13 @@ function PairDetail({
   const [asking, setAsking] = useState(false);
   const details = [pair.colorway, pair.size && `Size ${pair.size}`].filter(Boolean).join(' · ');
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // A detail page owns the bottom of the screen: the tab bar steps aside (like Book's details step).
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({ tabBarStyle: { display: 'none' } });
+    return () => navigation.setOptions({ tabBarStyle: undefined });
+  }, [navigation]);
   const done = pair.cleans.filter((o) => o.status === 'completed');
   const active = activeClean(pair);
   const g = latestGrades(pair);
@@ -254,27 +261,38 @@ function PairDetail({
     { label: 'Last clean', value: done.length ? new Date(done[0].created_at).toLocaleDateString('en-JM', { day: 'numeric', month: 'short' }) : '—' },
   ];
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
-        <ScreenHeader
-          title={pairTitle(pair)}
-          subtitle={details || (pair.nickname && pair.nickname !== pairTitle(pair) ? pair.nickname : undefined)}
-          left={
-            <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back to Vault" hitSlop={12}>
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + space.sm, paddingBottom: insets.bottom + 120 }}>
+        <View style={{ paddingHorizontal: space.lg, gap: space.lg }}>
+          {/* The subject leads: the cover first, back button floating over it */}
+          <View>
+            <Cover pair={pair} size={pair.cover ? Math.round((Math.min(width, 600) - space.lg * 2) * 0.8) : 200} wide />
+            <Pressable
+              onPress={onBack}
+              accessibilityRole="button"
+              accessibilityLabel="Back to Vault"
+              hitSlop={8}
+              style={[{ position: 'absolute', top: space.sm, left: space.sm, width: 40, height: 40, borderRadius: 20, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }, elevation.raised]}
+            >
               <Icon name="chevronL" size={20} color={c.navy} />
             </Pressable>
-          }
-          right={pair.nickname && pair.nickname !== pairTitle(pair) ? <Text style={type.overline}>{pair.nickname}</Text> : undefined}
-        />
-        <View style={{ paddingHorizontal: space.lg, gap: space.xl }}>
-          <Cover pair={pair} size={pair.cover ? Math.min(width, 600) - space.lg * 2 : 200} wide />
+          </View>
 
-          {/* The numbers that matter, big and bare */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View style={{ gap: space.xxs }}>
+            <Text style={type.title} accessibilityRole="header">
+              {pairTitle(pair)}
+            </Text>
+            {!!(details || (pair.nickname && pair.nickname !== pairTitle(pair))) && (
+              <Text style={[type.body, { color: c.inkMuted }]}>{[details, pair.nickname && pair.nickname !== pairTitle(pair) ? pair.nickname : null].filter(Boolean).join(' · ')}</Text>
+            )}
+          </View>
+
+          {/* The numbers that matter, quiet and bare */}
+          <View style={{ flexDirection: 'row', gap: space.xl, paddingVertical: space.md, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: c.line }}>
             {stats.map((st) => (
               <View key={st.label}>
-                <Text style={[type.title, { fontSize: 30, lineHeight: 34, fontVariant: ['tabular-nums'] }]}>{st.value}</Text>
-                <Text style={type.overline}>{st.label}</Text>
+                <Text style={[type.headline, { fontVariant: ['tabular-nums'] }]}>{st.value}</Text>
+                <Text style={type.caption}>{st.label}</Text>
               </View>
             ))}
           </View>
@@ -292,27 +310,6 @@ function PairDetail({
               </Text>
             </View>
           )}
-
-          <PressScale
-            testID={active ? 'pair-track' : 'pair-book'}
-            onPress={active ? onTrack : onBook}
-            style={{
-              height: 60,
-              borderRadius: radius.pill,
-              backgroundColor: c.accent,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingLeft: space.lg,
-              paddingRight: 6,
-              boxShadow: '0 14px 30px rgba(26,111,212,0.3), 0 2px 6px rgba(10,31,68,0.16)',
-            }}
-          >
-            <Text style={[type.button, { color: c.white }]}>{active ? 'Track this clean' : done.length ? 'Book its next clean' : 'Book its first clean'}</Text>
-            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.white, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="arrowR" size={20} color={c.accent} strokeWidth={2} />
-            </View>
-          </PressScale>
 
           {showGrade && <ConditionCard pair={pair} />}
 
@@ -423,7 +420,33 @@ function PairDetail({
         </View>
         {asking && <CreppieChat draft={creppieDraft(pair)} onClose={() => setAsking(false)} />}
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Sticky action bar: what matters on the left, the one action on the right (DESIGN.md §7) */}
+      <View
+        testID="pair-bar"
+        style={[
+          { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: c.surface },
+          { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line, paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: insets.bottom + space.md },
+          elevation.raised,
+        ]}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={type.bodyStrong} numberOfLines={1}>
+            {active ? stageLabel(active) : done.length ? `Last clean ${new Date(done[0].created_at).toLocaleDateString('en-JM', { day: 'numeric', month: 'short' })}` : 'Not cleaned yet'}
+          </Text>
+          <Text style={type.caption} numberOfLines={1}>
+            {active ? (active.service?.name ?? 'In for a clean') : `${done.length} clean${done.length === 1 ? '' : 's'} on record`}
+          </Text>
+        </View>
+        <PressScale
+          testID={active ? 'pair-track' : 'pair-book'}
+          onPress={active ? onTrack : onBook}
+          style={{ height: 52, borderRadius: radius.md, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg }}
+        >
+          <Text style={[type.button, { color: c.white }]}>{active ? 'Track this clean' : done.length ? 'Book its next clean' : 'Book its first clean'}</Text>
+        </PressScale>
+      </View>
+    </View>
   );
 }
 
