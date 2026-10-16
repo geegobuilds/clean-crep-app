@@ -13,15 +13,20 @@ type RawImageLike = { width: number; height: number; channels: number; data: Uin
 type Segmenter = (image: unknown) => Promise<RawImageLike[]>;
 
 let segmenter: Promise<Segmenter> | null = null;
+let onGpu = false;
+let gpuFailed = false; // WebGPU loaded but failed to run: WebAssembly from now on
 
 function loadSegmenter(): Promise<Segmenter> {
   segmenter ??= (async () => {
     const tf = await import(/* webpackIgnore: true */ /* turbopackIgnore: true */ TRANSFORMERS_URL);
     // Some browsers advertise WebGPU but can't run it (no adapter, no fp16), so
     // fall back to WebAssembly whenever the WebGPU pipeline won't load.
-    if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
+    onGpu = false;
+    if (!gpuFailed && typeof navigator !== 'undefined' && 'gpu' in navigator) {
       try {
-        return (await tf.pipeline('background-removal', MODEL, { device: 'webgpu', dtype: 'fp16' })) as Segmenter;
+        const gpu = (await tf.pipeline('background-removal', MODEL, { device: 'webgpu', dtype: 'fp16' })) as Segmenter;
+        onGpu = true;
+        return gpu;
       } catch (e) {
         console.warn('[cutout] WebGPU unavailable, using WebAssembly', e);
       }
@@ -44,8 +49,18 @@ export async function makeCutout(photo: Blob, max = 1200): Promise<Blob> {
   src.height = Math.round(bitmap.height * scale);
   src.getContext('2d')!.drawImage(bitmap, 0, 0, src.width, src.height);
 
-  const run = await loadSegmenter();
-  const [out] = await run(src.toDataURL('image/jpeg', 0.92));
+  const input = src.toDataURL('image/jpeg', 0.92);
+  let out: RawImageLike | undefined;
+  try {
+    [out] = await (await loadSegmenter())(input);
+  } catch (e) {
+    if (!onGpu) throw e;
+    // WebGPU loaded but couldn't run this: switch to WebAssembly and retry once.
+    console.warn('[cutout] WebGPU run failed, using WebAssembly', e);
+    gpuFailed = true;
+    segmenter = null;
+    [out] = await (await loadSegmenter())(input);
+  }
   if (!out || out.channels !== 4) throw new Error('no cutout');
 
   // Crop to what's left (alpha > 16), padded 6%.
