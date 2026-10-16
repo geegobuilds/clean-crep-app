@@ -29,9 +29,13 @@ export function SiteNav({ bookHref }: { bookHref: string }) {
     check();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
+    // Content above can grow (images, reveals) and move a new band under the nav without a scroll.
+    const ro = new ResizeObserver(onScroll);
+    ro.observe(document.body);
     return () => {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      ro.disconnect();
       cancelAnimationFrame(frame);
     };
   }, []);
