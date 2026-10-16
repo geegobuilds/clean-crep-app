@@ -26,7 +26,6 @@ export default function AppGroupLayout() {
     { name: 'book', label: 'Book', icon: 'book' },
     { name: 'orders', label: 'Orders', icon: 'orders' },
     ...(features.has('vault') ? [{ name: 'vault', label: 'Vault', icon: 'vault' as IconName }] : []),
-    { name: 'inbox', label: 'Inbox', icon: 'bell' },
     { name: 'profile', label: 'Profile', icon: 'profile' },
   ];
 
@@ -37,7 +36,8 @@ export default function AppGroupLayout() {
       <Tabs.Screen name="orders" options={{ title: 'Orders' }} />
       <Tabs.Screen name="vault" options={{ title: 'Vault', href: features.has('vault') ? undefined : null }} />
       <Tabs.Screen name="club" options={{ href: null, tabBarStyle: { display: 'none' } }} />
-      <Tabs.Screen name="inbox" options={{ title: 'Inbox' }} />
+      {/* Inbox opens from the bell on Home (with an unread badge), not a tab. */}
+      <Tabs.Screen name="inbox" options={{ title: 'Inbox', href: null }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
   );

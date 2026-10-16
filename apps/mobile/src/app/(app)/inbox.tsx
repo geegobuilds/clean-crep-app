@@ -84,6 +84,11 @@ export default function InboxScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
       <ScreenHeader
+        left={
+          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="Back" hitSlop={12}>
+            <Icon name="chevronL" size={20} color={c.navy} />
+          </Pressable>
+        }
         title="Inbox"
         subtitle={!session ? 'Order updates land here.' : unread > 0 ? `${unread} unread notification${unread > 1 ? 's' : ''}` : 'All caught up.'}
         right={
