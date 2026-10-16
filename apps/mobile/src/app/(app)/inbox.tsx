@@ -5,6 +5,8 @@ import { useRouter } from 'expo-router';
 import { type Notification, type NotificationType } from '@clean-crep/shared';
 import { Icon, type IconName } from '@/components/icon';
 import { useNotifications } from '@/hooks/use-notifications';
+import { useOrders } from '@/hooks/use-orders';
+import { useFeatures } from '@/hooks/use-features';
 import { useAuth } from '@/lib/auth';
 import { EmptyState, ErrorState, SignInPrompt, SkeletonList } from '@/components/states';
 import { Overline, ScreenHeader } from '@/components/ui';
@@ -23,12 +25,20 @@ const DIRECTIONS_URL = 'https://www.google.com/maps/search/?api=1&query=Clean+Cr
 
 type Action = { label: string; run: (router: ReturnType<typeof useRouter>) => void };
 
-/** The nudges share a type with other messages, so the title says which one it is. */
-function kindOf(n: Notification): { icon: IconName; action?: Action } {
+/**
+ * The nudges share a type with other messages, so the title says which one it is.
+ * `pair`: the Vault item a Ready/Completed order cleaned (Passport on), which
+ * its action opens (before/after, care history, share) instead of Orders (0031).
+ */
+function kindOf(n: Notification, pair: string | null = null): { icon: IconName; action?: Action } {
   if (n.title === 'Due for a clean') return { icon: 'vault', action: { label: 'Book again', run: (r) => r.push('/book') } };
   if (n.title === 'Use your care credits') return { icon: 'coins', action: { label: 'Book a clean', run: (r) => r.push('/book') } };
   if (n.title === 'Still waiting for you') return { icon: 'pin', action: { label: 'Get directions', run: () => Linking.openURL(DIRECTIONS_URL) } };
   const icon = ICON_MAP[n.type] ?? 'bell';
+  if (pair && (n.type === 'ready' || n.type === 'complete')) {
+    const label = n.body.includes('before & after') ? 'See before & after' : 'View in Vault';
+    return { icon, action: { label, run: (r) => r.push(`/vault?pair=${pair}`) } };
+  }
   return n.order_id ? { icon, action: { label: 'Track order', run: (r) => r.push('/orders') } } : { icon };
 }
 
@@ -56,6 +66,10 @@ export default function InboxScreen() {
   const router = useRouter();
   const { session } = useAuth();
   const { notifications, loading, error, reload, markRead, markAllRead } = useNotifications();
+  const { orders } = useOrders();
+  const features = useFeatures();
+  const pairOf = (n: Notification): string | null =>
+    (features.has('passport') && n.order_id && orders.find((o) => o.id === n.order_id)?.pair_id) || null;
   const refresh = usePullRefresh(reload);
   const unread = notifications.filter((n) => !n.read).length;
   const today = notifications.filter((n) => isToday(n.created_at));
@@ -64,7 +78,7 @@ export default function InboxScreen() {
   function handlePress(n: Notification, action?: Action) {
     markRead(n.id);
     if (action) action.run(router);
-    else if (n.order_id) router.push('/orders');
+    else if (n.order_id) (kindOf(n, pairOf(n)).action ?? { run: (r: typeof router) => r.push('/orders') }).run(router);
   }
 
   return (
@@ -100,20 +114,20 @@ export default function InboxScreen() {
             onAction={() => router.push('/book')}
           />
         )}
-        {session && !loading && today.length > 0 && <NotificationSection label="TODAY" items={today} onPress={handlePress} />}
-        {session && !loading && earlier.length > 0 && <NotificationSection label="EARLIER" items={earlier} onPress={handlePress} />}
+        {session && !loading && today.length > 0 && <NotificationSection label="TODAY" items={today} pairOf={pairOf} onPress={handlePress} />}
+        {session && !loading && earlier.length > 0 && <NotificationSection label="EARLIER" items={earlier} pairOf={pairOf} onPress={handlePress} />}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function NotificationSection({ label, items, onPress }: { label: string; items: Notification[]; onPress: (n: Notification, action?: Action) => void }) {
+function NotificationSection({ label, items, pairOf, onPress }: { label: string; items: Notification[]; pairOf: (n: Notification) => string | null; onPress: (n: Notification, action?: Action) => void }) {
   return (
     <View style={{ gap: space.sm }}>
       <Overline>{label}</Overline>
       <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, overflow: 'hidden' }, elevation.card]}>
         {items.map((n, i) => {
-          const kind = kindOf(n);
+          const kind = kindOf(n, pairOf(n));
           return (
             <Animated.View key={n.id} entering={FadeInDown.delay(i * 40).springify().damping(18)}>
               <Pressable
