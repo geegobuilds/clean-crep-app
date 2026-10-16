@@ -2,7 +2,7 @@
 
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import Image from 'next/image';
-import { afterSrc, beforeSrc, type WorkPair } from '@/lib/work';
+import { afterSrc, beforeSrc, SAMPLE_PHOTOS, type WorkPair } from '@/lib/work';
 
 // "The Difference": drag the line (or use the arrow keys) to compare a pair
 // before and after. Arrows / dots cycle through the pairs in lib/work.ts.
@@ -17,6 +17,7 @@ export function BeforeAfter({ pairs }: { pairs: WorkPair[] }) {
   const dragging = useRef(false);
 
   const pair = pairs[index];
+  const isSample = !!pair && (pair.sample || (SAMPLE_PHOTOS && !pair.afterUrl));
   if (!pair) return null;
 
   function moveTo(clientX: number) {
@@ -71,10 +72,10 @@ export function BeforeAfter({ pairs }: { pairs: WorkPair[] }) {
         onPointerUp={stopDrag}
         onPointerCancel={stopDrag}
       >
-        <Image key={`a${pair.n}`} src={pair.afterUrl ?? afterSrc(pair.n)} unoptimized={!!pair.afterUrl} alt={`${pair.label ?? `Pair ${pair.n}`} after cleaning`} fill sizes={SIZES} className="ba-img" draggable={false} />
+        <Image key={`a${pair.n}`} src={pair.afterUrl ?? afterSrc(pair.n)} unoptimized={!!pair.afterUrl} alt={isSample ? 'Sample photo: after cleaning' : `${pair.label ?? `Pair ${pair.n}`} after cleaning`} fill sizes={SIZES} className="ba-img" draggable={false} />
         {pair.beforeUrl !== null && (
           <div className="ba-before" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
-            <Image key={`b${pair.n}`} src={pair.beforeUrl ?? beforeSrc(pair.n)} unoptimized={!!pair.beforeUrl} alt={`${pair.label ?? `Pair ${pair.n}`} before cleaning`} fill sizes={SIZES} className="ba-img" draggable={false} />
+            <Image key={`b${pair.n}`} src={pair.beforeUrl ?? beforeSrc(pair.n)} unoptimized={!!pair.beforeUrl} alt={isSample ? 'Sample photo: before cleaning' : `${pair.label ?? `Pair ${pair.n}`} before cleaning`} fill sizes={SIZES} className="ba-img" draggable={false} />
           </div>
         )}
         <span className="ba-tag ba-tag-before" aria-hidden="true">
@@ -83,6 +84,7 @@ export function BeforeAfter({ pairs }: { pairs: WorkPair[] }) {
         <span className="ba-tag ba-tag-after" aria-hidden="true">
           After
         </span>
+        {isSample && <span className="sample-tag">Sample</span>}
         <div
           className="ba-handle"
           style={{ left: `${pos}%` }}

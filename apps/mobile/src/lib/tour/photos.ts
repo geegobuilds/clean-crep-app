@@ -15,3 +15,13 @@ export function photoUrl(url: string | null | undefined) {
   if (!m || !SHOTS[m[1]]) return url;
   return `https://images.unsplash.com/photo-${SHOTS[m[1]]}?w=900&h=900&fit=crop&q=80&auto=format${m[2] === 'before' ? AGED : ''}`;
 }
+
+/**
+ * Until an item has its own photo: a stock product shot for its category, shown
+ * with a "Sample" tag (Geego, 2026-10-15). No good Clarks shot yet, so Clarks
+ * keep the navy initial tile.
+ */
+export function sampleCover(category: string): string | null {
+  const shot = category === 'cap' ? SHOTS.cap : category === 'sneaker' ? SHOTS.af1 : null;
+  return shot ? `https://images.unsplash.com/photo-${shot}?w=900&h=900&fit=crop&q=80&auto=format` : null;
+}

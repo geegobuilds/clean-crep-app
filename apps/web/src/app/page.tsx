@@ -10,7 +10,7 @@ import { ServiceTiles } from '@/components/service-tiles';
 import { SiteNav } from '@/components/site-nav';
 import { RevealOnScroll } from '@/components/reveal-on-scroll';
 import { BeforeAfter } from '@/components/before-after';
-import { PHOTOS_READY, WORK_PAIRS, afterSrc, beforeSrc } from '@/lib/work';
+import { PHOTOS_READY, SAMPLE_PHOTOS, WORK_PAIRS, afterSrc, beforeSrc } from '@/lib/work';
 
 const WHATSAPP_URL = 'https://wa.me/18765072163';
 // Every "Book" button goes to the Quick Book card in the hero.
@@ -88,6 +88,7 @@ export default async function LandingPage() {
                   </div>
                   <span className="ba-tag ba-tag-before">Before</span>
                   <span className="ba-tag ba-tag-after">After</span>
+                  {SAMPLE_PHOTOS && <span className="sample-tag">Sample</span>}
                 </div>
               )}
             </div>
