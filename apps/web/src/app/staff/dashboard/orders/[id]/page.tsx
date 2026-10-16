@@ -23,6 +23,8 @@ import { StatusTag } from '@/components/status-tag';
 import { createClient } from '@/lib/supabase/client';
 import { listOrderPhotos, uploadCutout, uploadOrderPhoto, type OrderPhoto, type PhotoKind } from '@/lib/order-photos';
 import { makeCutout } from '@/lib/cutout';
+import { passportMessage, waLink, waNumber } from '@/lib/whatsapp';
+import { WhatsAppIcon } from '@/components/whatsapp-icon';
 
 // Staff order page, built for a phone held at the counter: shoot a "before" at
 // drop-off and an "after" when it's clean. The file input opens the camera
@@ -31,7 +33,7 @@ import { makeCutout } from '@/lib/cutout';
 interface OrderRow extends Order {
   service: Service | null;
   customer: { name: string; phone: string | null } | null;
-  pair: Pick<Pair, 'id' | 'brand' | 'model' | 'nickname' | 'category' | 'passport_code'> | null;
+  pair: Pick<Pair, 'id' | 'brand' | 'model' | 'nickname' | 'category' | 'passport_code' | 'passport_public'> | null;
 }
 
 const display: React.CSSProperties = { fontFamily: 'var(--font-archivo), var(--font-dm-sans), sans-serif', fontWeight: 800 };
@@ -53,7 +55,7 @@ export default function StaffOrderPage() {
 
   const reload = useCallback(async () => {
     const [{ data }, list, ev] = await Promise.all([
-      supabase.from('orders').select('*, service:services(*), customer:customers(name, phone), pair:pairs(id, brand, model, nickname, category, passport_code)').eq('id', id).maybeSingle(),
+      supabase.from('orders').select('*, service:services(*), customer:customers(name, phone), pair:pairs(id, brand, model, nickname, category, passport_code, passport_public)').eq('id', id).maybeSingle(),
       listOrderPhotos(supabase, id),
       supabase.from('pair_events').select('kind, order_id, data, created_at').eq('order_id', id),
     ]);
@@ -145,6 +147,7 @@ export default function StaffOrderPage() {
   const latest = (kind: PhotoKind) => photos.find((p) => p.kind === kind) ?? null;
   const shots = photos.filter((p) => p.kind !== 'cutout').length;
   const name = order?.customer?.name ?? order?.guest_name ?? 'Guest';
+  const phone = order?.customer?.phone ?? order?.guest_phone ?? null;
 
   return (
     <div style={{ minHeight: '100vh', background: palette.offWhite, color: palette.navy }}>
@@ -275,10 +278,57 @@ export default function StaffOrderPage() {
                 })}
               </div>
             </section>
+
+            <TellCustomer
+              phone={phone}
+              text={passportMessage({
+                name,
+                item: order.pair ? pairTitle(order.pair) : order.item_name,
+                status: order.status,
+                method: order.drop_method,
+                passportCode: order.pair?.passport_public ? order.pair.passport_code : null,
+                hasAfterPhoto: !!latest('after'),
+              })}
+            />
           </>
         )}
       </main>
     </div>
+  );
+}
+
+/** Send the customer their update + Crep Passport link from staff's own WhatsApp. */
+function TellCustomer({ phone, text }: { phone: string | null; text: string }) {
+  const hasNumber = !!waNumber(phone);
+  return (
+    <section data-testid="tell-customer" style={{ background: palette.white, borderRadius: radius.lg, padding: 16, boxShadow: shadow.card, display: 'grid', gap: 12 }}>
+      <div style={overline}>Tell the customer</div>
+      <p style={{ fontSize: 15, lineHeight: 1.45, margin: 0, color: palette.navy, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{text}</p>
+      <a
+        data-testid="send-whatsapp"
+        href={waLink(phone, text)}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          minHeight: 48,
+          borderRadius: radius.md,
+          background: palette.navy,
+          color: palette.white,
+          fontSize: 15,
+          fontWeight: 600,
+          textDecoration: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+        }}
+      >
+        <WhatsAppIcon size={18} /> Send on WhatsApp
+      </a>
+      <p style={{ fontSize: 13, color: palette.inkMuted, margin: 0 }}>
+        {hasNumber ? `Opens WhatsApp to ${phone} with this message typed in. Edit it there before sending.` : 'No number on this order: WhatsApp opens your chat list so you can pick them.'}
+      </p>
+    </section>
   );
 }
 
