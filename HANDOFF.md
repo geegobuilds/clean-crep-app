@@ -4,10 +4,20 @@ Running state of the Clean Crep App build. Read this first every session; update
 end of any session where something meaningful changed. Keep it short — this is a status
 board, not a history (git log is the history).
 
-_Last updated: 2026-10-15_
+_Last updated: 2026-10-16_
 
 ## Current Status
 
+- **Sample photos everywhere + built-in background remover (2026-10-16, #51)**: until Geego sends
+  real before/afters, the website (hero, homepage sliders, Passports with no photos) and the app's
+  Vault covers use free-licence Unsplash shots, always tagged "Sample" (web: `SAMPLE_PHOTOS` in
+  `apps/web/src/lib/work.ts`; set it false once real photos are in, and swap the homepage
+  link-preview image, which is untagged stock). Staff dashboard: every "after" upload also makes a
+  product shot (background removed in the browser, BiRefNet-lite via transformers.js from
+  jsDelivr, free, ~115 MB first download) saved as order_photos kind 'cutout' and used as the
+  Vault cover on white. WebGPU when it works, else WebAssembly (slow on low-end Android: test on
+  the shop's device). Migration 0030 applied live (adds 'cutout'; Passport photo counts skip
+  cutouts). App covers that fail to load fall back to the initial tile.
 - **Crep Passport is live (2026-10-15, Geego said yes)**: `passport` flag ON for everyone.
   /p/<code> leads with the latest finished clean's before/after slider + "Book your clean", and
   the after photo is the WhatsApp/IG link preview. Photos stay in the PRIVATE order-photos bucket;
@@ -303,6 +313,10 @@ _Last updated: 2026-10-15_
 
 ## Decisions Made
 
+- **2026-10-16**: Geego: "use sample pictures for everything right now" (tagged "Sample", never
+  passed off as our work) and "include built-in background remover" (free, in-browser, for now;
+  a paid API only if quality disappoints). "Use sample for passports too": a Passport with no
+  photos shows a tagged sample before/after; samples never go in link previews.
 - **2026-10-08**: "fix legal". Changes:
   - The privacy policy is rewritten to match what we actually collect: Creppie/AI, photos,
     Passport, Club, PostHog, push notifications, the services we use, data stored outside Jamaica,
