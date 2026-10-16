@@ -66,7 +66,7 @@ export default function InboxScreen() {
   const router = useRouter();
   const { session } = useAuth();
   const { notifications, loading, error, reload, markRead, markAllRead } = useNotifications();
-  const { orders } = useOrders();
+  const { orders, loading: ordersLoading } = useOrders();
   const features = useFeatures();
   const pairOf = (n: Notification): string | null =>
     (features.has('vault') && features.has('passport') && n.order_id && orders.find((o) => o.id === n.order_id)?.pair_id) || null;
@@ -114,20 +114,21 @@ export default function InboxScreen() {
             onAction={() => router.push('/book')}
           />
         )}
-        {session && !loading && today.length > 0 && <NotificationSection label="TODAY" items={today} pairOf={pairOf} onPress={handlePress} />}
-        {session && !loading && earlier.length > 0 && <NotificationSection label="EARLIER" items={earlier} pairOf={pairOf} onPress={handlePress} />}
+        {session && !loading && today.length > 0 && <NotificationSection label="TODAY" items={today} pairOf={pairOf} ordersLoading={ordersLoading} onPress={handlePress} />}
+        {session && !loading && earlier.length > 0 && <NotificationSection label="EARLIER" items={earlier} pairOf={pairOf} ordersLoading={ordersLoading} onPress={handlePress} />}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function NotificationSection({ label, items, pairOf, onPress }: { label: string; items: Notification[]; pairOf: (n: Notification) => string | null; onPress: (n: Notification, action?: Action) => void }) {
+function NotificationSection({ label, items, pairOf, ordersLoading, onPress }: { label: string; items: Notification[]; pairOf: (n: Notification) => string | null; ordersLoading: boolean; onPress: (n: Notification, action?: Action) => void }) {
   return (
     <View style={{ gap: space.sm }}>
       <Overline>{label}</Overline>
       <View style={[{ backgroundColor: c.surface, borderRadius: radius.lg, overflow: 'hidden' }, elevation.card]}>
         {items.map((n, i) => {
-          const kind = kindOf(n, pairOf(n));
+          // Order updates wait for orders to load, so the chip doesn't flip from Track order to the Vault.
+          const kind = n.order_id && ordersLoading ? { icon: kindOf(n).icon } : kindOf(n, pairOf(n));
           return (
             <Animated.View key={n.id} entering={FadeInDown.delay(i * 40).springify().damping(18)}>
               <Pressable
