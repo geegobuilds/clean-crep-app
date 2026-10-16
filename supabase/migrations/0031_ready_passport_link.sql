@@ -1,7 +1,8 @@
 -- 0031 — Ready / Completed notifications lead to the item's before & after.
 --
 -- When an order cleaned a Vault item (orders.pair_id) and the customer has the
--- Passport, the Ready and Completed messages say the before & after is ready
+-- Vault and the Passport (both flags: the Vault screen sends people without
+-- `vault` back to Home), the Ready and Completed messages say the before & after is ready
 -- to see (only once an after photo is on the order), and their push opens that
 -- item in the Vault (/vault?pair=<id>: before/after, care history, "Share
 -- passport") instead of the Orders tab. Everything else is as in 0025 / 0017.
@@ -14,6 +15,7 @@ returns uuid language sql stable security definer set search_path = public as $$
    where o.id = n.order_id
      and o.pair_id is not null
      and n.type in ('ready', 'complete')
+     and feature_enabled_for('vault', n.customer_id)
      and feature_enabled_for('passport', n.customer_id);
 $$;
 
@@ -28,6 +30,7 @@ declare
   -- The before & after is worth a line once there is an after photo of a Vault item.
   show_after boolean := new.pair_id is not null
     and new.customer_id is not null
+    and feature_enabled_for('vault', new.customer_id)
     and feature_enabled_for('passport', new.customer_id)
     and exists (select 1 from order_photos ph where ph.order_id = new.id and ph.kind = 'after');
 begin

@@ -22,8 +22,15 @@ update orders set status = 'ready_for_pickup' where id = '00000000-0000-0000-000
 select pg_temp.ok((pg_temp.last('00000000-0000-0000-0000-0000000000c1')).body = 'Your AF1s is clean and waiting for pickup.', 'flag off: ready copy unchanged');
 select pg_temp.ok(pg_temp.url('00000000-0000-0000-0000-0000000000c1') = '/orders', 'flag off: push opens Orders');
 
--- Passport on.
+-- Passport on, Vault still off (it is live): no link to a screen they can't open.
 update feature_flags set enabled_for_all = true where key = 'passport';
+update feature_flags set enabled_for_all = false where key = 'vault';
+update orders set status = 'in_progress' where id = '00000000-0000-0000-0000-0000000000c1';
+update orders set status = 'ready_for_pickup' where id = '00000000-0000-0000-0000-0000000000c1';
+select pg_temp.ok((pg_temp.last('00000000-0000-0000-0000-0000000000c1')).body = 'Your AF1s is clean and waiting for pickup.', 'vault off: ready copy unchanged');
+select pg_temp.ok(pg_temp.url('00000000-0000-0000-0000-0000000000c1') = '/orders', 'vault off: push opens Orders');
+-- A Vault tester gets the link.
+insert into feature_flag_users(flag_key, user_id) values ('vault', '00000000-0000-0000-0000-0000000000a1');
 update orders set status = 'in_progress' where id = '00000000-0000-0000-0000-0000000000c1';
 update orders set status = 'ready_for_pickup' where id = '00000000-0000-0000-0000-0000000000c1';
 select pg_temp.ok((pg_temp.last('00000000-0000-0000-0000-0000000000c1')).body = 'Your AF1s is clean and waiting for pickup. Tap to see the before & after.', 'ready names the before & after');

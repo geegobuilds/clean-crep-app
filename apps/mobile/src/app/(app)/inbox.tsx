@@ -27,7 +27,7 @@ type Action = { label: string; run: (router: ReturnType<typeof useRouter>) => vo
 
 /**
  * The nudges share a type with other messages, so the title says which one it is.
- * `pair`: the Vault item a Ready/Completed order cleaned (Passport on), which
+ * `pair`: the Vault item a Ready/Completed order cleaned (Vault + Passport on), which
  * its action opens (before/after, care history, share) instead of Orders (0031).
  */
 function kindOf(n: Notification, pair: string | null = null): { icon: IconName; action?: Action } {
@@ -69,7 +69,7 @@ export default function InboxScreen() {
   const { orders } = useOrders();
   const features = useFeatures();
   const pairOf = (n: Notification): string | null =>
-    (features.has('passport') && n.order_id && orders.find((o) => o.id === n.order_id)?.pair_id) || null;
+    (features.has('vault') && features.has('passport') && n.order_id && orders.find((o) => o.id === n.order_id)?.pair_id) || null;
   const refresh = usePullRefresh(reload);
   const unread = notifications.filter((n) => !n.read).length;
   const today = notifications.filter((n) => isToday(n.created_at));
