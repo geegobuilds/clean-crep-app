@@ -189,7 +189,7 @@ function PlanPicker({
                 tapLight();
                 setSlug(p.slug);
               }}
-              style={[{ flex: 1, alignItems: 'center', paddingVertical: space.sm, borderRadius: radius.pill, backgroundColor: on ? c.navy : c.surface }, on ? null : elevation.card]}
+              style={[{ flex: 1, alignItems: 'center', paddingVertical: space.sm, borderRadius: radius.pill, backgroundColor: on ? c.navy : c.surface }, on ? { borderWidth: 1, borderColor: c.navy } : elevation.card]}
             >
               <Text style={[type.bodyStrong, { fontSize: 14, color: on ? c.white : c.ink }]}>{p.name}</Text>
               <Text style={[type.caption, { fontSize: 12, color: on ? c.onNavyMuted : c.inkMuted }]}>{formatPrice(p.price_cents)}</Text>

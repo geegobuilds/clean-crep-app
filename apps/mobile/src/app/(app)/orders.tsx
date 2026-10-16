@@ -34,7 +34,7 @@ export default function OrdersScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
-      <ScreenHeader title="Orders" subtitle="Every order, live, until it's back with you." />
+      <ScreenHeader title="Orders" />
 
       <ScrollView refreshControl={session ? refresh : undefined} contentContainerStyle={{ padding: space.lg, gap: space.lg, paddingBottom: 140 }}>
         {!session && (
@@ -74,7 +74,7 @@ export default function OrdersScreen() {
 
         {session && !loading && orders.length > 1 && (
           <View style={{ gap: space.sm }}>
-            <Overline>ALL ORDERS</Overline>
+            <Overline>All orders</Overline>
             {orders.map((o, i) => {
               const isActive = o.id === sel?.id;
               return (

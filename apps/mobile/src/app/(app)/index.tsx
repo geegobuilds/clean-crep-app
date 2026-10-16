@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Image, Linking, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
@@ -10,14 +10,11 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
-  withSpring,
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { trackerSteps, stepFromStatus, type DropMethod, type OrderStatus } from '@clean-crep/shared';
+import { type OrderStatus } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
-import { readyBy } from '@/components/order-ticket';
-import { Button, PressScale } from '@/components/ui';
+import { PressScale } from '@/components/ui';
 import { RotationRail } from '@/components/rotation-rail';
 import { ClubCard } from '@/components/club-card';
 import { useVault } from '@/hooks/use-vault';
@@ -25,10 +22,11 @@ import { useAuth } from '@/lib/auth';
 import { success, tapLight } from '@/lib/haptics';
 import { useOrders } from '@/hooks/use-orders';
 import { useFeatures } from '@/hooks/use-features';
+import { useNotifications } from '@/hooks/use-notifications';
 import { ErrorState, SignInPrompt } from '@/components/states';
 import { ReviewAsk } from '@/components/review-ask';
 import { CreppieChat } from '@/components/creppie-chat';
-import { c, elevation, radius, space, spring, type } from '@/theme';
+import { c, radius, space, type } from '@/theme';
 
 // Home (DESIGN.md §8):
 //  - Three planes that move at different speeds: one huge word at the back
@@ -49,11 +47,6 @@ const HERO_WORD: Partial<Record<OrderStatus, string>> = {
   pending_payment: 'READY',
 };
 
-function formatEta(d: Date): string {
-  if (d.toDateString() === new Date().toDateString()) return 'Today';
-  return d.toLocaleDateString('en-JM', { weekday: 'short', day: 'numeric', month: 'short' });
-}
-
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -68,6 +61,9 @@ export default function HomeScreen() {
   const lastCompleted = orders.find((o) => o.status === 'completed') ?? null;
   const firstName = customer?.name?.split(' ')[0];
   const [chatOpen, setChatOpen] = useState(false);
+  // The Inbox lives behind the bell; the badge says how many are unread.
+  const { notifications } = useNotifications();
+  const unread = session ? notifications.filter((n) => !n.read).length : 0;
 
   // Light status bar over the navy hero, dark again when leaving Home.
   useFocusEffect(
@@ -128,10 +124,15 @@ export default function HomeScreen() {
           <View style={{ paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
             <Image source={logo} style={{ width: 28, height: 28, borderRadius: 14 }} />
             <Text style={[type.caption, { color: c.onNavyMuted, flex: 1 }]}>{firstName ? `Hi, ${firstName}` : 'Clean Crep Jamaica'}</Text>
-            <Pressable onPress={() => router.push('/inbox')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Inbox">
+            <Pressable onPress={() => router.push('/inbox')} hitSlop={10} accessibilityRole="button" accessibilityLabel={unread ? `Inbox, ${unread} unread` : 'Inbox'}>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c.onNavyLine, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="bell" size={17} color={c.white} />
               </View>
+              {unread > 0 && (
+                <View testID="inbox-badge" style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, backgroundColor: c.accent, borderWidth: 2, borderColor: c.navy, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: c.white, fontSize: 10, lineHeight: 12, fontFamily: type.bodyStrong.fontFamily, fontVariant: ['tabular-nums'] }}>{unread > 9 ? '9+' : unread}</Text>
+                </View>
+              )}
             </Pressable>
           </View>
           <Text style={[type.overline, { color: c.onNavyMuted, paddingHorizontal: space.lg, marginTop: space.lg }]}>
@@ -199,18 +200,6 @@ export default function HomeScreen() {
             </View>
           </PressScale>
 
-          {session && !ordersLoading && lead && (
-            <PressScale testID="home-order" onPress={() => router.push('/orders')} style={[{ backgroundColor: c.surface, borderRadius: radius.lg, padding: space.md, gap: space.sm }, elevation.card]}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <Text style={type.overline}>Your order</Text>
-                <Text style={type.caption}>
-                  {lead.drop_method === 'pickup' ? 'Back' : 'Ready'} {formatEta(readyBy(lead))}
-                  {activeOrders.length > 1 ? ` · +${activeOrders.length - 1} more` : ''}
-                </Text>
-              </View>
-              <Steps step={stepFromStatus(lead.status)} method={lead.drop_method} />
-            </PressScale>
-          )}
           {session && ordersError && !ordersLoading && <ErrorState message={ordersError} onRetry={reloadOrders} />}
           {!session && (
             <SignInPrompt title="Track your cleans here" body="Sign in to see live updates on your pairs." where="home" onSignIn={() => router.push('/sign-in?next=/')} />
@@ -226,10 +215,15 @@ export default function HomeScreen() {
 
           {session && !ordersLoading && <ReviewAsk itemName={lastCompleted?.item_name ?? null} />}
 
-          {/* Creppie and WhatsApp: the human ways in. */}
-          <View style={{ flexDirection: 'row', gap: space.sm }}>
-            <Button variant="secondary" compact label="Ask Creppie" icon={<Icon name="help" size={18} color={c.navy} />} onPress={() => setChatOpen(true)} style={{ flex: 1 }} />
-            <Button variant="secondary" compact label="WhatsApp us" icon={<Icon name="wa" size={18} color={c.navy} />} onPress={() => Linking.openURL(WHATSAPP_URL)} style={{ flex: 1 }} />
+          {/* The human ways in, as quiet links (the hero already carries the one primary action). */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: space.md }}>
+            <Pressable onPress={() => setChatOpen(true)} accessibilityRole="button" hitSlop={10}>
+              <Text style={[type.bodyStrong, { color: c.accent }]}>Ask Creppie</Text>
+            </Pressable>
+            <Text style={type.caption}>·</Text>
+            <Pressable onPress={() => Linking.openURL(WHATSAPP_URL)} accessibilityRole="button" hitSlop={10}>
+              <Text style={[type.bodyStrong, { color: c.accent }]}>WhatsApp us</Text>
+            </Pressable>
           </View>
 
           <Text style={[type.caption, { textAlign: 'center' }]}>Shop 19, Pristine Plaza, Half Way Tree</Text>
@@ -261,37 +255,6 @@ export default function HomeScreen() {
       </Animated.View>
 
       {chatOpen && <CreppieChat onClose={() => setChatOpen(false)} />}
-    </View>
-  );
-}
-
-/** Four dots on a line: Received → In Progress → Ready → Picked Up (Delivered for CrepRun). Springs to the current step. */
-function Steps({ step, method }: { step: number; method?: DropMethod | null }) {
-  const STEPS = trackerSteps(method);
-  const p = useSharedValue(0);
-  const total = STEPS.length;
-  useEffect(() => {
-    p.value = withDelay(300, withSpring(Math.max(0, step - 1) / (total - 1), spring));
-  }, [step, total, p]);
-  const fill = useAnimatedStyle(() => ({ width: `${Math.round(p.value * 100)}%` }));
-  return (
-    <View>
-      <View style={{ height: 4, marginHorizontal: 6, marginTop: 4, backgroundColor: c.line, borderRadius: 2 }}>
-        <Animated.View style={[{ height: 4, backgroundColor: c.navy, borderRadius: 2 }, fill]} />
-      </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: -8 }}>
-        {STEPS.map((s, i) => {
-          const done = i < step;
-          return (
-            <View key={s} style={{ alignItems: i === 0 ? 'flex-start' : i === total - 1 ? 'flex-end' : 'center', width: 70 }}>
-              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: done ? c.navy : c.surface, borderWidth: 2, borderColor: done ? c.navy : c.line }} />
-              <Text style={[type.caption, { fontSize: 11, marginTop: 4, color: done ? c.ink : c.inkMuted }]} numberOfLines={1}>
-                {s}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
     </View>
   );
 }

@@ -146,3 +146,11 @@ navy pill with its label, the rest are icons. Shortcuts on Home never duplicate 
 | Use a shadow **or** a border | Use both on the same card |
 | Leave space: 24 gutter, 32 between sections | Fill every gap with a divider |
 | Fire haptics on toggles and on success | Buzz on every tap or on errors |
+
+
+## Clean pass (2026-10-16, Designer: "Airbnb-clean")
+- Page background is **white** (`c.bg`). `offWhite` (`c.fill`) is for image plates, inputs, pressed rows and icon tiles only.
+- Resting content on white has **no shadow**: a 1px `line` hairline (`elevation.card`). Shadows only on things that float: content over navy or photos (`elevation.float`), tab bar, sticky footers, sheets (`elevation.raised`).
+- Section headers are **sentence case** (`type.section`, Archivo 700 20/26). The caps `overline` is for navy surfaces only (ticket stub, Club card). No "01–05" step numbers.
+- Screen titles use `display` 34. The one huge thing on a screen is content (hero word, total, balance), not the screen name. Subtitles only when they carry data ("2 unread").
+- Sticky action bar on detail/flow screens (booking details, Vault item): total or status on the left, the one primary action on the right, tab bar hidden. Coming next: hairline list rows instead of cards, photo-first service cards once real photos exist.

@@ -84,6 +84,11 @@ export default function InboxScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={['top']}>
       <ScreenHeader
+        left={
+          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="Back" hitSlop={12}>
+            <Icon name="chevronL" size={20} color={c.navy} />
+          </Pressable>
+        }
         title="Inbox"
         subtitle={!session ? 'Order updates land here.' : unread > 0 ? `${unread} unread notification${unread > 1 ? 's' : ''}` : 'All caught up.'}
         right={
@@ -114,8 +119,8 @@ export default function InboxScreen() {
             onAction={() => router.push('/book')}
           />
         )}
-        {session && !loading && today.length > 0 && <NotificationSection label="TODAY" items={today} pairOf={pairOf} ordersLoading={ordersLoading} onPress={handlePress} />}
-        {session && !loading && earlier.length > 0 && <NotificationSection label="EARLIER" items={earlier} pairOf={pairOf} ordersLoading={ordersLoading} onPress={handlePress} />}
+        {session && !loading && today.length > 0 && <NotificationSection label="Today" items={today} pairOf={pairOf} ordersLoading={ordersLoading} onPress={handlePress} />}
+        {session && !loading && earlier.length > 0 && <NotificationSection label="Earlier" items={earlier} pairOf={pairOf} ordersLoading={ordersLoading} onPress={handlePress} />}
       </ScrollView>
     </SafeAreaView>
   );
@@ -140,10 +145,10 @@ function NotificationSection({ label, items, pairOf, ordersLoading, onPress }: {
                   padding: space.md,
                   borderBottomWidth: i < items.length - 1 ? 1 : 0,
                   borderBottomColor: c.line,
-                  backgroundColor: pressed ? c.bg : c.surface,
+                  backgroundColor: pressed ? c.fill : c.surface,
                 })}
               >
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: n.read ? c.bg : c.navy, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: n.read ? c.fill : c.navy, alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name={kind.icon} size={17} color={n.read ? c.inkMuted : c.white} />
                 </View>
                 <View style={{ flex: 1 }}>

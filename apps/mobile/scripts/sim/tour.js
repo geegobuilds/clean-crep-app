@@ -21,7 +21,12 @@ const netCalls = [];
   const vis = (v, exact = true) => p.getByText(v, { exact }).and(p.locator('xpath=//*[not(ancestor-or-self::*[@aria-hidden="true"])]')).first();
   let n = 0;
   const snap = async (name) => { step = name; await p.waitForTimeout(1100); const t = await p.evaluate(() => document.body.innerText); const bad = t.match(/\b(undefined|NaN|null|\[object Object\])\b/g); if (bad) issues.push(`${name}: shows ${[...new Set(bad)].join(', ')}`); await p.screenshot({ path: `${OUT}/${String(++n).padStart(2, '0')}-${name}.png` }); };
-  const tab = async (name) => { await p.getByRole('tab', { name }).click(); await p.waitForTimeout(800); };
+  const tab = async (name) => {
+    // Inbox is the bell on Home, not a tab.
+    if (name === 'Inbox') { await p.getByRole('tab', { name: 'Home' }).click(); await p.getByRole('button', { name: /^Inbox/ }).click(); }
+    else await p.getByRole('tab', { name }).click();
+    await p.waitForTimeout(800);
+  };
   const scroll = async (px) => { await p.mouse.move(d.viewport.width / 2, d.viewport.height / 2); for (let i = 0; i < Math.round(px / 80); i++) { await p.mouse.wheel(0, 80); await p.waitForTimeout(30); } };
   try {
     await p.goto('http://localhost:8099/sign-in', { waitUntil: 'networkidle', timeout: 300000 });

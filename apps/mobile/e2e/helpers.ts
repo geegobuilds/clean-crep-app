@@ -37,8 +37,13 @@ export async function shot(page: Page, name: string) {
   await page.screenshot({ path: `e2e/.shots/${test.info().project.name}/${name}.png` });
 }
 
-/** Tap a bottom tab by its label. */
+/** Tap a bottom tab by its label. Inbox lives behind the bell on Home (not a tab since the clean pass). */
 export async function tab(page: Page, label: 'Home' | 'Book' | 'Orders' | 'Inbox' | 'Profile') {
+  if (label === 'Inbox') {
+    await page.getByRole('tab', { name: 'Home' }).click();
+    await page.getByRole('button', { name: /^Inbox/ }).click();
+    return;
+  }
   await page.getByRole('tab', { name: label }).click();
 }
 

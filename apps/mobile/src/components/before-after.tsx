@@ -49,7 +49,7 @@ export function BeforeAfter({ before, after, itemName, orderNumber }: { before: 
           testID="before-after"
           accessibilityLabel={`Before and after photos of your ${itemName}. Drag to compare.`}
           onLayout={(e) => setW(e.nativeEvent.layout.width)}
-          style={[{ aspectRatio: 4 / 5, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: c.ice }, elevation.card]}
+          style={[{ aspectRatio: 4 / 5, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: c.ice }, elevation.float]}
         >
           <Image source={{ uri: after }} style={{ position: 'absolute', top: 0, left: 0, width: w, height: '100%' }} resizeMode="cover" />
           <Animated.View style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, overflow: 'hidden' }, clipStyle]}>
