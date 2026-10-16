@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Image, Text, View } from 'react-native';
 import { pairTitle } from '@clean-crep/shared';
 import type { VaultClean, VaultPair } from '@/hooks/use-vault';
@@ -44,17 +45,21 @@ const CORNERS: Record<Corner, { top?: number; bottom?: number; left?: number; ri
  */
 export function Cover({ pair, size, wide, sampleCorner = 'bottom-right' }: { pair: VaultPair; size: number; wide?: boolean; sampleCorner?: Corner }) {
   const style = { width: wide ? '100%' : size, height: size, borderRadius: radius.lg } as const;
-  if (pair.cover && pair.coverKind === 'cutout') {
+  // A cover that won't load (offline, CDN down) falls back to the initial tile.
+  const [broken, setBroken] = useState<string | null>(null);
+  const cover = pair.cover && broken !== pair.cover ? pair.cover : null;
+  const onError = () => setBroken(pair.cover);
+  if (cover && pair.coverKind === 'cutout') {
     return (
       <View style={[style, { backgroundColor: c.surface, padding: Math.round(size * 0.08) }]}>
-        <Image source={{ uri: pair.cover }} style={{ width: '100%', height: '100%' }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        <Image source={{ uri: cover }} style={{ width: '100%', height: '100%' }} resizeMode="contain" onError={onError} accessibilityIgnoresInvertColors />
       </View>
     );
   }
-  if (pair.cover) {
+  if (cover) {
     return (
       <View>
-        <Image source={{ uri: pair.cover }} style={style} resizeMode="cover" accessibilityIgnoresInvertColors />
+        <Image source={{ uri: cover }} style={style} resizeMode="cover" onError={onError} accessibilityIgnoresInvertColors />
         {pair.coverKind === 'sample' && (
           <View testID="cover-sample" style={{ position: 'absolute', ...CORNERS[sampleCorner], backgroundColor: 'rgba(10,31,68,0.72)', borderRadius: radius.pill, paddingVertical: 2, paddingHorizontal: 7 }}>
             <Text style={[type.caption, { fontSize: 11, lineHeight: 14, color: c.white }]}>Sample</Text>
@@ -70,10 +75,15 @@ export function Cover({ pair, size, wide, sampleCorner = 'bottom-right' }: { pai
   );
 }
 
+/** A white pill on a white product-shot tile needs an edge to read. */
+export function pillEdge(pair: VaultPair) {
+  return pair.coverKind === 'cutout' ? { borderWidth: 1, borderColor: c.line } : null;
+}
+
 /** The white pill on a cover saying where an item in for a clean is up to. */
-export function StagePill({ clean }: { clean: VaultClean }) {
+export function StagePill({ clean, pair }: { clean: VaultClean; pair?: VaultPair }) {
   return (
-    <View testID="vault-stage" style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: 8 }}>
+    <View testID="vault-stage" style={[{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: 8 }, pair && pillEdge(pair)]}>
       <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.navy }} />
       <Text style={[type.caption, { color: c.ink, fontFamily: type.bodyStrong.fontFamily }]}>{stageLabel(clean)}</Text>
     </View>

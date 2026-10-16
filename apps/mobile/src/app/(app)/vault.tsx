@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { gradesFor, pairTitle, passportUrl, type PairCategory } from '@clean-crep/shared';
 import { Icon } from '@/components/icon';
-import { activeClean, cleanedLine, Cover, shortDay, StagePill, stageLabel } from '@/components/pair-cover';
+import { activeClean, cleanedLine, Cover, shortDay, pillEdge, StagePill, stageLabel } from '@/components/pair-cover';
 import { CreppieChat } from '@/components/creppie-chat';
 import { StatusTag } from '@/components/status-tag';
 import { Button, Card, Overline, PressScale, ScreenHeader } from '@/components/ui';
@@ -105,11 +105,11 @@ export default function VaultScreen() {
                         <Cover pair={p} size={tile} sampleCorner="top-left" />
                         {active && (
                           <View style={{ position: 'absolute', left: space.sm, bottom: space.sm }}>
-                            <StagePill clean={active} />
+                            <StagePill clean={active} pair={p} />
                           </View>
                         )}
                         {n > 0 && (
-                          <View style={{ position: 'absolute', top: space.sm, right: space.sm, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }}>
+                          <View style={[{ position: 'absolute', top: space.sm, right: space.sm, backgroundColor: c.surface, borderRadius: radius.pill, paddingVertical: 3, paddingHorizontal: space.xs }, pillEdge(p)]}>
                             <Text style={[type.caption, { color: c.ink, fontVariant: ['tabular-nums'] }]}>{n}× clean</Text>
                           </View>
                         )}

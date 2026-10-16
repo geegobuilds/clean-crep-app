@@ -109,7 +109,7 @@ export function RotationRail({ pairs, loading, error, onRetry }: { pairs: VaultP
                         )}
                         {active && (
                           <View style={{ position: 'absolute', left: space.sm, bottom: space.sm }}>
-                            <StagePill clean={active} />
+                            <StagePill clean={active} pair={p} />
                           </View>
                         )}
                       </View>
