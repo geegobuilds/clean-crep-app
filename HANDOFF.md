@@ -60,8 +60,8 @@ _Last updated: 2026-10-16_
   items that fit the service and sends pair_id; "Book its next clean" opens Book for that item
   (/book?pair=); 0027 matches brand+model/model and sends service-named orders to the owner's only
   item in that category; 0028 lets customers remove never-cleaned items. Geego's order CC-0061 was
-  moved onto his NY SnapBack; the empty "Premium Cap" duplicate is left for him to remove in-app
-  (the Supabase connector holds DELETEs for approval and times out). e2e: e2e/vault.spec.ts.
+  moved onto his NY SnapBack; the empty "Premium Cap" duplicate is gone (checked live 2026-10-16:
+  his Vault is the NY SnapBack + one sneaker). e2e: e2e/vault.spec.ts.
   Phone check without a Mac/KVM: `sim.js` in the scratchpad drives the Expo web build with the
   iPhone 15 Pro and Pixel 7 profiles through every section (same idea as CI's phone checks).
 - **App redesign (2026-10-09)**: DESIGN.md §8. Home + floating pill tab bar merged (#42). Second
