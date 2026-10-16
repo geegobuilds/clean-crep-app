@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { colors } from '@clean-crep/shared';
 import { createClient } from '@/lib/supabase/client';
+import { waNumber } from '@/lib/whatsapp';
 
 // "Due for a clean": customers whose last order was picked up ~5 weeks ago
 // (migrations 0017/0018). App customers with push get an automatic nudge at
@@ -49,14 +50,6 @@ const th: React.CSSProperties = {
 };
 const td: React.CSSProperties = { padding: '10px 14px', borderBottom: `1px solid ${colors.border}`, verticalAlign: 'middle', fontSize: 12, color: colors.navy };
 const btn: React.CSSProperties = { fontSize: 11, fontWeight: 500, padding: '6px 12px', borderRadius: 7, textDecoration: 'none', display: 'inline-block' };
-
-/** Jamaican numbers for wa.me: 876… -> 1876…; already 1… stays. */
-function waNumber(phone: string | null): string {
-  const d = (phone ?? '').replace(/\D/g, '');
-  if (!d) return '';
-  if (d.length === 7) return `1876${d}`;
-  return d.startsWith('1') ? d : `1${d}`;
-}
 
 function nudgeText(row: Pick<Due, 'name' | 'service_label'>, stats: Pick<Stats, 'discount_enabled' | 'welcome_back_pct'> | null): string {
   const first = row.name.split(' ')[0] || 'there';

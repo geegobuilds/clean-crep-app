@@ -8,6 +8,15 @@ _Last updated: 2026-10-16_
 
 ## Current Status
 
+- **WhatsApp passport button + glass (2026-10-16)**: staff order page has "Tell the customer":
+  a status-aware message (ready for pickup / CrepRun on its way / thanks) with the item's Crep
+  Passport link, and "Send on WhatsApp" opens staff's own WhatsApp with it typed in (wa.me, no
+  API or cost; `apps/web/src/lib/whatsapp.ts`, also used by Due for a clean). Website glass per
+  the Designer: the nav is dark glass over navy bands and turns light glass over white bands; the
+  Before/After and Sample photo chips are frosted; the Passport page gets a sticky light-glass bar
+  with the item name + "Book a clean" once its header scrolls away. Solid fallbacks for no
+  backdrop-filter, reduced transparency and high contrast. Next: the app's Ready notification
+  linking the passport.
 - **Sample photos everywhere + built-in background remover (2026-10-16, #51)**: until Geego sends
   real before/afters, the website (hero, homepage sliders, Passports with no photos) and the app's
   Vault covers use free-licence Unsplash shots, always tagged "Sample" (web: `SAMPLE_PHOTOS` in

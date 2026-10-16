@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { colors, pairTitle, type ConditionGrade, type Passport } from '@clean-crep/shared';
 import { BeforeAfter } from '@/components/before-after';
+import { PassportBar } from '@/components/passport-bar';
 import { sampleFor } from '@/lib/work';
 
 // Crep Passport: the public page behind the QR on a Crep Tag and the link we
@@ -90,7 +91,8 @@ export default async function PassportPage({ params }: { params: Promise<{ code:
 
   return (
     <main style={{ minHeight: '100vh', background: colors.offWhite, color: colors.navy }}>
-      <section style={{ background: colors.navy, color: colors.white, padding: '28px 20px 40px' }}>
+      <PassportBar title={title(p)} watch="passport-hero" />
+      <section id="passport-hero" style={{ background: colors.navy, color: colors.white, padding: '28px 20px 40px' }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
           <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, color: colors.white, textDecoration: 'none' }}>
             <Image src="/assets/logo-cropped.png" alt="" width={32} height={32} style={{ borderRadius: '50%' }} />
