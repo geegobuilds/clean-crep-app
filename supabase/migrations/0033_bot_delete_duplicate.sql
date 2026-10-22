@@ -101,7 +101,7 @@ begin
                   v_dup_no, replace(v_orig_no, 'CC-', ''), replace(v_dup_no, 'CC-', ''));
   end if;
   if d.pair_id is not null and d.pair_id is distinct from o.pair_id then
-    return format('Not deleted: %s is linked to a Vault item that %s isn''t. Fix it in the dashboard first.', v_dup_no, v_orig_no);
+    return format('Not deleted: %s and %s are linked to different Vault items (their item names differ). This one needs deleting by hand: ask Claude.', v_dup_no, v_orig_no);
   end if;
 
   insert into deleted_orders (order_number, duplicate_of, order_row, status_events)

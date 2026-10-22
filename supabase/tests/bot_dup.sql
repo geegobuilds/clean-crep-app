@@ -63,7 +63,7 @@ insert into pair_events(pair_id, kind, order_id) select '00000000-0000-0000-0000
 select pg_temp.ok(pg_temp.dup('a7','a1') like 'Not deleted:%Vault grades or tags%', 'pair events refused');
 delete from pair_events;
 update orders set pair_id = '00000000-0000-0000-0000-00000000aa01' where id = (select id from t where k = 'a7');
-select pg_temp.ok(pg_temp.dup('a7','a1') like 'Not deleted:%linked to a Vault item%', 'own Vault item refused');
+select pg_temp.ok(pg_temp.dup('a7','a1') like 'Not deleted:%linked to different Vault items%', 'own Vault item refused');
 -- Back to the Vault item the app auto-attached to both bookings.
 update orders set pair_id = (select pair_id from orders where id = (select id from t where k = 'a1')) where id = (select id from t where k = 'a7');
 update orders set credits_used = 1 where id = (select id from t where k = 'a7');
