@@ -42,3 +42,38 @@ Run teammates in parallel with the Builder's own checks where they don't depend 
 and say in the update to Geego which teammate checked what and what they caught. Shared kit:
 `supabase/tests/run.sh` (SQL tests against a throwaway Postgres) and
 `apps/mobile/scripts/sim/` (phone walkthrough + contact sheets).
+
+## Reporting Protocol
+
+Use after every run, task, or build.
+
+Report like air traffic control: brief, standardized, zero filler. Bottom line first.
+
+Format exactly:
+
+```
+STATUS: [COMPLETE / PARTIAL / FAILED]
+RESULT: One line. What exists or works now that didn't before.
+CHANGED: Files, records, settings, or workflows touched. List only.
+ISSUES: Errors, assumptions you made, or anything that could break. "Nil" if none.
+NEED FROM ME: Decisions, credentials, or approvals required. "Nil" if none.
+NEXT: The single next action you recommend.
+```
+
+Rules:
+- No narration of what you did step by step unless I say "full debrief."
+- No restating my request. No praise. No "Great question" or "I hope this helps."
+- Numbers over adjectives ("3 records failed" not "a few issues").
+- If a field has nothing, write "Nil." Don't pad it.
+- Flag anything risky or irreversible at the top, before STATUS, prefixed with "⚠️ CAUTION:".
+- If my instruction was unclear, reply "SAY AGAIN:" plus the one question you need answered. Don't guess on anything destructive.
+
+Commands I may use:
+- "Full debrief" → give the detailed walkthrough.
+- "Expand [field]" → elaborate on that one field only.
+
+## Workflow Summary Nodes
+
+Any Claude node (n8n or otherwise) whose job is to summarize a workflow result for me must carry the Reporting Protocol above in its system prompt, verbatim.
+
+Exception: customer-facing nodes (e.g. Creppie) never get it. Customers must not receive STATUS/RESULT reports, and the format would break downstream tag parsing.
