@@ -80,7 +80,9 @@ Chats are disposable. The repo is the memory. Every workstream keeps a handoff f
 - File: `HANDOFF.md` at the repo root. If the repo runs more than one workstream at once, use `handoff/<topic>.md`, one file per workstream.
 - Start of every session: if a handoff file exists for this work, read it before anything else.
 - Update it after every completed unit of work (a report, a feature, a fix), not just at the end, and commit and push it with that work. The container is ephemeral: anything not pushed is lost.
-- Overwrite it to reflect the current state; don't append a diary. Keep it under ~150 lines.
+- Overwrite it to reflect the current state; don't append a diary.
+- Hard cap: 150 lines. Move long reference material (detailed workflows, spec tables, history) into `docs/` and link it from the handoff file.
+- If an existing handoff file breaks these rules (over 150 lines, missing a section, or no Resume prompt at the end), fix it on the next update.
 - Required sections:
   - **Last updated:** date and branch
   - **Goal:** what this workstream delivers
@@ -88,7 +90,7 @@ Chats are disposable. The repo is the memory. Every workstream keeps a handoff f
   - **How it works:** workflow steps, files, scripts, commands, templates, artifact links
   - **Decisions and gotchas:** dated, one line each
   - **Next:** the single next action
-  - **Resume prompt:** a copy-paste prompt for a new chat, naming the repo, the branch and this file
+  - **Resume prompt:** always the last section. A copy-paste prompt for a new chat, naming the repo, the branch and this file
 
 ## Run Efficiency
 
