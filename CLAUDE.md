@@ -1,10 +1,5 @@
 # Working with Claude on this repo
 
-- Session state lives in `HANDOFF.md` at the repo root. At the start of every session, read
-  `HANDOFF.md` first, before anything else. At the end of any session where something
-  meaningful changed (a decision, a blocker opened/cleared, work shipped, next steps moved),
-  update `HANDOFF.md` — bump the "Last updated" date, date any new decisions — and commit it.
-
 - Standing preference: whenever there's an actionable next step — not just risky/production
   checkpoints, any task at all — give the user a self-contained, copy-paste-ready prompt they
   can hand to a Cowork session, rather than doing the work directly in this session. Don't
@@ -77,3 +72,31 @@ Commands I may use:
 Any Claude node (n8n or otherwise) whose job is to summarize a workflow result for me must carry the Reporting Protocol above in its system prompt, verbatim.
 
 Exception: customer-facing nodes (e.g. Creppie) never get it. Customers must not receive STATUS/RESULT reports, and the format would break downstream tag parsing.
+
+## Session Handoff
+
+Chats are disposable. The repo is the memory. Every workstream keeps a handoff file so any new chat can take over with zero context loss.
+
+- File: `HANDOFF.md` at the repo root. If the repo runs more than one workstream at once, use `handoff/<topic>.md`, one file per workstream.
+- Start of every session: if a handoff file exists for this work, read it before anything else.
+- Update it after every completed unit of work (a report, a feature, a fix), not just at the end, and commit and push it with that work. The container is ephemeral: anything not pushed is lost.
+- Overwrite it to reflect the current state; don't append a diary. Keep it under ~150 lines.
+- Required sections:
+  - **Last updated:** date and branch
+  - **Goal:** what this workstream delivers
+  - **State:** done / in progress / queued, and what each queued item is waiting on
+  - **How it works:** workflow steps, files, scripts, commands, templates, artifact links
+  - **Decisions and gotchas:** dated, one line each
+  - **Next:** the single next action
+  - **Resume prompt:** a copy-paste prompt for a new chat, naming the repo, the branch and this file
+
+## Run Efficiency
+
+- One chat = one workstream. A new topic gets a new chat.
+- Switch to a new chat at a clean boundary (a unit just finished and pushed) when the chat is long: weeks old, dozens of completed units, or history getting heavy. Long chats re-read their whole history every turn, so they get slower and more expensive. When a switch is due, say so in ISSUES.
+- To switch: update the handoff file, commit, push, and report. Geego then opens a new chat with the Resume prompt and archives the old chat once the new one confirms the state.
+- Done it twice? Script it. Repeatable work lives in scripts and templates in the repo, not in chat memory.
+- Ask for all inputs for the next batch up front (e.g. every datasheet for the next N jobs) and process them in one run instead of one at a time.
+- Keep context lean: read only the parts of large files you need, and use subagents for bulk reading or checking so the main chat holds conclusions, not file dumps.
+- Commit and push after every completed unit.
+- Verify output before reporting COMPLETE. A wrong report costs more than a slow one.
