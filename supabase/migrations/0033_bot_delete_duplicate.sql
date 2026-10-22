@@ -2,11 +2,17 @@
 -- Also brings staff_bot_command (until now applied live only) under version control.
 --
 -- Guard rails (a duplicate is a second booking of the same job, nothing more):
---   * both orders exist, and they're different orders
---   * same customer: same app account, or (guests) same phone or same name
---   * the duplicate isn't completed, has no photos and used no Club credit
--- Before deleting, the order and its status history are copied to deleted_orders,
--- so a wrong delete can be put back by hand. Staff-only: no anon/authenticated grants.
+--   * both orders exist, they're different, and neither is completed
+--   * same customer: same app account, or (guests) the same phone; a guest name only
+--     counts when one side has no phone, and never when blank
+--   * same service, booked within 7 days of each other
+--   * the duplicate has no photos, no Vault grades/tags, used no Club credit, isn't the
+--     order carrying a welcome-back discount, and isn't linked to a Vault item the kept
+--     order doesn't share
+-- Both rows are locked first, so two crossed commands can't delete both orders.
+-- Before deleting, the order and its status history are copied to deleted_orders.
+-- To restore by hand, disable the orders insert triggers first (they re-price, re-apply
+-- discounts and send a new "received" notification). Staff-only: no anon/authenticated grants.
 
 create table if not exists deleted_orders (
   id bigint generated always as identity primary key,
@@ -27,12 +33,14 @@ security definer
 set search_path to 'public'
 as $$
 declare
-  v_dup_no text := 'CC-' || lpad(nullif(regexp_replace(coalesce(p_dup, ''), '\D', '', 'g'), '')::int::text, 4, '0');
-  v_orig_no text := 'CC-' || lpad(nullif(regexp_replace(coalesce(p_orig, ''), '\D', '', 'g'), '')::int::text, 4, '0');
+  v_dup_no text := 'CC-' || (select lpad(n, greatest(4, length(n)), '0') from (select nullif(regexp_replace(coalesce(p_dup, ''), '\D', '', 'g'), '')::bigint::text as n) x);
+  v_orig_no text := 'CC-' || (select lpad(n, greatest(4, length(n)), '0') from (select nullif(regexp_replace(coalesce(p_orig, ''), '\D', '', 'g'), '')::bigint::text as n) x);
   d orders;
   o orders;
   v_dup_name text;
   v_orig_name text;
+  v_dup_phone text;
+  v_orig_phone text;
   v_same boolean;
 begin
   if v_dup_no is null or v_orig_no is null then
@@ -42,7 +50,9 @@ begin
     return 'Those are the same order. e.g. dup 54 53 (deletes 54, keeps 53)';
   end if;
 
-  select * into d from orders where order_number = v_dup_no for update;
+  -- Lock both rows in a fixed order: "dup 54 53" and "dup 53 54" at the same time can't both win.
+  perform 1 from orders where order_number in (v_dup_no, v_orig_no) order by id for update;
+  select * into d from orders where order_number = v_dup_no;
   if not found then return v_dup_no || ' not found. Nothing deleted.'; end if;
   select * into o from orders where order_number = v_orig_no;
   if not found then return v_orig_no || ' not found. Nothing deleted.'; end if;
@@ -50,12 +60,16 @@ begin
   select coalesce(c.name, d.guest_name, '?') into v_dup_name from (select 1) x left join customers c on c.id = d.customer_id;
   select coalesce(c.name, o.guest_name, '?') into v_orig_name from (select 1) x left join customers c on c.id = o.customer_id;
 
-  v_same := case
-    when d.customer_id is not null or o.customer_id is not null then d.customer_id is not distinct from o.customer_id
-    else (nullif(regexp_replace(coalesce(d.guest_phone, ''), '\D', '', 'g'), '')
-            = nullif(regexp_replace(coalesce(o.guest_phone, ''), '\D', '', 'g'), ''))
-      or lower(trim(d.guest_name)) = lower(trim(o.guest_name))
-  end;
+  if d.customer_id is not null or o.customer_id is not null then
+    v_same := d.customer_id is not distinct from o.customer_id;
+  else
+    v_dup_phone := normalize_jm_phone(d.guest_phone);
+    v_orig_phone := normalize_jm_phone(o.guest_phone);
+    v_same := case
+      when v_dup_phone is not null and v_orig_phone is not null then v_dup_phone = v_orig_phone
+      else nullif(lower(trim(d.guest_name)), '') = nullif(lower(trim(o.guest_name)), '')
+    end;
+  end if;
   if not coalesce(v_same, false) then
     return format('Not deleted: %s is %s but %s is %s. Different customers, so it isn''t a duplicate.',
                   v_dup_no, v_dup_name, v_orig_no, v_orig_name);
@@ -63,12 +77,31 @@ begin
   if d.status = 'completed' then
     return format('Not deleted: %s is already completed.', v_dup_no);
   end if;
+  if o.status = 'completed' then
+    return format('Not deleted: %s (the one to keep) is completed, so %s isn''t a second booking of it. Check the numbers.', v_orig_no, v_dup_no);
+  end if;
+  if d.service_id is distinct from o.service_id then
+    return format('Not deleted: %s (%s) and %s (%s) are different services.', v_dup_no, left(d.item_name, 28), v_orig_no, left(o.item_name, 28));
+  end if;
+  if abs(extract(epoch from d.created_at - o.created_at)) > 7 * 86400 then
+    return format('Not deleted: %s and %s were booked more than 7 days apart. Check the numbers.', v_dup_no, v_orig_no);
+  end if;
   if exists (select 1 from order_photos where order_id = d.id) then
     return format('Not deleted: %s has photos. Check which order is the real one first.', v_dup_no);
+  end if;
+  if exists (select 1 from pair_events where order_id = d.id) then
+    return format('Not deleted: %s has Vault grades or tags. Check which order is the real one first.', v_dup_no);
   end if;
   if d.redeem_credit or coalesce(d.credits_used, 0) > 0
      or exists (select 1 from membership_credit_ledger where order_id = d.id) then
     return format('Not deleted: %s used a Club credit. Sort the credit out in the dashboard first.', v_dup_no);
+  end if;
+  if d.welcome_back_nudge_id is not null and o.welcome_back_nudge_id is null then
+    return format('Not deleted: %s carries the welcome-back discount. Delete the other one instead: dup %s %s',
+                  v_dup_no, replace(v_orig_no, 'CC-', ''), replace(v_dup_no, 'CC-', ''));
+  end if;
+  if d.pair_id is not null and d.pair_id is distinct from o.pair_id then
+    return format('Not deleted: %s is linked to a Vault item that %s isn''t. Fix it in the dashboard first.', v_dup_no, v_orig_no);
   end if;
 
   insert into deleted_orders (order_number, duplicate_of, order_row, status_events)
