@@ -32,6 +32,9 @@ by name ("get the Reviewer / QA / the Designer on this"):
 - **Designer** (`designer`): holds the premium bar and `DESIGN.md`; critiques screenshots and
   writes buildable specs. Used when planning a new screen or flow and before a visual change
   ships.
+- **Closer** (`closer`): checks nothing was left half-done: live Supabase vs `supabase/migrations`
+  (`supabase/tests/fingerprint.sh --drift`), unpushed work and merged branches, the handoff file,
+  n8n workflows, leftovers. Read-only. **Required** after every merge, before reporting COMPLETE.
 
 Run teammates in parallel with the Builder's own checks where they don't depend on each other,
 and say in the update to Geego which teammate checked what and what they caught. Shared kit:
@@ -102,3 +105,14 @@ Chats are disposable. The repo is the memory. Every workstream keeps a handoff f
 - Keep context lean: read only the parts of large files you need, and use subagents for bulk reading or checking so the main chat holds conclusions, not file dumps.
 - Commit and push after every completed unit.
 - Verify output before reporting COMPLETE. A wrong report costs more than a slow one.
+
+## Keep It Tidy: Closing Checklist
+
+Before reporting COMPLETE on any run, task or build, close it out (in this repo: run the **Closer**). Nothing half-done, nothing out of sync. Fix what you find; report what you can't.
+
+- **Repo matches live.** Anything changed directly in a live system (database, n8n, Vercel, Airtable, dashboards) is saved in the repo in the same session: migration, exported workflow JSON, or a note in the handoff file. Nothing exists only live.
+- **Git is clean.** All work is committed and pushed. Merged or abandoned branches are deleted, on GitHub too. Open PRs are either being driven to merge or closed with a reason.
+- **Handoff is current.** The handoff file reflects this unit (see Session Handoff).
+- **Automations are healthy.** Every workflow you touched is in the state it should be (active or off), has its credentials set, and its last run succeeded.
+- **No leftovers.** No test records in live data, no temp or debug files committed, no stray TODOs, no half-applied changes.
+- Anything you couldn't close goes under ISSUES with the exact fix, or as a Cowork prompt under NEED FROM ME.
